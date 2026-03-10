@@ -30,7 +30,7 @@ OathKeeper는 B2B AI 개발 서비스 회사에서 세일즈 담당이 가져오
 
 2. 경영진(또는 의사 결정권자, 사용자)가 OathKeeper에 분석 요청: 이때 문서(word/pdf)나 요청 텍스트가 추가될 수 있음
 
-3.1 OathKeeper 에이전트가 Deal 정보와 경영진(사용자) 입력 정보를 파싱하여 구조화된 형태로 요약, 정리 
+3.1 OathKeeper 에이전트가 Deal 정보와 경영진(사용자) 입력 정보를 파싱하여 구조화된 형태로 요약, 정리
 - 출력항목 예시
 | 필드명 | 설명 | 입력 유형 |
 |---|---|---|
@@ -96,7 +96,7 @@ OathKeeper는 B2B AI 개발 서비스 회사에서 세일즈 담당이 가져오
 | Agent | Langchain, Langgraph | RAG, Agent 워크플로우 설계 |
 | Vector DB | Pinecone | 과거 프로젝트 유사도 검색용 |
 | RDB | PostgreSQL | 평가 결과, 설정, 사용자 데이터 저장 |
-| Frontend | React (Dashboard), TailwindCSS v4 + shadcn/ui | 스코어카드 및 분석 결과 표시 |
+| Frontend | Nextjs, TailwindCSS v4 + shadcn/ui | 사용자 입출력, 분석 결과, 관리화면 등 |
 | Input 연동 | Notion API | MVP 기준. 향후 HubSpot API 추가 |
 | 알림 | Slack Webhook | 분석 완료 알림 및 요약 전송 |
 
@@ -198,4 +198,3 @@ docs/PRD.md
 ├── 8. MVP 제외 사항
 └── 9. 성공 지표
 ```
-
