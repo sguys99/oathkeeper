@@ -1,0 +1,75 @@
+name: deal_structuring
+version: "1.0"
+description: >
+  비구조화 Deal 텍스트에서 구조화된 필드를 추출한다.
+
+system_prompt: |
+  {{ system_base }}
+
+  당신의 역할은 비구조화된 Deal 텍스트에서 아래 필드를 정확히 추출하는 것입니다.
+  텍스트에 해당 정보가 없으면 null로, 불명확하면 missing_fields에 추가하세요.
+
+  반드시 아래 JSON 형식으로만 응답하세요.
+
+user_prompt: |
+  아래 Deal 텍스트를 분석하여 구조화된 JSON으로 추출하세요.
+
+  ---
+  {{ deal_input }}
+  ---
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "customer_name": "고객사명 (string | null)",
+    "customer_size": "대/중/소 (string | null)",
+    "customer_industry": "산업군 (string | null)",
+    "project_summary": "요청 배경, 목적, 기대 효과 요약 (string | null)",
+    "tech_requirements": ["필요 기술 스택 목록 (list[string])"],
+    "expected_amount": 0,
+    "deadline": "요구 납기 (string | null)",
+    "payment_terms": "결제 조건 (string | null)",
+    "special_notes": "보안 요건, 특별 요구, 제약 조건 (string | null)",
+    "missing_fields": ["미입력/불명확 항목 목록 (list[string])"]
+  }
+  ```
+
+output_schema:
+  type: object
+  properties:
+    customer_name:
+      type: ["string", "null"]
+    customer_size:
+      type: ["string", "null"]
+      enum: ["대", "중", "소", null]
+    customer_industry:
+      type: ["string", "null"]
+    project_summary:
+      type: ["string", "null"]
+    tech_requirements:
+      type: array
+      items:
+        type: string
+    expected_amount:
+      type: ["integer", "null"]
+    deadline:
+      type: ["string", "null"]
+    payment_terms:
+      type: ["string", "null"]
+    special_notes:
+      type: ["string", "null"]
+    missing_fields:
+      type: array
+      items:
+        type: string
+  required:
+    - customer_name
+    - customer_size
+    - customer_industry
+    - project_summary
+    - tech_requirements
+    - expected_amount
+    - deadline
+    - payment_terms
+    - special_notes
+    - missing_fields

@@ -1,0 +1,79 @@
+name: resource_estimation
+version: "1.0"
+description: >
+  Deal의 기술 요구사항과 규모를 바탕으로 투입 인력, 기간, 예산을 산출한다.
+
+system_prompt: |
+  {{ system_base }}
+
+  당신의 역할은 Deal의 기술 요구사항, 규모, 복잡도를 분석하여 예상 투입 인력 구성, 기간, 소요 예산을 산출하는 것입니다.
+  회사의 인건비 단가와 현재 인력 현황, 과거 유사 프로젝트 실적을 참고하여 현실적인 산출을 수행하세요.
+
+  산출 시 근거를 반드시 포함하세요 (예: "유사 프로젝트 평균 3개월 소요").
+
+user_prompt: |
+  아래 Deal 정보를 바탕으로 소요 인력·기간·예산을 산출하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  ## 팀원 현황 및 월 단가
+  {% if team_members %}
+  {% for m in team_members %}
+  - {{ m.name }} ({{ m.role }}): 월 {{ m.monthly_rate | int }}만원{% if m.is_available %}, 투입 가능{% else %}, 현재 {{ m.current_project }}에 투입 중{% endif %}
+  {% endfor %}
+  {% else %}
+  (팀원 정보가 제공되지 않았습니다. 일반적인 인건비 기준으로 산출하세요.)
+  {% endif %}
+
+  {% if company_rates %}
+  ## 회사 비용 기준
+  {{ company_rates }}
+  {% endif %}
+
+  {% if past_projects %}
+  ## 유사 프로젝트 참고
+  {% for p in past_projects %}
+  - {{ p.project_name }}: {{ p.duration_months }}개월, {{ p.tech_stack | join(', ') }}
+  {% endfor %}
+  {% endif %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "team_composition": [
+      {"role": "PM", "count": 1, "monthly_rate": 0}
+    ],
+    "duration_months": 0.0,
+    "total_cost": 0,
+    "expected_margin": 0.0,
+    "rationale": "산출 근거 설명"
+  }
+  ```
+
+output_schema:
+  type: object
+  properties:
+    team_composition:
+      type: array
+      items:
+        type: object
+        properties:
+          role:
+            type: string
+          count:
+            type: integer
+          monthly_rate:
+            type: integer
+        required: [role, count, monthly_rate]
+    duration_months:
+      type: number
+    total_cost:
+      type: integer
+    expected_margin:
+      type: number
+    rationale:
+      type: string
+  required: [team_composition, duration_months, total_cost, expected_margin, rationale]

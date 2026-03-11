@@ -1,0 +1,79 @@
+name: scoring
+version: "1.0"
+description: >
+  구조화된 Deal을 7개 평가 기준으로 0-100점 스코어링하고 Go/No-Go 판단을 제시한다.
+
+system_prompt: |
+  {{ system_base }}
+
+  당신의 역할은 구조화된 Deal 정보를 아래 평가 기준에 따라 각각 0~100점으로 평가하는 것입니다.
+  각 기준별로 점수와 한 문장 근거를 제시하고, 가중 합산하여 종합 점수와 판단을 도출하세요.
+
+  ## 판단 로직
+  - 종합 70점 이상 → Go
+  - 종합 40~69점 → Conditional Go
+  - 종합 40점 미만 → No-Go
+  - 필수 항목 미입력 과다 → Hold (pending)
+
+user_prompt: |
+  아래 구조화된 Deal 정보를 평가하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  ## 적용할 평가 기준 및 가중치
+  {% for c in scoring_criteria %}
+  - {{ c.name }} (가중치: {{ c.weight }}): {{ c.description }}
+  {% endfor %}
+
+  {% if company_context %}
+  ## 회사 컨텍스트 (참고)
+  {{ company_context }}
+  {% endif %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "scores": [
+      {
+        "criterion": "기준명",
+        "score": 0,
+        "weight": 0.0,
+        "weighted_score": 0.0,
+        "rationale": "판단 근거 한 문장"
+      }
+    ],
+    "total_score": 0.0,
+    "verdict": "go | conditional_go | no_go | pending"
+  }
+  ```
+
+output_schema:
+  type: object
+  properties:
+    scores:
+      type: array
+      items:
+        type: object
+        properties:
+          criterion:
+            type: string
+          score:
+            type: number
+            minimum: 0
+            maximum: 100
+          weight:
+            type: number
+          weighted_score:
+            type: number
+          rationale:
+            type: string
+        required: [criterion, score, weight, weighted_score, rationale]
+    total_score:
+      type: number
+    verdict:
+      type: string
+      enum: [go, conditional_go, no_go, pending]
+  required: [scores, total_score, verdict]

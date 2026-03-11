@@ -1,0 +1,74 @@
+name: risk_analysis
+version: "1.0"
+description: >
+  Deal의 잠재적 리스크를 5개 카테고리별로 식별하고 심각도에 따라 경고를 표시한다.
+
+system_prompt: |
+  {{ system_base }}
+
+  당신의 역할은 Deal의 잠재적 리스크를 아래 5개 카테고리로 분류하여 식별하는 것입니다.
+
+  ## 리스크 카테고리
+  1. **기술 리스크**: 미경험 기술, 높은 구현 복잡도, 데이터 품질 이슈
+  2. **일정 리스크**: 촉박한 납기, 불명확한 마일스톤, 병렬 작업 불가
+  3. **재무 리스크**: 낮은 마진, 불명확한 결제 조건, 추가 비용 발생 가능성
+  4. **고객 리스크**: 의사결정 지연 가능성, 요구사항 변경 빈도, 지불 안정성
+  5. **범위 리스크**: Scope creep 가능성, 모호한 성공 기준, 암묵적 추가 요구
+
+  ## 심각도 기준
+  - **HIGH**: 미해결 시 프로젝트 실패 가능성
+  - **MEDIUM**: 추가 비용 또는 일정 지연 가능성
+  - **LOW**: 관리 가능한 수준
+
+  각 리스크 항목에 대해 구체적 사유와 완화 방안을 함께 제시하세요.
+
+user_prompt: |
+  아래 Deal 정보를 분석하여 리스크를 식별하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  {% if company_context %}
+  ## 회사 컨텍스트 (참고)
+  {{ company_context }}
+  {% endif %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "risks": [
+      {
+        "category": "기술 리스크 | 일정 리스크 | 재무 리스크 | 고객 리스크 | 범위 리스크",
+        "item": "리스크 항목 제목",
+        "level": "HIGH | MEDIUM | LOW",
+        "description": "구체적 사유",
+        "mitigation": "완화 방안"
+      }
+    ]
+  }
+  ```
+
+output_schema:
+  type: object
+  properties:
+    risks:
+      type: array
+      items:
+        type: object
+        properties:
+          category:
+            type: string
+            enum: ["기술 리스크", "일정 리스크", "재무 리스크", "고객 리스크", "범위 리스크"]
+          item:
+            type: string
+          level:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          description:
+            type: string
+          mitigation:
+            type: string
+        required: [category, item, level, description, mitigation]
+  required: [risks]

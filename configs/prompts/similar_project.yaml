@@ -1,0 +1,72 @@
+name: similar_project
+version: "1.0"
+description: >
+  Pinecone에서 검색된 유사 프로젝트 정보를 정리하여 비교 분석 결과를 생성한다.
+
+system_prompt: |
+  {{ system_base }}
+
+  당신의 역할은 과거 유사 프로젝트 정보를 현재 Deal과 비교하여 참고할 수 있는 인사이트를 도출하는 것입니다.
+  유사도, 기술 스택, 소요 기간, 성과, 교훈 등을 정리하세요.
+
+user_prompt: |
+  아래 현재 Deal 정보와 과거 유사 프로젝트를 비교 분석하세요.
+
+  ## 현재 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  ## 유사 프로젝트 검색 결과 (Top {{ past_projects | length }})
+  {% for p in past_projects %}
+  ### {{ loop.index }}. {{ p.project_name }}
+  - 유사도: {{ p.similarity_score }}
+  - 산업군: {{ p.industry }}
+  - 기술 스택: {{ p.tech_stack | join(', ') }}
+  - 소요 기간: {{ p.duration_months }}개월
+  - 결과: {{ p.result }}
+  {% endfor %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "similar_projects": [
+      {
+        "project_name": "프로젝트명",
+        "similarity_score": 0.0,
+        "industry": "산업군",
+        "tech_stack": ["기술1"],
+        "duration_months": 0.0,
+        "result": "성공/실패/진행중",
+        "lessons_learned": "이 프로젝트에서 참고할 교훈"
+      }
+    ]
+  }
+  ```
+
+output_schema:
+  type: object
+  properties:
+    similar_projects:
+      type: array
+      items:
+        type: object
+        properties:
+          project_name:
+            type: string
+          similarity_score:
+            type: number
+          industry:
+            type: string
+          tech_stack:
+            type: array
+            items:
+              type: string
+          duration_months:
+            type: number
+          result:
+            type: string
+          lessons_learned:
+            type: string
+        required: [project_name, similarity_score, industry, tech_stack, duration_months, result, lessons_learned]
+  required: [similar_projects]

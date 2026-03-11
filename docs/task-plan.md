@@ -98,22 +98,22 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 0 (settings), Phase 1과 병렬 가능
 
 ### 3-1. LLM 클라이언트
-- [ ] `backend/app/agent/llm.py` — LiteLLM 라우터 설정, `get_llm()` 팩토리 (LangChain ChatModel 래핑)
-- [ ] `backend/app/agent/embeddings.py` — OpenAI text-embedding-3-small 임베딩 클라이언트
+- [x] `backend/app/agent/llm.py` — LiteLLM 라우터 설정, `get_llm()` 팩토리 (LangChain ChatModel 래핑)
+- [x] `backend/app/agent/embeddings.py` — OpenAI text-embedding-3-small 임베딩 클라이언트
 
 ### 3-2. 프롬프트 템플릿
-- [ ] `configs/prompts/system.yaml` — 공통 시스템 프롬프트 (역할 정의, Business Context Jinja2 변수)
-- [ ] `configs/prompts/deal_structuring.yaml` — 구조화 필드 추출, JSON 출력 스키마
-- [ ] `configs/prompts/scoring.yaml` — 7개 기준별 평가, JSON 출력
-- [ ] `configs/prompts/resource_estimation.yaml` — 소요 산출
-- [ ] `configs/prompts/risk_analysis.yaml` — 5개 카테고리, 3단계 심각도
-- [ ] `configs/prompts/similar_project.yaml` — 유사 프로젝트 정리
-- [ ] `configs/prompts/final_verdict.yaml` — 마크다운 리포트 생성
-- [ ] `backend/app/agent/prompt_loader.py` — YAML 로더 + Jinja2 렌더링
+- [x] `configs/prompts/system.yaml` — 공통 시스템 프롬프트 (역할 정의, Business Context Jinja2 변수)
+- [x] `configs/prompts/deal_structuring.yaml` — 구조화 필드 추출, JSON 출력 스키마
+- [x] `configs/prompts/scoring.yaml` — 7개 기준별 평가, JSON 출력
+- [x] `configs/prompts/resource_estimation.yaml` — 소요 산출
+- [x] `configs/prompts/risk_analysis.yaml` — 5개 카테고리, 3단계 심각도
+- [x] `configs/prompts/similar_project.yaml` — 유사 프로젝트 정리
+- [x] `configs/prompts/final_verdict.yaml` — 마크다운 리포트 생성
+- [x] `backend/app/agent/prompt_loader.py` — YAML 로더 + Jinja2 렌더링
 
 ### 3-3. 테스트
-- [ ] `tests/unit/agent/test_prompt_loader.py` — 프롬프트 로딩/렌더링 테스트
-- [ ] `tests/unit/agent/test_llm.py` — LLM 클라이언트 초기화 테스트
+- [x] `tests/unit/agent/test_prompt_loader.py` — 프롬프트 로딩/렌더링 테스트
+- [x] `tests/unit/agent/test_llm.py` — LLM 클라이언트 초기화 테스트
 
 ---
 
