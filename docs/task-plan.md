@@ -67,28 +67,28 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 1
 
 ### 2-1. Pydantic 스키마
-- [ ] `backend/app/api/schemas/deal.py` — DealCreate, DealResponse, DealListResponse, DealStatus(Enum)
-- [ ] `backend/app/api/schemas/analysis.py` — AnalysisResponse, ScoreDetail, ResourceEstimate, RiskItem, SimilarProject, VerdictEnum
-- [ ] `backend/app/api/schemas/settings.py` — ScoringCriteriaSchema, CompanySettingSchema, TeamMemberSchema, WeightUpdateRequest (합계 100% validator)
-- [ ] `backend/app/api/schemas/user.py` — UserCreate, UserResponse
-- [ ] `backend/app/api/schemas/notion.py` — NotionDealListResponse, NotionSaveRequest/Response
+- [x] `backend/app/api/schemas/deal.py` — DealCreate, DealResponse, DealListResponse, DealStatus(Enum)
+- [x] `backend/app/api/schemas/analysis.py` — AnalysisResponse, ScoreDetail, ResourceEstimate, RiskItem, SimilarProject, VerdictEnum
+- [x] `backend/app/api/schemas/settings.py` — ScoringCriteriaSchema, CompanySettingSchema, TeamMemberSchema, WeightUpdateRequest (합계 100% validator)
+- [x] `backend/app/api/schemas/user.py` — UserCreate, UserResponse
+- [x] `backend/app/api/schemas/notion.py` — NotionDealListResponse, NotionSaveRequest/Response
 
 ### 2-2. API 라우터
-- [ ] `backend/app/api/routers/deals.py` — `POST /api/deals`, `GET /api/deals`, `GET /api/deals/{id}`
-- [ ] `backend/app/api/routers/analysis.py` — `POST /api/deals/{id}/analyze`, `GET /api/deals/{id}/analysis`, `GET /api/deals/{id}/status` (SSE)
-- [ ] `backend/app/api/routers/settings.py` — 평가 기준, 회사 설정, 팀원, 비용 CRUD 엔드포인트
-- [ ] `backend/app/api/routers/notion.py` — `GET /api/notion/deals`, `POST /api/deals/{id}/save-to-notion`
-- [ ] `backend/app/api/routers/users.py` — `POST /api/users`, `GET /api/users/me`
-- [ ] `backend/app/api/main.py`에 전체 라우터 등록
+- [x] `backend/app/api/routers/deals.py` — `POST /api/deals`, `GET /api/deals`, `GET /api/deals/{id}`
+- [x] `backend/app/api/routers/analysis.py` — `POST /api/deals/{id}/analyze`, `GET /api/deals/{id}/analysis`, `GET /api/deals/{id}/status` (SSE)
+- [x] `backend/app/api/routers/settings.py` — 평가 기준, 회사 설정, 팀원, 비용 CRUD 엔드포인트
+- [x] `backend/app/api/routers/notion.py` — `GET /api/notion/deals`, `POST /api/deals/{id}/save-to-notion`
+- [x] `backend/app/api/routers/users.py` — `POST /api/users`, `GET /api/users/me`
+- [x] `backend/app/api/main.py`에 전체 라우터 등록
 
 ### 2-3. 에러 핸들링
-- [ ] `backend/app/api/exceptions.py` — 커스텀 예외 (DealNotFound, AnalysisInProgress, NotionAPIError)
-- [ ] 전역 예외 핸들러 등록
+- [x] `backend/app/api/exceptions.py` — 커스텀 예외 (DealNotFound, AnalysisInProgress, NotionAPIError)
+- [x] 전역 예외 핸들러 등록
 
 ### 2-4. 테스트
-- [ ] `tests/unit/api/test_deals_router.py` — Deal 엔드포인트 테스트
-- [ ] `tests/unit/api/test_settings_router.py` — 설정 엔드포인트 테스트
-- [ ] `tests/unit/api/test_schemas.py` — 스키마 validation 테스트 (가중치 합계 등)
+- [x] `tests/unit/api/test_deals_router.py` — Deal 엔드포인트 테스트
+- [x] `tests/unit/api/test_settings_router.py` — 설정 엔드포인트 테스트
+- [x] `tests/unit/api/test_schemas.py` — 스키마 validation 테스트 (가중치 합계 등)
 
 ---
 
