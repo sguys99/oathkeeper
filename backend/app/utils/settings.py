@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # Pinecone
     pinecone_api_key: str = ""
     pinecone_environment: str = ""
+    pinecone_company_context_index: str = "company-context"
+    pinecone_project_history_index: str = "project-history"
 
     # Notion
     notion_api_key: str = ""

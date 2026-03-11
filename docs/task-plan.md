@@ -123,15 +123,15 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 3 (임베딩 클라이언트), Phase 1과 병렬 가능
 
 ### 4-1. Pinecone 클라이언트
-- [ ] `backend/app/db/pinecone_client.py` — Pinecone 연결 관리 (init, get_index)
+- [x] `backend/app/db/pinecone_client.py` — Pinecone 연결 관리 (init, get_index)
 
 ### 4-2. Vector Store 서비스
-- [ ] `backend/app/db/vector_store.py` — `CompanyContextStore`: upsert(텍스트→임베딩→Pinecone), query(Top K)
-- [ ] `backend/app/db/vector_store.py` — `ProjectHistoryStore`: upsert(프로젝트 메타데이터), search_similar(코사인 유사도 Top 3)
+- [x] `backend/app/db/vector_store.py` — `CompanyContextStore`: upsert(텍스트→임베딩→Pinecone), query(Top K)
+- [x] `backend/app/db/vector_store.py` — `ProjectHistoryStore`: upsert(프로젝트 메타데이터), search_similar(코사인 유사도 Top 3)
 
 ### 4-3. 테스트
-- [ ] `tests/unit/db/test_vector_store.py` — mock 기반 단위 테스트
-- [ ] `tests/integration/test_pinecone.py` — 실제 Pinecone 통합 테스트 (`@pytest.mark.integration`)
+- [x] `tests/unit/db/test_vector_store.py` — mock 기반 단위 테스트
+- [x] `tests/integration/test_pinecone.py` — 실제 Pinecone 통합 테스트 (`@pytest.mark.integration`)
 
 ---
 
