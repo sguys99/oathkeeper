@@ -20,3 +20,21 @@ init-dev:  ## Init dev env
 format:  ## Run formatting
 	ruff check . --fix
 	ruff format .
+
+run:  ## Run the FastAPI server (dev mode)
+	uv run python main.py
+
+docker-up:  ## Start Docker services (PostgreSQL)
+	docker compose up -d
+
+docker-down:  ## Stop Docker services
+	docker compose down
+
+migrate:  ## Run Alembic migrations
+	uv run alembic upgrade head
+
+seed:  ## Insert seed data into the database
+	uv run python -m backend.app.db.seed
+
+test:  ## Run unit tests
+	uv run pytest
