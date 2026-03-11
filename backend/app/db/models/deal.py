@@ -1,0 +1,37 @@
+import uuid
+
+from sqlalchemy import CheckConstraint, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.app.db.base import Base, JsonType, TimestampMixin
+
+
+class Deal(Base, TimestampMixin):
+    __tablename__ = "deals"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'analyzing', 'completed', 'failed')",
+            name="ck_deals_status",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    notion_page_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    raw_input: Mapped[str | None] = mapped_column(Text, nullable=True)
+    structured_data: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+
+    creator: Mapped["User | None"] = relationship(  # noqa: F821
+        back_populates="deals",
+        lazy="selectin",
+    )
+    analysis_result: Mapped["AnalysisResult | None"] = relationship(  # noqa: F821
+        back_populates="deal",
+        uselist=False,
+        lazy="selectin",
+    )

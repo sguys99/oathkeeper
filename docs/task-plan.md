@@ -36,28 +36,28 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 0
 
 ### 1-1. SQLAlchemy ORM 모델
-- [ ] `backend/app/db/models/user.py` — `users` (id, email, name, role, created_at)
-- [ ] `backend/app/db/models/deal.py` — `deals` (id, notion_page_id, title, raw_input, structured_data JSONB, status, created_by FK, timestamps)
-- [ ] `backend/app/db/models/analysis_result.py` — `analysis_results` (id, deal_id FK, total_score, verdict, scores/resource_estimate/risks/similar_projects JSONB, report_markdown, notion_saved_at, created_at)
-- [ ] `backend/app/db/models/scoring_criteria.py` — `scoring_criteria` (id, name, weight, description, is_active, display_order, updated_at)
-- [ ] `backend/app/db/models/company_setting.py` — `company_settings` (key PK, value, description, updated_at)
-- [ ] `backend/app/db/models/team_member.py` — `team_members` (id, name, role, monthly_rate, is_available, current_project, available_from)
+- [x] `backend/app/db/models/user.py` — `users` (id, email, name, role, created_at)
+- [x] `backend/app/db/models/deal.py` — `deals` (id, notion_page_id, title, raw_input, structured_data JSONB, status, created_by FK, timestamps)
+- [x] `backend/app/db/models/analysis_result.py` — `analysis_results` (id, deal_id FK, total_score, verdict, scores/resource_estimate/risks/similar_projects JSONB, report_markdown, notion_saved_at, created_at)
+- [x] `backend/app/db/models/scoring_criteria.py` — `scoring_criteria` (id, name, weight, description, is_active, display_order, updated_at)
+- [x] `backend/app/db/models/company_setting.py` — `company_settings` (key PK, value, description, updated_at)
+- [x] `backend/app/db/models/team_member.py` — `team_members` (id, name, role, monthly_rate, is_available, current_project, available_from)
 
 ### 1-2. 마이그레이션 및 시드 데이터
-- [ ] Alembic 초기 마이그레이션 생성/적용
-- [ ] `backend/app/db/seed.py` — 7개 평가 기준 기본값, 샘플 company_settings 삽입
+- [x] Alembic 초기 마이그레이션 생성/적용
+- [x] `backend/app/db/seed.py` — 7개 평가 기준 기본값, 샘플 company_settings 삽입
 
 ### 1-3. CRUD 레포지토리
-- [ ] `backend/app/db/repositories/deal_repo.py` — create, get_by_id, list_with_filters, update_status
-- [ ] `backend/app/db/repositories/analysis_repo.py` — create, get_by_deal_id, update_notion_saved
-- [ ] `backend/app/db/repositories/settings_repo.py` — ScoringCriteria, CompanySettings, TeamMember CRUD
-- [ ] `backend/app/db/repositories/user_repo.py` — User CRUD
+- [x] `backend/app/db/repositories/deal_repo.py` — create, get_by_id, list_with_filters, update_status
+- [x] `backend/app/db/repositories/analysis_repo.py` — create, get_by_deal_id, update_notion_saved
+- [x] `backend/app/db/repositories/settings_repo.py` — ScoringCriteria, CompanySettings, TeamMember CRUD
+- [x] `backend/app/db/repositories/user_repo.py` — User CRUD
 
 ### 1-4. 테스트
-- [ ] `tests/conftest.py` — 테스트 DB 세션 픽스처 (SQLite in-memory)
-- [ ] `tests/unit/db/test_models.py` — 모델 인스턴스 생성 테스트
-- [ ] `tests/unit/db/test_deal_repo.py` — Deal 레포지토리 테스트
-- [ ] `tests/unit/db/test_settings_repo.py` — 설정 레포지토리 테스트
+- [x] `tests/conftest.py` — 테스트 DB 세션 픽스처 (SQLite in-memory)
+- [x] `tests/unit/db/test_models.py` — 모델 인스턴스 생성 테스트
+- [x] `tests/unit/db/test_deal_repo.py` — Deal 레포지토리 테스트
+- [x] `tests/unit/db/test_settings_repo.py` — 설정 레포지토리 테스트
 
 ---
 
