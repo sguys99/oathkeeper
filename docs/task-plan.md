@@ -13,20 +13,20 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **목표:** 로컬 환경에서 서비스를 실행할 수 있는 기반 인프라 완성
 
 ### 0-1. Docker 및 데이터베이스 인프라
-- [ ] `docker-compose.yaml` — PostgreSQL 서비스 정의 (포트 5432, 볼륨, 환경변수)
-- [ ] `.env.example`에 `DATABASE_URL`, `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT`, `NOTION_API_KEY`, `SLACK_WEBHOOK_URL` 추가
+- [x] `docker-compose.yaml` — PostgreSQL 서비스 정의 (포트 5432, 볼륨, 환경변수)
+- [x] `.env.example`에 `DATABASE_URL`, `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT`, `NOTION_API_KEY`, `SLACK_WEBHOOK_URL` 추가
 
 ### 0-2. 앱 설정 및 부트스트랩
-- [ ] `backend/app/utils/settings.py` — Pydantic `BaseSettings` 구현 (`.env` 로드, 전체 설정 항목 정의)
-- [ ] `backend/app/api/main.py` — FastAPI 앱 인스턴스 생성 (CORS, lifespan, 기본 health check)
-- [ ] `main.py` — uvicorn 서버 구동으로 교체
-- [ ] `pyproject.toml` — 누락 의존성 추가: `sqlalchemy`, `asyncpg`, `alembic`, `pinecone-client`, `notion-client`, `httpx`, `python-multipart`, `jinja2`
-- [ ] `Makefile` — `run`, `docker-up`, `docker-down`, `migrate`, `seed`, `test` 타겟 추가
+- [x] `backend/app/utils/settings.py` — Pydantic `BaseSettings` 구현 (`.env` 로드, 전체 설정 항목 정의)
+- [x] `backend/app/api/main.py` — FastAPI 앱 인스턴스 생성 (CORS, lifespan, 기본 health check)
+- [x] `main.py` — uvicorn 서버 구동으로 교체
+- [x] `pyproject.toml` — 누락 의존성 추가: `sqlalchemy`, `asyncpg`, `alembic`, `pinecone-client`, `notion-client`, `httpx`, `python-multipart`, `jinja2`
+- [x] `Makefile` — `run`, `docker-up`, `docker-down`, `migrate`, `seed`, `test` 타겟 추가
 
 ### 0-3. 데이터베이스 마이그레이션 설정
-- [ ] Alembic 초기화 (`backend/app/db/migrations/`)
-- [ ] `backend/app/db/base.py` — SQLAlchemy `DeclarativeBase` 정의
-- [ ] `backend/app/db/session.py` — async `SessionLocal`, `get_db` 의존성 함수
+- [x] Alembic 초기화 (`backend/app/db/migrations/`)
+- [x] `backend/app/db/base.py` — SQLAlchemy `DeclarativeBase` 정의
+- [x] `backend/app/db/session.py` — async `SessionLocal`, `get_db` 의존성 함수
 
 ---
 
