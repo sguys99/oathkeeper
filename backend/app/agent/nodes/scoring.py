@@ -1,0 +1,97 @@
+"""Scoring node — evaluate structured deal against 7 criteria."""
+
+import logging
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.app.agent.base import (
+    call_llm,
+    format_company_context,
+    format_scoring_criteria,
+    parse_json_response,
+)
+from backend.app.agent.prompt_loader import load_prompt
+from backend.app.agent.state import AgentState
+from backend.app.db.repositories import settings_repo
+from backend.app.db.vector_store import CompanyContextStore
+
+logger = logging.getLogger(__name__)
+
+
+def _determine_verdict(total_score: float) -> str:
+    """Server-side verdict based on score thresholds (don't trust LLM arithmetic)."""
+    if total_score >= 70:
+        return "go"
+    if total_score >= 40:
+        return "conditional_go"
+    return "no_go"
+
+
+def _recalculate_scores(scores: list[dict]) -> tuple[list[dict], float]:
+    """Recompute weighted_score and total from LLM-provided raw scores."""
+    recalculated = []
+    total = 0.0
+    for s in scores:
+        score = float(s.get("score", 0))
+        weight = float(s.get("weight", 0))
+        weighted = round(score * weight, 2)
+        total += weighted
+        recalculated.append({**s, "score": score, "weight": weight, "weighted_score": weighted})
+    return recalculated, round(total, 2)
+
+
+def make_scoring_node(db: AsyncSession, context_store: CompanyContextStore):
+    """Factory — returns an async scoring node with injected dependencies."""
+
+    async def scoring_node(state: AgentState) -> dict:
+        try:
+            structured_deal = state.get("structured_deal", {})
+
+            # Fetch scoring criteria from DB
+            criteria = await settings_repo.list_active_criteria(db)
+            scoring_criteria = format_scoring_criteria(criteria)
+
+            # Fetch company context
+            query_text = structured_deal.get("project_summary", "")
+            context_results = await context_store.query(query_text, top_k=5)
+            company_context = format_company_context(context_results)
+
+            # Render prompts
+            system_tpl = load_prompt("system")
+            system_base = system_tpl.render_system(
+                company_context=company_context,
+                deal_criteria="",
+                scoring_criteria=scoring_criteria,
+            )
+
+            tpl = load_prompt("scoring")
+            system_prompt, user_prompt = tpl.render(
+                system_base=system_base,
+                structured_deal=structured_deal,
+                scoring_criteria=scoring_criteria,
+                company_context=company_context,
+            )
+
+            raw = await call_llm(system_prompt, user_prompt)
+            parsed = parse_json_response(raw)
+
+            # Server-side recalculation for accuracy
+            scores, total_score = _recalculate_scores(parsed.get("scores", []))
+            verdict = _determine_verdict(total_score)
+
+            return {
+                "scores": scores,
+                "total_score": total_score,
+                "verdict": verdict,
+            }
+
+        except Exception:
+            logger.exception("scoring node failed")
+            return {
+                "scores": [],
+                "total_score": 0.0,
+                "verdict": "pending",
+                "errors": ["scoring: node execution failed"],
+            }
+
+    return scoring_node

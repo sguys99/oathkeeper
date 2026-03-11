@@ -141,33 +141,33 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 3 (LLM) + Phase 4 (Vector DB) + Phase 1 (DB)
 
 ### 5-1. 공통 구조
-- [ ] `backend/app/agent/state.py` — LangGraph State TypedDict (deal_input, structured_deal, scores, resource_estimate, risks, similar_projects, final_report, status, errors)
-- [ ] `backend/app/agent/base.py` — 에이전트 베이스 (공통 프롬프트 로딩, LLM 호출, 출력 파싱, 에러 핸들링)
+- [x] `backend/app/agent/state.py` — LangGraph State TypedDict (deal_input, structured_deal, scores, resource_estimate, risks, similar_projects, final_report, status, errors)
+- [x] `backend/app/agent/base.py` — 에이전트 베이스 (공통 프롬프트 로딩, LLM 호출, 출력 파싱, 에러 핸들링)
 
 ### 5-2. 개별 에이전트
-- [ ] `backend/app/agent/nodes/deal_structuring.py` — 비구조화 텍스트 → 구조화 JSON, missing_fields 식별
-- [ ] `backend/app/agent/nodes/scoring.py` — 7개 기준 0-100점, 가중 합산, Go/No-Go 판단
-- [ ] `backend/app/agent/nodes/resource_estimation.py` — 인력/기간/예산 계산 (Vector DB 회사 단가 참조)
-- [ ] `backend/app/agent/nodes/risk_analysis.py` — 5개 카테고리 리스크, HIGH/MEDIUM/LOW, 완화 방안
-- [ ] `backend/app/agent/nodes/similar_project.py` — Pinecone Top 3 유사 프로젝트, 비교 정보
-- [ ] `backend/app/agent/nodes/final_verdict.py` — 전체 결과 종합, 마크다운 리포트, 권고사항
+- [x] `backend/app/agent/nodes/deal_structuring.py` — 비구조화 텍스트 → 구조화 JSON, missing_fields 식별
+- [x] `backend/app/agent/nodes/scoring.py` — 7개 기준 0-100점, 가중 합산, Go/No-Go 판단
+- [x] `backend/app/agent/nodes/resource_estimation.py` — 인력/기간/예산 계산 (Vector DB 회사 단가 참조)
+- [x] `backend/app/agent/nodes/risk_analysis.py` — 5개 카테고리 리스크, HIGH/MEDIUM/LOW, 완화 방안
+- [x] `backend/app/agent/nodes/similar_project.py` — Pinecone Top 3 유사 프로젝트, 비교 정보
+- [x] `backend/app/agent/nodes/final_verdict.py` — 전체 결과 종합, 마크다운 리포트, 권고사항
 
 ### 5-3. 오케스트레이터 (LangGraph)
-- [ ] `backend/app/agent/graph.py` — StateGraph 정의
+- [x] `backend/app/agent/graph.py` — StateGraph 정의
   - deal_structuring → (scoring, resource_estimation, risk_analysis, similar_project) 병렬 → final_verdict
   - 조건부 분기: missing_fields 과다 시 보류 처리
   - 각 노드 완료 시 DB status 업데이트 콜백
 
 ### 5-4. 분석 서비스
-- [ ] `backend/app/agent/service.py` — `AnalysisService`: graph 실행, 결과 DB 저장, 에러 핸들링
-- [ ] `backend/app/api/routers/analysis.py`에서 `AnalysisService` 호출 연동 (BackgroundTasks)
+- [x] `backend/app/agent/service.py` — `AnalysisService`: graph 실행, 결과 DB 저장, 에러 핸들링
+- [x] `backend/app/api/routers/analysis.py`에서 `AnalysisService` 호출 연동 (BackgroundTasks)
 
 ### 5-5. 테스트
-- [ ] `tests/unit/agent/test_deal_structuring.py` — mock LLM 응답 기반 테스트
-- [ ] `tests/unit/agent/test_scoring.py` — 가중치 계산 정확성, 판단 로직 테스트
-- [ ] `tests/unit/agent/test_resource_estimation.py`
-- [ ] `tests/unit/agent/test_risk_analysis.py`
-- [ ] `tests/unit/agent/test_graph.py` — 전체 그래프 흐름 테스트 (모든 에이전트 mock)
+- [x] `tests/unit/agent/test_deal_structuring.py` — mock LLM 응답 기반 테스트
+- [x] `tests/unit/agent/test_scoring.py` — 가중치 계산 정확성, 판단 로직 테스트
+- [x] `tests/unit/agent/test_resource_estimation.py`
+- [x] `tests/unit/agent/test_risk_analysis.py`
+- [x] `tests/unit/agent/test_graph.py` — 전체 그래프 흐름 테스트 (모든 에이전트 mock)
 - [ ] `tests/integration/test_analysis_e2e.py` — 실제 LLM 호출 통합 테스트 (`@pytest.mark.integration`)
 
 ---

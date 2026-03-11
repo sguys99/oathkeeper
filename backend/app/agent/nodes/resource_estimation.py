@@ -1,0 +1,63 @@
+"""Resource estimation node — calculate team, duration, and cost."""
+
+import json
+import logging
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.app.agent.base import (
+    call_llm,
+    format_team_members,
+    parse_json_response,
+)
+from backend.app.agent.prompt_loader import load_prompt
+from backend.app.agent.state import AgentState
+from backend.app.db.repositories import settings_repo
+from backend.app.db.vector_store import ProjectHistoryStore
+
+logger = logging.getLogger(__name__)
+
+
+def make_resource_estimation_node(
+    db: AsyncSession,
+    project_store: ProjectHistoryStore,
+):
+    """Factory — returns an async resource-estimation node."""
+
+    async def resource_estimation_node(state: AgentState) -> dict:
+        try:
+            structured_deal = state.get("structured_deal", {})
+
+            # Fetch team members and company rates from DB
+            members = await settings_repo.list_team_members(db)
+            team_members = format_team_members(members)
+
+            rates_setting = await settings_repo.get_setting(db, "company_rates")
+            company_rates = rates_setting.value if rates_setting else ""
+
+            # Fetch similar past projects for reference
+            deal_text = structured_deal.get("project_summary", "")
+            past_projects = await project_store.search_similar(deal_text, top_k=3)
+
+            # Render prompts
+            tpl = load_prompt("resource_estimation")
+            system_prompt, user_prompt = tpl.render(
+                structured_deal=structured_deal,
+                team_members=team_members,
+                company_rates=company_rates,
+                past_projects=json.dumps(past_projects, ensure_ascii=False),
+            )
+
+            raw = await call_llm(system_prompt, user_prompt)
+            parsed = parse_json_response(raw)
+
+            return {"resource_estimate": parsed}
+
+        except Exception:
+            logger.exception("resource_estimation node failed")
+            return {
+                "resource_estimate": {},
+                "errors": ["resource_estimation: node execution failed"],
+            }
+
+    return resource_estimation_node

@@ -1,0 +1,58 @@
+"""Tests for resource_estimation node."""
+
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from backend.app.agent.nodes.resource_estimation import make_resource_estimation_node
+
+pytestmark = pytest.mark.unit
+
+SAMPLE_ESTIMATE = {
+    "team_composition": [
+        {"role": "PM", "count": 1, "monthly_rate": 10000000},
+        {"role": "BE", "count": 2, "monthly_rate": 8000000},
+    ],
+    "duration_months": 4,
+    "total_cost": 104000000,
+    "expected_margin": 0.25,
+    "rationale": "Based on similar projects",
+}
+
+
+class TestResourceEstimationNode:
+    @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.resource_estimation.call_llm")
+    @patch("backend.app.agent.nodes.resource_estimation.settings_repo")
+    @patch("backend.app.agent.nodes.resource_estimation.load_prompt")
+    async def test_happy_path(self, mock_load_prompt, mock_settings_repo, mock_call_llm):
+        mock_settings_repo.list_team_members = AsyncMock(return_value=[])
+        mock_settings_repo.get_setting = AsyncMock(return_value=None)
+        mock_call_llm.return_value = json.dumps(SAMPLE_ESTIMATE)
+
+        mock_tpl = MagicMock()
+        mock_tpl.render.return_value = ("system", "user")
+        mock_load_prompt.return_value = mock_tpl
+
+        project_store = AsyncMock()
+        project_store.search_similar.return_value = []
+
+        node = make_resource_estimation_node(AsyncMock(), project_store)
+        result = await node({"structured_deal": {"project_summary": "test"}})
+
+        assert result["resource_estimate"]["duration_months"] == 4
+        assert len(result["resource_estimate"]["team_composition"]) == 2
+
+    @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.resource_estimation.call_llm")
+    @patch("backend.app.agent.nodes.resource_estimation.settings_repo")
+    @patch("backend.app.agent.nodes.resource_estimation.load_prompt")
+    async def test_error_returns_empty(self, mock_load_prompt, mock_settings_repo, mock_call_llm):
+        mock_settings_repo.list_team_members = AsyncMock(side_effect=RuntimeError("fail"))
+
+        node = make_resource_estimation_node(AsyncMock(), AsyncMock())
+        result = await node({"structured_deal": {}})
+
+        assert result["resource_estimate"] == {}
+        assert "resource_estimation" in result["errors"][0]

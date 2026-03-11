@@ -4,10 +4,11 @@ import json
 import uuid
 from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.agent.service import AnalysisService
 from backend.app.api.exceptions import AnalysisInProgress, AnalysisNotFound, DealNotFound
 from backend.app.api.schemas.analysis import AnalysisResponse, AnalysisTriggerResponse
 from backend.app.db.repositories import analysis_repo, deal_repo
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/api/deals", tags=["analysis"])
 )
 async def trigger_analysis(
     deal_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisTriggerResponse:
     deal = await deal_repo.get_by_id(db, deal_id)
@@ -32,6 +34,9 @@ async def trigger_analysis(
         raise AnalysisInProgress(deal_id)
 
     await deal_repo.update_status(db, deal_id, "analyzing")
+
+    service = AnalysisService()
+    background_tasks.add_task(service.run_analysis, deal_id)
 
     return AnalysisTriggerResponse(
         deal_id=deal_id,
