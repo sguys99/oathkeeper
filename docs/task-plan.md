@@ -203,46 +203,46 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 2 (API 스키마 확정 후 병렬 착수 가능)
 
 ### 7-1. 프로젝트 초기화
-- [ ] Next.js 15 App Router 프로젝트 생성
-- [ ] TailwindCSS v4 설정
-- [ ] shadcn/ui 설치 (Button, Input, Card, Table, Tabs, Dialog, Badge, Slider, Select, Textarea)
-- [ ] `frontend/lib/api.ts` — API 클라이언트 (fetch 래퍼, 타입 정의)
+- [x] Next.js 15 App Router 프로젝트 생성
+- [x] TailwindCSS v4 설정
+- [x] shadcn/ui 설치 (Button, Input, Card, Table, Tabs, Dialog, Badge, Slider, Select, Textarea)
+- [x] `frontend/lib/api.ts` — API 클라이언트 (fetch 래퍼, 타입 정의)
 
 ### 7-2. 공통 컴포넌트
-- [ ] `frontend/app/layout.tsx` — 전체 레이아웃 (헤더, 네비게이션)
-- [ ] `frontend/components/VerdictBadge.tsx` — Go/No-Go/조건부/보류 배지
-- [ ] `frontend/components/ScoreBar.tsx` — 점수 프로그레스 바
-- [ ] `frontend/components/RiskIndicator.tsx` — 리스크 레벨 (HIGH/MEDIUM/LOW 색상)
-- [ ] `frontend/components/RadarChart.tsx` — 7개 평가 기준 레이더 차트
+- [x] `frontend/app/layout.tsx` — 전체 레이아웃 (헤더, 네비게이션)
+- [x] `frontend/components/VerdictBadge.tsx` — Go/No-Go/조건부/보류 배지
+- [x] `frontend/components/ScoreBar.tsx` — 점수 프로그레스 바
+- [x] `frontend/components/RiskIndicator.tsx` — 리스크 레벨 (HIGH/MEDIUM/LOW 색상)
+- [x] `frontend/components/RadarChart.tsx` — 7개 평가 기준 레이더 차트
 
 ### 7-3. 페이지 1 — Deal 분석 요청 (`/`)
-- [ ] Notion Deal 드롭다운 선택
-- [ ] 추가 정보 텍스트 입력 + 파일 업로드 (drag & drop)
-- [ ] 분석 시작 + 진행 상태 표시 (SSE/polling)
-- [ ] 완료 시 상세 결과 페이지 자동 이동
+- [x] Notion Deal 드롭다운 선택
+- [x] 추가 정보 텍스트 입력 + 파일 업로드 (drag & drop)
+- [x] 분석 시작 + 진행 상태 표시 (SSE/polling)
+- [x] 완료 시 상세 결과 페이지 자동 이동
 
 ### 7-4. 페이지 2 — Deal 현황 대시보드 (`/deals`)
-- [ ] Deal 목록 테이블 (고객사, 판단, 점수, 생성일, 담당자)
-- [ ] 검색 + 필터 (판단 결과, 기간) + 페이지네이션
+- [x] Deal 목록 테이블 (고객사, 판단, 점수, 생성일, 담당자)
+- [x] 검색 + 필터 (판단 결과, 기간) + 페이지네이션
 
 ### 7-5. 페이지 3 — 상세 분석 결과 (`/deals/[id]`)
-- [ ] 종합 점수 + 레이더 차트 + Deal 개요
-- [ ] 평가 기준별 점수 (프로그레스 바 + 근거)
-- [ ] 소요 인력/기간/예산 카드
-- [ ] 리스크 분석 목록 (카테고리별, 심각도 색상)
-- [ ] 유사 프로젝트 Top 3
-- [ ] 권고사항 + "Notion에 저장" 버튼
+- [x] 종합 점수 + 레이더 차트 + Deal 개요
+- [x] 평가 기준별 점수 (프로그레스 바 + 근거)
+- [x] 소요 인력/기간/예산 카드
+- [x] 리스크 분석 목록 (카테고리별, 심각도 색상)
+- [x] 유사 프로젝트 Top 3
+- [x] 권고사항 + "Notion에 저장" 버튼
 
 ### 7-6. 페이지 4 — 관리자 설정 (`/admin`)
-- [ ] 탭 1: 회사 정보 (사업 방향, 전략, Deal 기준)
-- [ ] 탭 2: 평가 기준 가중치 (슬라이더, 합계 100% 실시간 검증)
-- [ ] 탭 3: 인력 관리 (팀원 CRUD, 월 단가, 가용 상태)
-- [ ] 탭 4: 비용 설정 (HW/SW/라이선스 항목 CRUD)
-- [ ] 탭 5: 프로젝트 이력 (등록 폼 + 목록)
+- [x] 탭 1: 회사 정보 (사업 방향, 전략, Deal 기준)
+- [x] 탭 2: 평가 기준 가중치 (슬라이더, 합계 100% 실시간 검증)
+- [x] 탭 3: 인력 관리 (팀원 CRUD, 월 단가, 가용 상태)
+- [x] 탭 4: 비용 설정 (HW/SW/라이선스 항목 CRUD)
+- [x] 탭 5: 프로젝트 이력 (등록 폼 + 목록)
 
 ### 7-7. 반응형
-- [ ] 1280px 이상 데스크탑 레이아웃
-- [ ] 768px 이하 모바일 간소화 (메인 입력 + Deal 현황만)
+- [x] 1280px 이상 데스크탑 레이아웃
+- [x] 768px 이하 모바일 간소화 (메인 입력 + Deal 현황만)
 
 ---
 
