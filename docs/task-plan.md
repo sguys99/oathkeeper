@@ -178,22 +178,22 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 2 (API) + Phase 5 (분석 결과)
 
 ### 6-1. Notion 연동
-- [ ] `backend/app/integrations/notion_client.py` — Notion API 클라이언트 래퍼 (DB 조회, 페이지 읽기, 하위 페이지 생성)
-- [ ] `backend/app/integrations/notion_service.py` — `list_deals()`: PRD 6.3 필드 매핑 적용
-- [ ] `backend/app/integrations/notion_service.py` — `get_deal_content(page_id)`: 콘텐츠 파싱
-- [ ] `backend/app/integrations/notion_service.py` — `save_analysis_to_notion()`: 분석 결과 하위 페이지 저장
+- [x] `backend/app/integrations/notion_client.py` — Notion API 클라이언트 래퍼 (DB 조회, 페이지 읽기, 하위 페이지 생성)
+- [x] `backend/app/integrations/notion_service.py` — `list_deals()`: PRD 6.3 필드 매핑 적용
+- [x] `backend/app/integrations/notion_service.py` — `get_deal_content(page_id)`: 콘텐츠 파싱
+- [x] `backend/app/integrations/notion_service.py` — `save_analysis_to_notion()`: 분석 결과 하위 페이지 저장
 
 ### 6-2. Slack 연동
-- [ ] `backend/app/integrations/slack_client.py` — Webhook 알림 (분석 완료 요약, Notion 저장 완료)
+- [x] `backend/app/integrations/slack_client.py` — Webhook 알림 (분석 완료 요약, Notion 저장 완료)
 
 ### 6-3. 파일 업로드
-- [ ] `backend/app/api/routers/deals.py` — `POST /api/deals/{id}/upload` (Word/PDF)
-- [ ] `backend/app/utils/file_parser.py` — Word(python-docx)/PDF(PyPDF2) 텍스트 추출
+- [x] `backend/app/api/routers/deals.py` — `POST /api/deals/{id}/upload` (Word/PDF)
+- [x] `backend/app/utils/file_parser.py` — Word(python-docx)/PDF(PyPDF2) 텍스트 추출
 
 ### 6-4. 테스트
-- [ ] `tests/unit/integrations/test_notion_service.py` — Notion 서비스 mock 테스트
-- [ ] `tests/unit/integrations/test_slack_client.py`
-- [ ] `tests/integration/test_notion.py` — 실제 API 통합 테스트 (`@pytest.mark.integration`)
+- [x] `tests/unit/integrations/test_notion_service.py` — Notion 서비스 mock 테스트
+- [x] `tests/unit/integrations/test_slack_client.py`
+- [x] `tests/integration/test_notion.py` — 실제 API 통합 테스트 (`@pytest.mark.integration`)
 
 ---
 
