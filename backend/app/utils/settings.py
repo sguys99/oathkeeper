@@ -41,7 +41,8 @@ class Settings(BaseSettings):
 
     # Notion
     notion_api_key: str = ""
-    notion_database_id: str = ""
+    notion_deal_db_id: str = ""
+    notion_decision_db_id: str = ""
 
     # Slack
     slack_webhook_url: str = ""

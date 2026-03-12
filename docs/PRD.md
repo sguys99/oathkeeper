@@ -442,31 +442,40 @@ CREATE TABLE team_members (
 }
 ```
 
-### 6.3 Notion 데이터베이스 필드 매핑
+### 6.3 Notion 데이터베이스 구조
 
-OathKeeper가 읽는 Notion DB 필드 (세일즈 담당 입력):
+OathKeeper는 2개의 Notion DB를 사용한다.
 
-| Notion 필드명 | 타입 | OathKeeper 매핑 |
-|---|---|---|
-| 거래처명 | Title | `customer_name` |
-| 프로젝트 개요 | Text | `project_summary` |
-| 예상 계약금액 | Number | `expected_amount` |
-| 납기 | Date | `deadline` |
-| 기술 요구사항 | Text | `tech_requirements` |
-| 특이사항 | Text | `special_notes` |
-| 회의록/메모 | Text (자유) | LLM 전체 파싱 |
-| 담당 세일즈 | Person | `created_by` (참고) |
+**DB 1: deal information** (세일즈 담당 입력 — OathKeeper가 읽기)
 
-OathKeeper가 Notion에 저장하는 분석 결과 (하위 페이지 생성):
+| Notion 속성명 | 타입 | OathKeeper 매핑 | 비고 |
+|---|---|---|---|
+| `deal_info` | Title | 고객사 + 프로젝트명 | 예: "xx 철강 AI 비전 프로젝트" |
+| `customer_name` | Text | `customer_name` | API 필터/검색용 |
+| `expected_amount` | Number | `expected_amount` | 예상 계약 금액 (원) |
+| `deadline` | Date | `deadline` | 요구 납기 |
+| `date` | Date | 입력일 | |
+| `author` | Person | `created_by` (담당 세일즈) | |
+| `status` | Select | 분석 상태 | `미분석` / `분석중` / `완료` |
 
-| 저장 항목 | 설명 |
-|---|---|
-| 분석 일시 | 분석 완료 시각 |
-| 종합 점수 | 숫자 + 판단 결과 (Go/No-Go/조건부/보류) |
-| 항목별 점수 | 7개 기준 점수 표 |
-| 리스크 요약 | 카테고리별 리스크 목록 |
-| 소요 산출 | 인력·기간·예산 요약 |
-| 권고 사항 | 에이전트 최종 권고 문장 |
+> `project_summary`, `tech_requirements`, `special_notes` 등 상세 정보는 **페이지 본문(content)**에 자유 텍스트/회의록으로 작성. LLM이 본문을 파싱하여 구조화 필드를 추출한다.
+
+**DB 2: ai decision** (OathKeeper가 분석 결과 저장)
+
+| Notion 속성명 | 타입 | OathKeeper 매핑 | 비고 |
+|---|---|---|---|
+| `report` | Title | 분석 리포트 제목 | 예: "xx 철강 분석 결과" |
+| `decision` | Select | `verdict` | `Go` / `Conditional Go` / `No-Go` / `Hold` |
+| `deal` | Relation | deal information 연결 | page_id 기반, 1:N 관계 |
+| `total_score` | Number | `total_score` | 종합 점수 (0~100) |
+| `analysis_date` | Date | 분석 완료 시각 | 자동 기록 |
+
+> 상세 분석 내용(항목별 점수, 리스크 목록, 소요 산출, 권고사항, 마크다운 리포트)은 **페이지 본문(content)**에 작성한다.
+
+**두 DB 간 관계:**
+- `ai decision.deal` → `deal information` Relation (양방향)
+- 하나의 Deal에 대해 재분석 시 ai decision에 새 레코드 생성 (1:N)
+- deal information에 Rollup 속성 추가로 최신 판단 결과 자동 표시 가능
 
 ---
 
