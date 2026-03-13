@@ -273,12 +273,12 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **목표:** 프로덕션 배포 환경 구성 및 운영 모니터링 설정
 **의존성:** Phase 8
 
-- [ ] `Dockerfile` (backend) — Python 멀티스테이지 빌드
-- [ ] `frontend/Dockerfile` — Next.js 프로덕션 빌드
-- [ ] `docker-compose.yaml` 프로덕션 설정 (backend, frontend, PostgreSQL, nginx)
-- [ ] 로깅 설정 (structlog, JSON 포맷)
-- [ ] 에러 트래킹 (Sentry 연동)
-- [ ] `README.md` 배포 가이드 완성
+- [x] `Dockerfile` (backend) — Python 멀티스테이지 빌드
+- [x] `frontend/Dockerfile` — Next.js 프로덕션 빌드
+- [x] `docker-compose.prod.yaml` 프로덕션 설정 (backend, frontend, PostgreSQL, nginx)
+- [x] 로깅 설정 (structlog, JSON 포맷)
+- [x] 에러 트래킹 (Sentry 연동)
+- [x] `README.md` 배포 가이드 완성
 
 ---
 

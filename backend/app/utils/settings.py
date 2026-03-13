@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     # Slack
     slack_webhook_url: str = ""
 
+    # Monitoring
+    sentry_dsn: str = ""
+    log_level: str = "INFO"
+
+    # CORS (production)
+    cors_origins: list[str] = []
+
 
 @lru_cache
 def get_settings() -> Settings:

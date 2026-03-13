@@ -44,3 +44,12 @@ test-integration:  ## Run integration tests
 
 test-e2e:  ## Run e2e tests (requires credentials + running services)
 	uv run pytest -m e2e -v --timeout=200
+
+docker-build:  ## Build production Docker images
+	docker compose -f docker-compose.prod.yaml build
+
+docker-prod-up:  ## Start all production services
+	docker compose -f docker-compose.prod.yaml up -d
+
+docker-prod-down:  ## Stop all production services
+	docker compose -f docker-compose.prod.yaml down

@@ -210,6 +210,61 @@ oathkeeper/
 
 ---
 
+## 배포 (Production Deployment)
+
+### 사전 요구사항
+
+- Docker 및 Docker Compose
+
+### 설정
+
+```bash
+cp .env.example .env
+```
+
+`.env` 파일에서 프로덕션 값을 설정합니다:
+
+```env
+DEBUG=False
+ENVIRONMENT=production
+SENTRY_DSN=https://...@sentry.io/...
+LOG_LEVEL=INFO
+CORS_ORIGINS=["https://your-domain.com"]
+```
+
+### 빌드 및 실행
+
+```bash
+# Docker 이미지 빌드
+make docker-build
+
+# 데이터베이스 마이그레이션
+docker compose -f docker-compose.prod.yaml run --rm backend alembic upgrade head
+
+# 시드 데이터 삽입 (최초 1회)
+docker compose -f docker-compose.prod.yaml run --rm backend python -m backend.app.db.seed
+
+# 서비스 시작
+make docker-prod-up
+
+# 서비스 중지
+make docker-prod-down
+```
+
+### 접속
+
+- 웹 UI: `http://localhost` (nginx 포트 80)
+- API Health Check: `http://localhost/api/health`
+
+### 로그 확인
+
+```bash
+docker compose -f docker-compose.prod.yaml logs -f backend
+docker compose -f docker-compose.prod.yaml logs -f frontend
+```
+
+---
+
 ## 라이선스
 
 Private — All rights reserved.

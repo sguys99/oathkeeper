@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: oathkeeper_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oathkeeper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oathkeeper}
+      POSTGRES_DB: ${POSTGRES_DB:-oathkeeper}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oathkeeper} -d ${POSTGRES_DB:-oathkeeper}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oathkeeper_backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-oathkeeper}:${POSTGRES_PASSWORD:-oathkeeper}@postgres:5432/${POSTGRES_DB:-oathkeeper}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    container_name: oathkeeper_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: oathkeeper_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
