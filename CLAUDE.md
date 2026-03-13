@@ -4,85 +4,140 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-OathKeeper is a B2B AI development deal Go/No-Go decision support agent. It automatically analyzes deal information, scores opportunities against a 7-criterion framework, assesses risks, and provides strategic recommendations via Notion integration.
+OathKeeper is a B2B AI development deal Go/No-Go decision support agent. It analyzes deal information, scores opportunities against a 7-criterion framework, assesses risks, and provides strategic recommendations via Notion integration.
 
 **Evaluation criteria:** Technical fit (20%), Profitability (20%), Resource availability (15%), Timeline risk (15%), Customer risk (10%), Requirement clarity (10%), Strategic value (10%)
 
-**Implementation status:** Most code is still stubs/planning phase. Only `backend/app/utils/path.py` and `backend/app/utils/settings.py` have non-trivial content. Use `docs/task-plan.md` (9-phase roadmap) and `docs/PRD.md` as authoritative references.
+**Verdict thresholds:** Go ≥ 70, Conditional Go 40–69, No-Go < 40, Hold (≥3 critical fields missing)
+
+**Deal status flow:** pending → analyzing → completed (or failed)
 
 ## Commands
 
 ```bash
 # Environment setup
-make init          # Initialize production environment (Python 3.12.12)
+make init          # Initialize production environment (Python 3.12.9)
 make init-dev      # Initialize dev environment + pre-commit hooks
 
-# Code quality
+# Development
+make run           # Start FastAPI server (uvicorn via main.py)
 make format        # ruff check . --fix && ruff format .
+make docker-up     # Start PostgreSQL container
+make docker-down   # Stop PostgreSQL container
+make migrate       # Run Alembic migrations (alembic upgrade head)
+make seed          # Insert seed data (scoring criteria, company settings, team members)
 
-# Testing
-uv run pytest                          # Run unit tests (default)
-uv run pytest -m integration           # Run integration tests
-uv run pytest tests/path/test_file.py  # Run a single test file
-uv run pytest -k "test_function_name"  # Run a specific test
+# Testing (default runs unit tests only)
+uv run pytest                          # Unit tests (default via -m unit)
+uv run pytest -m integration           # Integration tests (require API keys)
+uv run pytest -m e2e --timeout=200     # E2E tests (require running services)
+uv run pytest tests/path/test_file.py  # Single test file
+uv run pytest -k "test_function_name"  # Single test function
+
+# Production deployment
+make docker-build     # Build production Docker images
+make docker-prod-up   # Start all production services
+make docker-prod-down # Stop all production services
 ```
 
 ## Architecture
 
-**Stack:** Python 3.12.12, FastAPI, LangChain/LangGraph agents, OpenAI GPT-4o or Claude Sonnet (via LiteLLM router), Pinecone (vector DB), PostgreSQL, Next.js 15 frontend
+**Stack:** Python 3.12.12, FastAPI, LangGraph, LiteLLM (OpenAI GPT-4o / Claude Sonnet routing), Pinecone, PostgreSQL (async via SQLAlchemy + asyncpg), Next.js 15 + shadcn/ui frontend
 
-**Backend layout:**
-- `backend/app/api/` — FastAPI routers and Pydantic schemas
-- `backend/app/agent/` — LangGraph nodes, graph orchestration, LLM client
-- `backend/app/db/` — SQLAlchemy ORM models, CRUD repositories, Pinecone client
-- `backend/app/integrations/` — Notion API client, Slack webhook
-- `backend/app/utils/path.py` — Project path constants (`REPO_ROOT`, `CONFIG_PATH`, etc.)
-- `backend/app/utils/settings.py` — App config (loads from `.env`)
-- `configs/prompts/` — YAML prompt templates (rendered with Jinja2 at runtime)
-- `main.py` — Entry point (uvicorn)
+### Backend (`backend/app/`)
 
-**Key integrations:** Notion API (deal input + result save), Slack Webhook (completion notifications), Pinecone (similar project search)
+- `api/main.py` — FastAPI app factory with CORS, exception handlers, structlog middleware
+- `api/routers/` — 5 routers: `deals`, `analysis`, `settings`, `users`, `notion`
+- `api/schemas/` — Pydantic request/response models
+- `api/exceptions.py` — Custom exceptions (`DealNotFound`, `AnalysisInProgress`, etc.)
+- `agent/graph.py` — LangGraph StateGraph orchestration (see flow below)
+- `agent/nodes/` — 7 node classes (one per analysis step)
+- `agent/state.py` — `AgentState` TypedDict shared across nodes
+- `agent/llm.py` — LiteLLM-backed LLM factory (routes to `openai/gpt-4o` or `anthropic/claude-sonnet`)
+- `agent/embeddings.py` — Embedding client for vector operations
+- `agent/prompt_loader.py` — Jinja2-based YAML prompt renderer
+- `agent/service.py` — High-level service tying graph execution to DB persistence
+- `db/models/` — 6 SQLAlchemy models: `Deal`, `AnalysisResult`, `ScoringCriteria`, `CompanySettings`, `TeamMember`, `User`
+- `db/repositories/` — Async CRUD repos: `deal_repo`, `analysis_repo`, `settings_repo`, `user_repo`
+- `db/vector_store.py` — `CompanyContextStore` and `ProjectHistoryStore` (Pinecone wrappers)
+- `db/seed.py` — Default scoring criteria, company settings, team member data
+- `integrations/notion_client.py` — Low-level Notion API operations
+- `integrations/notion_service.py` — High-level Notion deal sync and result saving
+- `integrations/slack_client.py` — Slack webhook notifications
+- `utils/settings.py` — Pydantic BaseSettings (loads `.env`)
+- `utils/path.py` — Path constants (`REPO_ROOT`, `CONFIG_PATH`, etc.)
+- `utils/logging.py` — structlog + Sentry setup
+- `utils/file_parser.py` — Word/PDF text extraction (20MB limit)
 
-## LangGraph Agent Flow
-
-The core analysis pipeline is a LangGraph graph in `backend/app/agent/graph.py`:
+### LangGraph Agent Flow (`agent/graph.py`)
 
 ```
 deal_structuring_node
         ↓
-[scoring_node, resource_estimation_node, risk_analysis_node, similar_project_node]  ← parallel
-        ↓
-final_verdict_node
+should_continue_or_hold (conditional)
+    ├── Hold (≥3 missing fields) → hold_verdict_node → END
+    └── Continue:
+           ↓
+        [parallel execution]
+        ├── scoring_node
+        ├── resource_estimation_node
+        ├── risk_analysis_node
+        └── similar_project_node
+           ↓
+        final_verdict_node → END
 ```
 
-Each node is a separate class in `backend/app/agent/nodes/`. The shared `AgentState` (TypedDict in `backend/app/agent/state.py`) holds:
-- `deal_input` → `structured_deal` → `scores`, `resource_estimate`, `risks`, `similar_projects` → `final_report`
-- `status` and `errors` for tracking
+`AgentState` flows: `deal_input` → `structured_deal` → `scores`, `resource_estimate`, `risks`, `similar_projects` → `final_report`
 
-Conditional branching: if `structured_deal.missing_fields` exceeds threshold → short-circuit to Hold verdict.
+### Prompt Templates (`configs/prompts/`)
 
-**Verdict thresholds:** Go ≥ 70, Conditional Go 40–69, No-Go < 40, Hold (missing critical fields)
+7 YAML files (`system.yaml`, `deal_structuring.yaml`, `scoring.yaml`, `resource_estimation.yaml`, `risk_analysis.yaml`, `similar_project.yaml`, `final_verdict.yaml`) loaded by `prompt_loader.py` with Jinja2. Runtime variables include `company_context`, `company_rates`, `team_members`, `past_projects`.
 
-## Prompt Template System
+### Frontend (`frontend/src/`)
 
-Prompts live in `configs/prompts/` as YAML files (`deal_structuring.yaml`, `scoring.yaml`, etc.) loaded by `backend/app/agent/prompt_loader.py` using Jinja2. Variables injected at runtime include `company_context`, `company_rates`, `team_members`, and `past_projects` from the DB.
+- **Next.js 15 App Router** with TailwindCSS v4, shadcn/ui, React Query
+- `/` — Deal input page (Notion selector, text input, file upload, SSE progress)
+- `/deals` — Dashboard with search, filters, pagination
+- `/deals/[id]` — Analysis results (radar chart, scores, resources, risks, similar projects, recommendations)
+- `/admin` — 5-tab settings (company info, scoring weights, team management, cost settings, project history)
+- `lib/api/` — Typed fetch-based API client
+- `hooks/` — React Query hooks (`use-deals`, `use-analysis`, `use-settings`, `use-notion`)
 
-## Data Persistence
+### Data Persistence
 
-- **PostgreSQL** for structured data: deals, analysis results (scores/risks/estimates stored as JSONB), users, scoring criteria config, team member rates
-- **Pinecone** vector store: company context embeddings + past project embeddings (Top-3 similarity search for `similar_project_node`)
-- **Alembic** for schema migrations (`migrations/`)
+- **PostgreSQL:** Deals, analysis results (JSONB for scores/risks/estimates), users, scoring criteria, company settings, team members
+- **Pinecone:** Company context embeddings + past project embeddings (Top-3 cosine similarity)
+- **Alembic:** Schema migrations in `backend/app/db/migrations/`
+
+### Key DB Relationships
+
+- `Deal` ← FK → `User` (created_by)
+- `Deal` → 1:1 → `AnalysisResult`
+
+## API Endpoints
+
+- `POST /api/deals/` — Create deal
+- `GET /api/deals/` — List deals (filters: status, created_by, pagination)
+- `GET /api/deals/{id}` — Get deal
+- `POST /api/deals/{id}/upload` — Upload Word/PDF document
+- `POST /api/deals/{id}/analyze` — Trigger analysis (returns 202, runs in background)
+- `GET /api/deals/{id}/analysis` — Get analysis result
+- `GET /api/deals/{id}/status` — SSE stream for analysis progress
+- `GET /api/notion/deals` — List deals from Notion
+- `POST /api/notion/{deal_id}/save-to-notion` — Save analysis to Notion
+- `/api/settings/` — CRUD for scoring criteria, company settings, team members, costs
+- `/api/users/` — User CRUD
 
 ## Configuration
 
-Copy `.env.example` to `.env`. Key settings:
-- `LLM_PROVIDER`: `openai` or `claude`
-- `OPENAI_MODEL`: `gpt-4o`
-- `ANTHROPIC_MODEL`: `claude-sonnet-4-5-20250929`
+Copy `.env.example` to `.env`. Key settings: `LLM_PROVIDER` (`openai`/`claude`), API keys for OpenAI/Anthropic/Pinecone/Notion, `SLACK_WEBHOOK_URL`, `DATABASE_URL`, `SENTRY_DSN`.
 
 ## Code Style
 
 - Line length: 105 chars (ruff)
 - Ruff rules: E, W, F, I, B, C4, UP (B008 ignored for FastAPI)
-- Pre-commit hooks run ruff + trailing comma enforcement automatically
+- isort: first-party = `app`
+- Pre-commit hooks: ruff + trailing comma enforcement
 - Test markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`
+- Unit tests use SQLite in-memory; integration tests require real services
+- README and docs are in Korean

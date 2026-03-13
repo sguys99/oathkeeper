@@ -62,7 +62,23 @@
 [Frontend] [Notion 저장] [Slack 알림]
 ```
 
-**에이전트 구성**
+### LangGraph Agent Flow
+
+LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
+
+```
+deal_structuring_node
+        ↓
+[scoring_node, resource_estimation_node, risk_analysis_node, similar_project_node]  ← 병렬 실행
+        ↓
+final_verdict_node
+```
+
+각 노드는 `backend/app/agent/nodes/` 아래 개별 클래스로 구현되며, `AgentState` (TypedDict)를 통해 상태를 공유합니다.
+
+조건부 분기: `structured_deal.missing_fields`가 임계값을 초과하면 즉시 보류(Hold) 판정으로 단락됩니다.
+
+### 에이전트 구성
 
 | 에이전트 | 역할 |
 |---|---|
@@ -80,14 +96,92 @@
 
 | 구분 | 기술 |
 |---|---|
-| **Backend** | Python 3.12, FastAPI |
-| **AI Agent** | LangChain, LangGraph |
+| **Backend** | Python 3.12, FastAPI, Pydantic v2 |
+| **AI Agent** | LangChain, LangGraph, LiteLLM |
 | **LLM** | OpenAI GPT-4o / Claude Sonnet (LiteLLM 라우터) |
 | **Vector DB** | Pinecone |
-| **RDB** | PostgreSQL |
-| **Frontend** | Next.js, TailwindCSS v4, shadcn/ui |
+| **RDB** | PostgreSQL 16 (SQLAlchemy 2.0 + asyncpg) |
+| **Migrations** | Alembic |
+| **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS v4, shadcn/ui |
+| **차트** | Recharts |
+| **상태 관리** | TanStack React Query 5 |
 | **Input** | Notion API |
 | **알림** | Slack Webhook |
+| **로깅** | Structlog |
+| **에러 추적** | Sentry |
+| **배포** | Docker Compose, Nginx |
+
+---
+
+## 프로젝트 구조
+
+```
+oathkeeper/
+├── backend/
+│   └── app/
+│       ├── api/               # FastAPI 라우터, Pydantic 스키마
+│       │   ├── routers/       # deals, analysis, users, settings, notion
+│       │   └── schemas/       # 요청/응답 스키마
+│       ├── agent/             # LangGraph 에이전트
+│       │   ├── graph.py       # 메인 그래프 정의
+│       │   ├── state.py       # AgentState (공유 상태)
+│       │   ├── llm.py         # LLM 클라이언트 (LiteLLM)
+│       │   ├── prompt_loader.py # YAML 프롬프트 로더 (Jinja2)
+│       │   └── nodes/         # 개별 에이전트 노드
+│       ├── db/                # 데이터베이스 레이어
+│       │   ├── models/        # SQLAlchemy ORM 모델
+│       │   ├── repositories/  # CRUD 리포지토리
+│       │   ├── migrations/    # Alembic 마이그레이션
+│       │   ├── pinecone_client.py
+│       │   └── seed.py        # 시드 데이터
+│       ├── integrations/      # 외부 서비스 연동
+│       │   ├── notion_client.py
+│       │   ├── notion_service.py
+│       │   └── slack_client.py
+│       └── utils/
+│           ├── settings.py    # 앱 설정 (환경변수 로드)
+│           ├── path.py        # 프로젝트 경로 상수
+│           ├── logging.py     # Structlog 설정
+│           └── file_parser.py # 문서 파싱 (Word/PDF)
+├── configs/
+│   └── prompts/               # 에이전트 프롬프트 YAML 템플릿
+├── frontend/
+│   └── src/
+│       ├── app/               # Next.js App Router 페이지
+│       │   ├── _components/   # 홈 페이지 (Deal 분석 요청)
+│       │   ├── deals/         # Deal 현황 대시보드
+│       │   │   └── [id]/      # Deal 상세 분석 결과
+│       │   └── admin/         # 관리자 설정 페이지
+│       ├── components/
+│       │   ├── ui/            # shadcn/ui 컴포넌트
+│       │   ├── common/        # 공통 컴포넌트 (차트, 배지 등)
+│       │   └── layout/        # 레이아웃 (헤더)
+│       ├── hooks/             # 커스텀 React Hooks
+│       ├── lib/api/           # API 클라이언트
+│       └── providers/         # React Context (Query, User)
+├── tests/
+│   ├── unit/                  # 유닛 테스트
+│   ├── integration/           # 인테그레이션 테스트
+│   ├── e2e/                   # E2E 테스트
+│   └── fixtures/              # 테스트 픽스처
+├── docs/                      # PRD, 태스크 플랜
+├── nginx/                     # Nginx 리버스 프록시 설정
+├── main.py                    # 엔트리포인트 (uvicorn)
+├── Makefile
+├── Dockerfile                 # Backend Docker
+├── docker-compose.yaml        # 개발 환경 (PostgreSQL)
+├── docker-compose.prod.yaml   # 프로덕션 환경 (전체 서비스)
+└── pyproject.toml
+```
+
+### 페이지 라우팅
+
+| 경로 | 설명 |
+|---|---|
+| `/` | Deal 분석 요청 페이지 |
+| `/deals` | Deal 현황 대시보드 |
+| `/deals/:id` | Deal 상세 분석 결과 |
+| `/admin` | 관리자 설정 페이지 |
 
 ---
 
@@ -97,6 +191,8 @@
 
 - Python 3.12.12+
 - [uv](https://docs.astral.sh/uv/) 패키지 매니저
+- Node.js 18+ (프론트엔드)
+- Docker & Docker Compose (데이터베이스)
 
 ### 설치
 
@@ -113,6 +209,9 @@ make init-dev
 
 # 가상환경 활성화
 source .venv/bin/activate
+
+# 프론트엔드 설치
+cd frontend && npm install && cd ..
 ```
 
 ### 환경 설정
@@ -148,65 +247,67 @@ PINECONE_ENVIRONMENT=...
 ### 실행
 
 ```bash
-uv run python main.py
+# 데이터베이스 시작
+make docker-up
+
+# DB 마이그레이션
+make migrate
+
+# 시드 데이터 삽입 (최초 1회)
+make seed
+
+# 백엔드 서버 실행
+make run
+
+# 프론트엔드 개발 서버 (별도 터미널)
+cd frontend && npm run dev
 ```
 
 ---
 
 ## 개발
 
-### 코드 포맷팅
+### 주요 Make 명령어
 
 ```bash
-make format
+make help              # 사용 가능한 명령어 목록
+make init-dev          # 개발 환경 초기화
+make format            # 코드 포맷팅 (ruff check --fix && ruff format)
+make run               # FastAPI 개발 서버 실행
+make docker-up         # PostgreSQL 시작
+make docker-down       # PostgreSQL 중지
+make migrate           # Alembic 마이그레이션 실행
+make seed              # 시드 데이터 삽입
 ```
 
 ### 테스트
 
 ```bash
 # 유닛 테스트 (기본)
-uv run pytest
+make test
 
 # 인테그레이션 테스트
-uv run pytest -m integration
+make test-integration
+
+# E2E 테스트 (서비스 실행 필요)
+make test-e2e
 
 # 특정 파일 실행
 uv run pytest tests/path/test_file.py
 
 # 특정 테스트 함수 실행
 uv run pytest -k "test_function_name"
+
+# 프론트엔드 E2E 테스트 (Playwright)
+cd frontend && npm run test:e2e
 ```
 
-### 프로젝트 구조
+### 코드 스타일
 
-```
-oathkeeper/
-├── backend/
-│   └── app/
-│       ├── api/          # FastAPI 라우터 및 Pydantic 스키마
-│       ├── db/           # 데이터베이스 레이어
-│       └── utils/
-│           ├── path.py   # 프로젝트 경로 상수
-│           └── settings.py  # 앱 설정 (환경변수 로드)
-├── configs/
-│   └── prompts/          # 에이전트 프롬프트 YAML 템플릿
-├── docs/
-│   └── PRD.md            # 제품 요구사항 문서
-├── frontend/             # Next.js 프론트엔드
-├── tests/                # 테스트 코드
-├── main.py               # 엔트리포인트
-├── pyproject.toml
-└── .env.example
-```
-
-### 페이지 라우팅
-
-| 경로 | 설명 |
-|---|---|
-| `/` | Deal 분석 요청 페이지 |
-| `/deals` | Deal 현황 대시보드 |
-| `/deals/:id` | Deal 상세 분석 결과 |
-| `/admin` | 관리자 설정 페이지 |
+- Line length: 105 chars
+- Ruff rules: E, W, F, I, B, C4, UP
+- Pre-commit hooks: ruff 포맷팅 + trailing comma 자동 적용
+- 테스트 마커: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`
 
 ---
 
@@ -250,6 +351,15 @@ make docker-prod-up
 # 서비스 중지
 make docker-prod-down
 ```
+
+### 프로덕션 구성
+
+| 서비스 | 설명 |
+|---|---|
+| **PostgreSQL** | 데이터베이스 |
+| **Backend** | FastAPI 애플리케이션 |
+| **Frontend** | Next.js 정적 빌드 |
+| **Nginx** | 리버스 프록시 (포트 80) |
 
 ### 접속
 
