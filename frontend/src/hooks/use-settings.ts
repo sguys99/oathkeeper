@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  batchUpsertCompanySettings,
   createTeamMember,
   deleteTeamMember,
   getCriteria,
@@ -12,6 +13,7 @@ import {
   upsertCompanySetting,
 } from "@/lib/api/settings";
 import type {
+  CompanySettingBatchUpsert,
   CompanySettingUpsert,
   TeamMemberCreate,
   TeamMemberUpdate,
@@ -51,6 +53,17 @@ export function useUpsertCompanySetting() {
       queryClient.invalidateQueries({
         queryKey: ["company-setting", variables.key],
       });
+    },
+  });
+}
+
+export function useBatchUpsertCompanySettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CompanySettingBatchUpsert) =>
+      batchUpsertCompanySettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-setting"] });
     },
   });
 }

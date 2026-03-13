@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCompanySetting, useUpsertCompanySetting } from "@/hooks/use-settings";
+import {
+  useBatchUpsertCompanySettings,
+  useCompanySetting,
+} from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -16,66 +19,83 @@ const COMPANY_KEYS = [
   { key: "deal_criteria", label: "Deal 선정 기준", rows: 3 },
 ];
 
-function SettingField({
-  settingKey,
-  label,
-  rows,
-}: {
-  settingKey: string;
-  label: string;
-  rows: number;
-}) {
-  const { data, isLoading } = useCompanySetting(settingKey);
-  const upsert = useUpsertCompanySetting();
-  const [value, setValue] = useState<string | null>(null);
+function useCompanySettings() {
+  const queries = COMPANY_KEYS.map(({ key }) => ({
+    key,
+    ...useCompanySetting(key),
+  }));
+  const isLoading = queries.some((q) => q.isLoading);
+  const serverValues: Record<string, string> = {};
+  for (const q of queries) {
+    serverValues[q.key] = q.data?.value ?? "";
+  }
+  return { serverValues, isLoading };
+}
 
-  const displayValue = value ?? data?.value ?? "";
+export function CompanyInfoTab() {
+  const { serverValues, isLoading } = useCompanySettings();
+  const batchUpsert = useBatchUpsertCompanySettings();
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !initialized) {
+      setFormValues(serverValues);
+      setInitialized(true);
+    }
+  }, [isLoading, initialized, serverValues]);
+
+  const displayValues = initialized ? formValues : serverValues;
+
+  const isDirty =
+    initialized &&
+    COMPANY_KEYS.some(
+      ({ key }) => (formValues[key] ?? "") !== (serverValues[key] ?? ""),
+    );
+
+  function handleChange(key: string, value: string) {
+    setFormValues((prev) => ({ ...prev, [key]: value }));
+  }
 
   async function handleSave() {
     try {
-      await upsert.mutateAsync({
-        key: settingKey,
-        value: displayValue,
+      const items = COMPANY_KEYS.map(({ key, label }) => ({
+        key,
+        value: displayValues[key] ?? "",
         description: label,
-      });
-      toast.success(`${label} 저장 완료`);
+      }));
+      await batchUpsert.mutateAsync({ items });
+      toast.success("회사 정보가 저장되었습니다");
     } catch {
       toast.error("저장에 실패했습니다");
     }
   }
 
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Textarea
-        value={displayValue}
-        onChange={(e) => setValue(e.target.value)}
-        rows={rows}
-        disabled={isLoading}
-        placeholder={`${label}을 입력하세요...`}
-      />
+    <div className="space-y-6">
+      {COMPANY_KEYS.map(({ key, label, rows }) => (
+        <div key={key} className="space-y-2">
+          <Label>{label}</Label>
+          <Textarea
+            value={displayValues[key] ?? ""}
+            onChange={(e) => handleChange(key, e.target.value)}
+            rows={rows}
+            disabled={isLoading}
+            placeholder={`${label}을 입력하세요...`}
+          />
+        </div>
+      ))}
       <div className="flex justify-end">
         <Button
-          size="sm"
           onClick={handleSave}
-          disabled={upsert.isPending || isLoading}
+          disabled={batchUpsert.isPending || isLoading || !isDirty}
         >
-          {upsert.isPending ? (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          {batchUpsert.isPending ? (
+            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
           ) : null}
           저장
         </Button>
       </div>
-    </div>
-  );
-}
-
-export function CompanyInfoTab() {
-  return (
-    <div className="space-y-6">
-      {COMPANY_KEYS.map(({ key, label, rows }) => (
-        <SettingField key={key} settingKey={key} label={label} rows={rows} />
-      ))}
     </div>
   );
 }

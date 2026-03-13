@@ -65,6 +65,23 @@ async def upsert_setting(
     return setting
 
 
+async def batch_upsert_settings(
+    session: AsyncSession,
+    items: list[dict],
+) -> list[CompanySetting]:
+    """Upsert multiple company settings in a single transaction."""
+    results = []
+    for item in items:
+        setting = await upsert_setting(
+            session,
+            key=item["key"],
+            value=item["value"],
+            description=item.get("description"),
+        )
+        results.append(setting)
+    return results
+
+
 # ---------------------------------------------------------------------------
 # TeamMember
 # ---------------------------------------------------------------------------

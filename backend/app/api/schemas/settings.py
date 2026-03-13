@@ -52,6 +52,10 @@ class CompanySettingUpsert(BaseModel):
     description: str | None = None
 
 
+class CompanySettingBatchUpsert(BaseModel):
+    items: list[CompanySettingUpsert]
+
+
 # --- Team Members ---
 
 

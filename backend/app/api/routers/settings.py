@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.exceptions import OathKeeperError
 from backend.app.api.schemas.settings import (
+    CompanySettingBatchUpsert,
     CompanySettingResponse,
     CompanySettingUpsert,
     ScoringCriteriaResponse,
@@ -49,6 +50,18 @@ async def update_weights(
 # ---------------------------------------------------------------------------
 # Company Settings
 # ---------------------------------------------------------------------------
+
+
+@router.put("/company/batch", response_model=list[CompanySettingResponse])
+async def batch_upsert_company_settings(
+    body: CompanySettingBatchUpsert,
+    db: AsyncSession = Depends(get_db),
+) -> list[CompanySettingResponse]:
+    items = [item.model_dump() for item in body.items]
+    settings = await settings_repo.batch_upsert_settings(db, items)
+    for s in settings:
+        await db.refresh(s)
+    return [CompanySettingResponse.model_validate(s) for s in settings]
 
 
 @router.get("/company/{key}", response_model=CompanySettingResponse)
