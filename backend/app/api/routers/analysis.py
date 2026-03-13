@@ -34,6 +34,8 @@ async def trigger_analysis(
         raise AnalysisInProgress(deal_id)
 
     await deal_repo.update_status(db, deal_id, "analyzing")
+    deal.current_step = "Deal 구조화 준비 중..."
+    await db.commit()
 
     service = AnalysisService()
     background_tasks.add_task(service.run_analysis, deal_id)

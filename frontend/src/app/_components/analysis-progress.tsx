@@ -48,7 +48,9 @@ export function AnalysisProgress({
           <XCircle className="h-12 w-12 text-red-500" />
         )}
         <p className="text-lg font-medium">
-          {STATUS_MESSAGES[status] ?? "처리 중..."}
+          {isActive
+            ? (deal?.current_step ?? STATUS_MESSAGES[status] ?? "처리 중...")
+            : (STATUS_MESSAGES[status] ?? "처리 중...")}
         </p>
         {isActive && (
           <p className="text-sm text-muted-foreground">
