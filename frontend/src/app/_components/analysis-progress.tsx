@@ -22,9 +22,9 @@ export function AnalysisProgress({
   onRetry: () => void;
 }) {
   const router = useRouter();
-  const isAnalyzing = true;
-  const { data: deal } = useDealPolling(dealId, isAnalyzing);
+  const { data: deal } = useDealPolling(dealId, true);
   const status = deal?.status ?? "analyzing";
+  const isActive = status === "pending" || status === "analyzing";
 
   useEffect(() => {
     if (status === "completed") {
@@ -38,7 +38,7 @@ export function AnalysisProgress({
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 py-12">
-        {status === "analyzing" && (
+        {isActive && (
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         )}
         {status === "completed" && (
@@ -50,7 +50,7 @@ export function AnalysisProgress({
         <p className="text-lg font-medium">
           {STATUS_MESSAGES[status] ?? "처리 중..."}
         </p>
-        {status === "analyzing" && (
+        {isActive && (
           <p className="text-sm text-muted-foreground">
             평가 기준 분석, 리스크 분석, 유사 프로젝트 검색이 진행됩니다
           </p>
