@@ -38,3 +38,9 @@ seed:  ## Insert seed data into the database
 
 test:  ## Run unit tests
 	uv run pytest
+
+test-integration:  ## Run integration tests
+	uv run pytest -m integration -v
+
+test-e2e:  ## Run e2e tests (requires credentials + running services)
+	uv run pytest -m e2e -v --timeout=200

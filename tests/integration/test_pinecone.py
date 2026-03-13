@@ -4,6 +4,7 @@ Requires PINECONE_API_KEY in environment and existing indexes.
 Run with: uv run pytest -m integration tests/integration/test_pinecone.py -v
 """
 
+import asyncio
 import uuid
 
 import pytest
@@ -96,6 +97,9 @@ class TestProjectHistoryIntegration:
                 {"project_name": "Factory MES", "industry": "제조", "result": "success"},
             )
             ids.append(unrelated_id)
+
+            # Wait for Pinecone to index the vectors (eventual consistency)
+            await asyncio.sleep(2)
 
             # Search for finance-related deal
             results = await project_store.search_similar("금융권 AI 고객 상담 자동화", top_k=5)

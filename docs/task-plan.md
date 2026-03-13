@@ -252,19 +252,19 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 **의존성:** Phase 5, 6, 7 완료
 
 ### 8-1. 백엔드 통합 테스트
-- [ ] `tests/integration/test_deal_flow.py` — Deal 생성 → 분석 → 결과 조회 전체 플로우
-- [ ] `tests/integration/test_notion_flow.py` — Notion 조회 → 분석 → Notion 저장 → Slack 알림
-- [ ] `tests/integration/test_settings_flow.py` — 설정 변경 → 분석 반영 검증
+- [x] `tests/integration/test_deal_flow.py` — Deal 생성 → 분석 → 결과 조회 전체 플로우
+- [x] `tests/integration/test_notion_flow.py` — Notion 조회 → 분석 → Notion 저장 → Slack 알림
+- [x] `tests/integration/test_settings_flow.py` — 설정 변경 → 분석 반영 검증
 
 ### 8-2. E2E 테스트
-- [ ] 실제 Deal 5건 분석 완료 시나리오 (`@pytest.mark.e2e`)
-- [ ] 응답 시간 3분 이내 검증
-- [ ] 분석 실패율 5% 이하 검증
+- [x] 실제 Deal 5건 분석 완료 시나리오 (`@pytest.mark.e2e`)
+- [x] 응답 시간 3분 이내 검증
+- [x] 분석 실패율 5% 이하 검증
 
 ### 8-3. 프론트엔드 E2E
-- [ ] Playwright 설정
-- [ ] 메인 입력 → 분석 → 결과 확인 시나리오
-- [ ] 관리자 설정 변경 시나리오
+- [x] Playwright 설정
+- [x] 메인 입력 → 분석 → 결과 확인 시나리오
+- [x] 관리자 설정 변경 시나리오
 
 ---
 

@@ -84,12 +84,14 @@ markers = [
     "unit: fast, isolated tests with no external dependencies",
     "integration: tests that require external services or API keys",
     "e2e: end-to-end tests requiring a running server and database",
+    "slow: long-running tests (e.g. failure-rate measurement)",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
     "pytest-asyncio>=1.3.0",
+    "pytest-timeout>=2.2.0",
     "aiosqlite>=0.20.0",
     "ruff>=0.8.0",
     "pre-commit>=3.3.3",
