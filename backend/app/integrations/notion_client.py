@@ -55,8 +55,19 @@ async def query_database(
     return results
 
 
-async def get_page_content(page_id: str) -> list[dict[str, Any]]:
-    """Retrieve all block children (page body) for a given page."""
+async def get_page_properties(page_id: str) -> dict[str, Any]:
+    """Retrieve a Notion page object's properties."""
+    client = get_notion_client()
+    page = await client.pages.retrieve(page_id=_normalize_id(page_id))
+    return page.get("properties", {})
+
+
+async def get_page_content(
+    page_id: str,
+    max_depth: int = 5,
+    _current_depth: int = 0,
+) -> list[dict[str, Any]]:
+    """Retrieve all block children (page body) for a given page, recursively."""
     client = get_notion_client()
     normalized_page_id = _normalize_id(page_id)
     blocks: list[dict[str, Any]] = []
@@ -71,6 +82,11 @@ async def get_page_content(page_id: str) -> list[dict[str, Any]]:
         if not response.get("has_more"):
             break
         cursor = response.get("next_cursor")
+
+    if _current_depth < max_depth:
+        for block in blocks:
+            if block.get("has_children"):
+                block["children"] = await get_page_content(block["id"], max_depth, _current_depth + 1)
 
     return blocks
 

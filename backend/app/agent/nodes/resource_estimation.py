@@ -4,8 +4,6 @@ import json
 import logging
 import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend.app.agent.base import (
     format_team_members,
     logged_call_llm,
@@ -15,13 +13,13 @@ from backend.app.agent.base import (
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 from backend.app.db.repositories import settings_repo
+from backend.app.db.session import AsyncSessionLocal
 from backend.app.db.vector_store import ProjectHistoryStore
 
 logger = logging.getLogger(__name__)
 
 
 def make_resource_estimation_node(
-    db: AsyncSession,
     project_store: ProjectHistoryStore,
 ):
     """Factory — returns an async resource-estimation node."""
@@ -30,12 +28,13 @@ def make_resource_estimation_node(
         try:
             structured_deal = state.get("structured_deal", {})
 
-            # Fetch team members and company rates from DB
-            members = await settings_repo.list_team_members(db)
-            team_members = format_team_members(members)
+            # Fetch team members and company rates from DB (own session for concurrency safety)
+            async with AsyncSessionLocal() as db:
+                members = await settings_repo.list_team_members(db)
+                team_members = format_team_members(members)
 
-            rates_setting = await settings_repo.get_setting(db, "company_rates")
-            company_rates = rates_setting.value if rates_setting else ""
+                rates_setting = await settings_repo.get_setting(db, "company_rates")
+                company_rates = rates_setting.value if rates_setting else ""
 
             # Fetch similar past projects for reference
             deal_text = structured_deal.get("project_summary", "")

@@ -54,8 +54,10 @@ export function DealTable() {
         toast.success("Deal이 삭제되었습니다");
         setDeletingDeal(null);
       },
-      onError: () => {
-        toast.error("삭제에 실패했습니다");
+      onError: (error) => {
+        const message =
+          error instanceof Error ? error.message : "삭제에 실패했습니다";
+        toast.error(message);
       },
     });
   };

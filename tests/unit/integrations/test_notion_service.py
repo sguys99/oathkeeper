@@ -136,20 +136,31 @@ class TestListDeals:
 class TestGetDealContent:
     @patch("backend.app.integrations.notion_service.notion_client")
     @pytest.mark.asyncio
-    async def test_extracts_text(self, mock_nc):
+    async def test_includes_properties_and_body(self, mock_nc):
+        props = _make_notion_page(
+            customer_name="성대 보일러",
+            expected_amount=50_000_000,
+            deadline="2026-05-14",
+        )["properties"]
+        mock_nc.get_page_properties = AsyncMock(return_value=props)
         mock_nc.get_page_content = AsyncMock(
             return_value=_make_notion_blocks(["프로젝트 개요입니다.", "기술 요구사항: AI 비전"]),
         )
 
         result = await notion_service.get_deal_content("page-abc")
 
+        assert "[딜 기본 정보]" in result
+        assert "고객명: 성대 보일러" in result
+        assert "예상 금액: 50,000,000" in result
+        assert "납기: 2026-05-14" in result
+        assert "[상세 내용]" in result
         assert "프로젝트 개요입니다." in result
         assert "기술 요구사항: AI 비전" in result
-        mock_nc.get_page_content.assert_awaited_once_with("page-abc")
 
     @patch("backend.app.integrations.notion_service.notion_client")
     @pytest.mark.asyncio
-    async def test_empty_blocks_returns_empty_string(self, mock_nc):
+    async def test_empty_blocks_and_properties(self, mock_nc):
+        mock_nc.get_page_properties = AsyncMock(return_value={})
         mock_nc.get_page_content = AsyncMock(return_value=[])
 
         result = await notion_service.get_deal_content("page-xyz")
@@ -236,6 +247,120 @@ class TestSaveAnalysisToNotion:
             await notion_service.save_analysis_to_notion(analysis)
             props = mock_nc.create_page.call_args.kwargs["properties"]
             assert props["decision"]["select"]["name"] == expected
+
+
+# ---------------------------------------------------------------------------
+# _properties_to_text
+# ---------------------------------------------------------------------------
+
+
+class TestPropertiesToText:
+    def test_all_fields(self):
+        props = _make_notion_page(
+            deal_info="AI 비전 프로젝트",
+            customer_name="성대 보일러",
+            expected_amount=50_000_000,
+            deadline="2026-05-14",
+            date="2026-03-15",
+            author_name="유광명",
+        )["properties"]
+
+        result = notion_service._properties_to_text(props)
+
+        assert "딜 정보: AI 비전 프로젝트" in result
+        assert "고객명: 성대 보일러" in result
+        assert "예상 금액: 50,000,000" in result
+        assert "납기: 2026-05-14" in result
+        assert "등록일: 2026-03-15" in result
+        assert "작성자: 유광명" in result
+
+    def test_empty_properties(self):
+        result = notion_service._properties_to_text({})
+        assert result == ""
+
+    def test_partial_properties(self):
+        props = _make_notion_page(
+            customer_name="테스트",
+            expected_amount=None,
+            deadline=None,
+            author_name=None,
+        )["properties"]
+
+        result = notion_service._properties_to_text(props)
+
+        assert "고객명: 테스트" in result
+        assert "예상 금액" not in result
+        assert "납기" not in result
+        assert "작성자" not in result
+
+
+# ---------------------------------------------------------------------------
+# _blocks_to_text (nested)
+# ---------------------------------------------------------------------------
+
+
+class TestBlocksToTextNested:
+    def test_flat_blocks(self):
+        blocks = _make_notion_blocks(["첫 번째", "두 번째"])
+        result = notion_service._blocks_to_text(blocks)
+        assert result == "첫 번째\n두 번째"
+
+    def test_nested_children(self):
+        blocks = [
+            {
+                "type": "paragraph",
+                "paragraph": {"rich_text": [{"plain_text": "현장 확인 결과"}]},
+                "has_children": True,
+                "children": [
+                    {
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"plain_text": "바코드 인식용 로봇 비전 카메라 사용중"}],
+                        },
+                    },
+                    {
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"plain_text": "현재 근접 촬영 이미지만 보유"}],
+                        },
+                    },
+                ],
+            },
+        ]
+
+        result = notion_service._blocks_to_text(blocks)
+
+        assert "현장 확인 결과" in result
+        assert "  바코드 인식용 로봇 비전 카메라 사용중" in result
+        assert "  현재 근접 촬영 이미지만 보유" in result
+
+    def test_deeply_nested(self):
+        blocks = [
+            {
+                "type": "paragraph",
+                "paragraph": {"rich_text": [{"plain_text": "레벨0"}]},
+                "has_children": True,
+                "children": [
+                    {
+                        "type": "paragraph",
+                        "paragraph": {"rich_text": [{"plain_text": "레벨1"}]},
+                        "has_children": True,
+                        "children": [
+                            {
+                                "type": "paragraph",
+                                "paragraph": {"rich_text": [{"plain_text": "레벨2"}]},
+                            },
+                        ],
+                    },
+                ],
+            },
+        ]
+
+        result = notion_service._blocks_to_text(blocks)
+
+        assert "레벨0" in result
+        assert "  레벨1" in result
+        assert "    레벨2" in result
 
 
 # ---------------------------------------------------------------------------

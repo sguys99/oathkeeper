@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -38,9 +39,23 @@ async def list_deals() -> list[NotionDeal]:
 
 
 async def get_deal_content(page_id: str) -> str:
-    """Extract plain text from a Notion deal page's body blocks."""
-    blocks = await notion_client.get_page_content(page_id)
-    return _blocks_to_text(blocks)
+    """Extract plain text from a Notion deal page's properties and body blocks."""
+    properties, blocks = await asyncio.gather(
+        notion_client.get_page_properties(page_id),
+        notion_client.get_page_content(page_id),
+    )
+
+    sections: list[str] = []
+
+    prop_text = _properties_to_text(properties)
+    if prop_text:
+        sections.append(f"[딜 기본 정보]\n{prop_text}")
+
+    body_text = _blocks_to_text(blocks)
+    if body_text:
+        sections.append(f"[상세 내용]\n{body_text}")
+
+    return "\n\n".join(sections)
 
 
 async def archive_decision_pages(deal_page_id: str) -> bool:
@@ -180,16 +195,53 @@ def _parse_deal_page(page: dict[str, Any]) -> NotionDeal:
     )
 
 
-def _blocks_to_text(blocks: list[dict[str, Any]]) -> str:
-    """Convert Notion blocks to plain text."""
+def _properties_to_text(props: dict[str, Any]) -> str:
+    """Format Notion page properties as labeled text for LLM consumption."""
+    parts: list[str] = []
+
+    title = _extract_title(props.get("deal_info", {}))
+    if title:
+        parts.append(f"딜 정보: {title}")
+
+    customer = _extract_rich_text(props.get("customer_name", {}))
+    if customer:
+        parts.append(f"고객명: {customer}")
+
+    amount = _extract_number(props.get("expected_amount", {}))
+    if amount is not None:
+        parts.append(f"예상 금액: {amount:,}")
+
+    deadline = _extract_date(props.get("deadline", {}))
+    if deadline:
+        parts.append(f"납기: {deadline}")
+
+    date = _extract_date(props.get("date", {}))
+    if date:
+        parts.append(f"등록일: {date}")
+
+    author = _extract_person(props.get("author", {}))
+    if author:
+        parts.append(f"작성자: {author}")
+
+    return "\n".join(parts)
+
+
+def _blocks_to_text(blocks: list[dict[str, Any]], depth: int = 0) -> str:
+    """Convert Notion blocks to plain text, recursively processing children."""
     lines: list[str] = []
+    indent = "  " * depth
     for block in blocks:
         block_type = block.get("type", "")
         data = block.get(block_type, {})
         rich_texts = data.get("rich_text") or []
         text = "".join(rt.get("plain_text", "") for rt in rich_texts)
         if text.strip():
-            lines.append(text)
+            lines.append(f"{indent}{text}")
+        children = block.get("children", [])
+        if children:
+            child_text = _blocks_to_text(children, depth + 1)
+            if child_text:
+                lines.append(child_text)
     return "\n".join(lines)
 
 

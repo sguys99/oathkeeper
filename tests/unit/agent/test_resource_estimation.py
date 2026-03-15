@@ -24,6 +24,7 @@ SAMPLE_ESTIMATE = {
 
 class TestResourceEstimationNode:
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.resource_estimation.AsyncSessionLocal")
     @patch(
         "backend.app.agent.nodes.resource_estimation.update_log_parsed_output",
         new_callable=AsyncMock,
@@ -37,7 +38,12 @@ class TestResourceEstimationNode:
         mock_settings_repo,
         mock_logged_call,
         mock_update_log,
+        mock_session_local,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_team_members = AsyncMock(return_value=[])
         mock_settings_repo.get_setting = AsyncMock(return_value=None)
         mock_logged_call.return_value = (json.dumps(SAMPLE_ESTIMATE), uuid.uuid4())
@@ -49,7 +55,7 @@ class TestResourceEstimationNode:
         project_store = AsyncMock()
         project_store.search_similar.return_value = []
 
-        node = make_resource_estimation_node(AsyncMock(), project_store)
+        node = make_resource_estimation_node(project_store)
         result = await node(
             {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
         )
@@ -58,12 +64,17 @@ class TestResourceEstimationNode:
         assert len(result["resource_estimate"]["team_composition"]) == 2
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.resource_estimation.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.resource_estimation.settings_repo")
     @patch("backend.app.agent.nodes.resource_estimation.load_prompt")
-    async def test_error_returns_empty(self, mock_load_prompt, mock_settings_repo):
+    async def test_error_returns_empty(self, mock_load_prompt, mock_settings_repo, mock_session_local):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_team_members = AsyncMock(side_effect=RuntimeError("fail"))
 
-        node = make_resource_estimation_node(AsyncMock(), AsyncMock())
+        node = make_resource_estimation_node(AsyncMock())
         result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["resource_estimate"] == {}

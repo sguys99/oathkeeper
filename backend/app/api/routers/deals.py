@@ -8,7 +8,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.exceptions import (
-    AnalysisInProgress,
     DealNotFound,
     DuplicateNotionDeal,
     OathKeeperError,
@@ -156,9 +155,6 @@ async def delete_deal(
     deal = await deal_repo.get_by_id(db, deal_id)
     if deal is None:
         raise DealNotFound(deal_id)
-    if deal.status == "analyzing":
-        raise AnalysisInProgress(deal_id)
-
     # Best-effort: archive ai decision pages linked to this deal
     if deal.notion_page_id:
         await notion_service.archive_decision_pages(deal.notion_page_id)

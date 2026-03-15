@@ -39,7 +39,7 @@ class AnalysisService:
 
                 # Build and run the graph
                 logger.info("Building graph for deal %s", deal_id)
-                graph = build_graph(db)
+                graph = build_graph()
                 logger.info("Graph built, starting execution for deal %s", deal_id)
 
                 result: dict = {}

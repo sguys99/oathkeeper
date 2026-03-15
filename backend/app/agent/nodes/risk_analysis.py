@@ -3,8 +3,6 @@
 import logging
 import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend.app.agent.base import (
     build_company_context,
     fetch_company_settings,
@@ -17,20 +15,23 @@ from backend.app.agent.base import (
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 from backend.app.db.repositories import settings_repo
+from backend.app.db.session import AsyncSessionLocal
 from backend.app.db.vector_store import CompanyContextStore
 
 logger = logging.getLogger(__name__)
 
 
-def make_risk_analysis_node(db: AsyncSession, context_store: CompanyContextStore):
+def make_risk_analysis_node(context_store: CompanyContextStore):
     """Factory — returns an async risk-analysis node."""
 
     async def risk_analysis_node(state: AgentState) -> dict:
         try:
             structured_deal = state.get("structured_deal", {})
 
-            # Fetch scoring criteria and company settings from DB
-            criteria = await settings_repo.list_active_criteria(db)
+            # Fetch scoring criteria and company settings from DB (own session for concurrency safety)
+            async with AsyncSessionLocal() as db:
+                criteria = await settings_repo.list_active_criteria(db)
+                company_settings = await fetch_company_settings(db)
             scoring_criteria = format_scoring_criteria(criteria)
 
             # Fetch company context
@@ -38,7 +39,6 @@ def make_risk_analysis_node(db: AsyncSession, context_store: CompanyContextStore
             context_results = await context_store.query(query_text, top_k=5)
             vector_context = format_company_context(context_results)
 
-            company_settings = await fetch_company_settings(db)
             company_context = build_company_context(vector_context, company_settings)
 
             # Render system base prompt

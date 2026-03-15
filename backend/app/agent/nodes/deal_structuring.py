@@ -3,8 +3,6 @@
 import logging
 import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from backend.app.agent.base import (
     build_company_context,
     fetch_company_settings,
@@ -17,13 +15,13 @@ from backend.app.agent.base import (
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 from backend.app.db.repositories import settings_repo
+from backend.app.db.session import AsyncSessionLocal
 from backend.app.db.vector_store import CompanyContextStore
 
 logger = logging.getLogger(__name__)
 
 
 def make_deal_structuring_node(
-    db: AsyncSession,
     context_store: CompanyContextStore,
 ):
     """Factory — returns an async node function with injected dependencies."""
@@ -32,14 +30,15 @@ def make_deal_structuring_node(
         try:
             deal_input = state["deal_input"]
 
-            # Fetch context for the system prompt
-            criteria = await settings_repo.list_active_criteria(db)
+            # Fetch context for the system prompt (own session for concurrency safety)
+            async with AsyncSessionLocal() as db:
+                criteria = await settings_repo.list_active_criteria(db)
+                company_settings = await fetch_company_settings(db)
             scoring_criteria = format_scoring_criteria(criteria)
 
             context_results = await context_store.query(deal_input, top_k=5)
             vector_context = format_company_context(context_results)
 
-            company_settings = await fetch_company_settings(db)
             company_context = build_company_context(vector_context, company_settings)
 
             # Render prompts

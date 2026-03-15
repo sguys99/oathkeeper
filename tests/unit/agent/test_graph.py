@@ -1,6 +1,6 @@
 """Tests for LangGraph orchestrator."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -82,7 +82,7 @@ class TestBuildGraph:
         mock_context_store.return_value = MagicMock()
         mock_project_store.return_value = MagicMock()
 
-        graph = build_graph(AsyncMock())
+        graph = build_graph()
         assert graph is not None
 
     @pytest.mark.asyncio
@@ -122,7 +122,7 @@ class TestBuildGraph:
 
         mock_deal.return_value = fake_deal_structuring
 
-        graph = build_graph(AsyncMock())
+        graph = build_graph()
         result = await graph.ainvoke({"deal_input": "vague deal"})
 
         assert result["verdict"] == "pending"

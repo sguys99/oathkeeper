@@ -107,6 +107,7 @@ class TestRecalculateScores:
 
 class TestScoringNode:
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.scoring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.scoring.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.scoring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.scoring.fetch_company_settings", new_callable=AsyncMock)
@@ -119,7 +120,12 @@ class TestScoringNode:
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
+        mock_session_local,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = (
@@ -141,7 +147,7 @@ class TestScoringNode:
         context_store = AsyncMock()
         context_store.query.return_value = []
 
-        node = make_scoring_node(AsyncMock(), context_store)
+        node = make_scoring_node(context_store)
         result = await node(
             {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
         )
@@ -151,6 +157,7 @@ class TestScoringNode:
         assert result["verdict"] in ("go", "conditional_go", "no_go")
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.scoring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.scoring.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.scoring.settings_repo")
     @patch("backend.app.agent.nodes.scoring.load_prompt")
@@ -159,10 +166,15 @@ class TestScoringNode:
         mock_load_prompt,
         mock_settings_repo,
         mock_fetch_settings,
+        mock_session_local,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(side_effect=RuntimeError("DB error"))
 
-        node = make_scoring_node(AsyncMock(), AsyncMock())
+        node = make_scoring_node(AsyncMock())
         result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["scores"] == []

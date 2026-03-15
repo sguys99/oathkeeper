@@ -16,7 +16,6 @@ import logging
 
 from langgraph.graph import END, StateGraph
 from langgraph.types import Send
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.base import MISSING_FIELDS_THRESHOLD
 from backend.app.agent.nodes import (
@@ -77,13 +76,8 @@ def _route_after_structuring(state: AgentState) -> list[Send]:
 # ── Graph builder ───────────────────────────────────────────────────────
 
 
-def build_graph(db: AsyncSession):
+def build_graph():
     """Construct and compile the analysis LangGraph.
-
-    Parameters
-    ----------
-    db:
-        An async database session shared by nodes that need DB access.
 
     Returns
     -------
@@ -96,10 +90,10 @@ def build_graph(db: AsyncSession):
     graph = StateGraph(AgentState)
 
     # ── Register nodes ──────────────────────────────────────────────
-    graph.add_node("deal_structuring", make_deal_structuring_node(db, context_store))
-    graph.add_node("scoring", make_scoring_node(db, context_store))
-    graph.add_node("resource_estimation", make_resource_estimation_node(db, project_store))
-    graph.add_node("risk_analysis", make_risk_analysis_node(db, context_store))
+    graph.add_node("deal_structuring", make_deal_structuring_node(context_store))
+    graph.add_node("scoring", make_scoring_node(context_store))
+    graph.add_node("resource_estimation", make_resource_estimation_node(project_store))
+    graph.add_node("risk_analysis", make_risk_analysis_node(context_store))
     graph.add_node("similar_project", make_similar_project_node(project_store))
     graph.add_node("final_verdict", make_final_verdict_node())
     graph.add_node("hold_verdict", hold_verdict_node)

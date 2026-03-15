@@ -38,6 +38,7 @@ EMPTY_COMPANY_SETTINGS = {
 
 class TestRiskAnalysisNode:
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.risk_analysis.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.risk_analysis.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.fetch_company_settings", new_callable=AsyncMock)
@@ -50,7 +51,12 @@ class TestRiskAnalysisNode:
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
+        mock_session_local,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = (json.dumps(SAMPLE_RISKS), uuid.uuid4())
@@ -63,7 +69,7 @@ class TestRiskAnalysisNode:
         context_store = AsyncMock()
         context_store.query.return_value = []
 
-        node = make_risk_analysis_node(AsyncMock(), context_store)
+        node = make_risk_analysis_node(context_store)
         result = await node(
             {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
         )
@@ -72,6 +78,7 @@ class TestRiskAnalysisNode:
         assert result["risks"][0]["level"] == "HIGH"
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.risk_analysis.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.risk_analysis.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.settings_repo")
@@ -82,13 +89,18 @@ class TestRiskAnalysisNode:
         mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
+        mock_session_local,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(side_effect=RuntimeError("DB error"))
 
         context_store = AsyncMock()
         context_store.query.return_value = []
 
-        node = make_risk_analysis_node(AsyncMock(), context_store)
+        node = make_risk_analysis_node(context_store)
         result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["risks"] == []

@@ -39,13 +39,9 @@ def mock_context_store():
     return store
 
 
-@pytest.fixture
-def mock_db():
-    return AsyncMock()
-
-
 class TestDealStructuringNode:
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.deal_structuring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.deal_structuring.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
@@ -58,9 +54,13 @@ class TestDealStructuringNode:
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
-        mock_db,
+        mock_session_local,
         mock_context_store,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = (json.dumps(SAMPLE_STRUCTURED), uuid.uuid4())
@@ -70,7 +70,7 @@ class TestDealStructuringNode:
         mock_tpl.render.return_value = ("system prompt", "user prompt")
         mock_load_prompt.return_value = mock_tpl
 
-        node = make_deal_structuring_node(mock_db, mock_context_store)
+        node = make_deal_structuring_node(mock_context_store)
         result = await node({"deal_input": "Acme Corp wants AI system", "deal_id": str(uuid.uuid4())})
 
         assert result["structured_deal"]["customer_name"] == "Acme Corp"
@@ -78,6 +78,7 @@ class TestDealStructuringNode:
         assert "errors" not in result
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.deal_structuring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.deal_structuring.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
@@ -90,9 +91,13 @@ class TestDealStructuringNode:
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
-        mock_db,
+        mock_session_local,
         mock_context_store,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = ("not valid json", uuid.uuid4())
@@ -102,7 +107,7 @@ class TestDealStructuringNode:
         mock_tpl.render.return_value = ("system", "user")
         mock_load_prompt.return_value = mock_tpl
 
-        node = make_deal_structuring_node(mock_db, mock_context_store)
+        node = make_deal_structuring_node(mock_context_store)
         result = await node({"deal_input": "bad input", "deal_id": str(uuid.uuid4())})
 
         assert result["structured_deal"] == {}
@@ -110,6 +115,7 @@ class TestDealStructuringNode:
         assert "deal_structuring" in result["errors"][0]
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.deal_structuring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.settings_repo")
@@ -120,9 +126,13 @@ class TestDealStructuringNode:
         mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
-        mock_db,
+        mock_session_local,
         mock_context_store,
     ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.side_effect = RuntimeError("LLM down")
@@ -132,7 +142,7 @@ class TestDealStructuringNode:
         mock_tpl.render.return_value = ("system", "user")
         mock_load_prompt.return_value = mock_tpl
 
-        node = make_deal_structuring_node(mock_db, mock_context_store)
+        node = make_deal_structuring_node(mock_context_store)
         result = await node({"deal_input": "test", "deal_id": str(uuid.uuid4())})
 
         assert result["structured_deal"] == {}
