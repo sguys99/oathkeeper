@@ -58,6 +58,15 @@ async def list_with_filters(
     return list(result.scalars().all())
 
 
+async def delete(session: AsyncSession, deal_id: uuid.UUID) -> bool:
+    deal = await session.get(Deal, deal_id)
+    if deal is None:
+        return False
+    await session.delete(deal)
+    await session.flush()
+    return True
+
+
 async def update_status(session: AsyncSession, deal_id: uuid.UUID, status: str) -> Deal | None:
     deal = await session.get(Deal, deal_id)
     if deal is None:

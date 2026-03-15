@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.api.exceptions import DealNotFound, DuplicateNotionDeal, OathKeeperError
+from backend.app.api.exceptions import (
+    AnalysisInProgress,
+    DealNotFound,
+    DuplicateNotionDeal,
+    OathKeeperError,
+)
 from backend.app.api.schemas.deal import (
     DealCreate,
     DealListResponse,
@@ -16,6 +21,7 @@ from backend.app.api.schemas.deal import (
 from backend.app.db.models.deal import Deal
 from backend.app.db.repositories import deal_repo
 from backend.app.db.session import get_db
+from backend.app.integrations import notion_service
 from backend.app.utils.file_parser import FileParseError, UnsupportedFileType, extract_text
 
 router = APIRouter(prefix="/api/deals", tags=["deals"])
@@ -122,3 +128,22 @@ async def upload_deal_document(
     await db.commit()
 
     return DealResponse.model_validate(deal)
+
+
+@router.delete("/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_deal(
+    deal_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete a deal and its analysis result. Archives the Notion page if linked."""
+    deal = await deal_repo.get_by_id(db, deal_id)
+    if deal is None:
+        raise DealNotFound(deal_id)
+    if deal.status == "analyzing":
+        raise AnalysisInProgress(deal_id)
+
+    # Best-effort Notion archive
+    if deal.notion_page_id:
+        await notion_service.archive_deal_page(deal.notion_page_id)
+
+    await deal_repo.delete(db, deal_id)

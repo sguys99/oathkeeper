@@ -10,13 +10,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VerdictBadge } from "@/components/common/verdict-badge";
 import { EmptyState } from "@/components/common/empty-state";
-import { useDeals } from "@/hooks/use-deals";
+import { useDeals, useDeleteDeal } from "@/hooks/use-deals";
 import { DealFilters } from "./deal-filters";
+import { DeleteDealDialog } from "./delete-deal-dialog";
 import { Pagination } from "./pagination";
 import { formatDate } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Verdict } from "@/lib/api/types";
 
 const LIMIT = 20;
@@ -26,6 +30,10 @@ export function DealTable() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [offset, setOffset] = useState(0);
+  const [deletingDeal, setDeletingDeal] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const { data, isLoading } = useDeals({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -33,9 +41,24 @@ export function DealTable() {
     limit: LIMIT,
   });
 
+  const deleteMutation = useDeleteDeal();
+
   const filteredItems = data?.items.filter((deal) =>
     search ? deal.title.toLowerCase().includes(search.toLowerCase()) : true,
   );
+
+  const handleDelete = () => {
+    if (!deletingDeal) return;
+    deleteMutation.mutate(deletingDeal.id, {
+      onSuccess: () => {
+        toast.success("Deal이 삭제되었습니다");
+        setDeletingDeal(null);
+      },
+      onError: () => {
+        toast.error("삭제에 실패했습니다");
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -68,6 +91,7 @@ export function DealTable() {
                 <TableHead className="w-[80px]">점수</TableHead>
                 <TableHead className="w-[120px]">생성일</TableHead>
                 <TableHead className="w-[100px]">담당자</TableHead>
+                <TableHead className="w-[50px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -95,6 +119,19 @@ export function DealTable() {
                   <TableCell>
                     {deal.creator?.name ?? "-"}
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingDeal({ id: deal.id, title: deal.title });
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -112,6 +149,16 @@ export function DealTable() {
           onPageChange={setOffset}
         />
       )}
+
+      <DeleteDealDialog
+        open={deletingDeal !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingDeal(null);
+        }}
+        dealTitle={deletingDeal?.title ?? ""}
+        onConfirm={handleDelete}
+        isPending={deleteMutation.isPending}
+      />
     </div>
   );
 }

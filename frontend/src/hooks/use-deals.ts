@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createDeal,
+  deleteDeal,
   getDeal,
   listDeals,
   listImportedNotionPageIds,
@@ -52,6 +53,16 @@ export function useImportedNotionPageIds() {
   return useQuery({
     queryKey: ["imported-notion-page-ids"],
     queryFn: listImportedNotionPageIds,
+  });
+}
+
+export function useDeleteDeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dealId: string) => deleteDeal(dealId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deals"] });
+    },
   });
 }
 

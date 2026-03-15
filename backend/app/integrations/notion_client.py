@@ -91,6 +91,12 @@ async def create_page(
     return await client.pages.create(**payload)
 
 
+async def archive_page(page_id: str) -> dict[str, Any]:
+    """Archive a Notion page by setting archived=True."""
+    client = get_notion_client()
+    return await client.pages.update(page_id=_normalize_id(page_id), archived=True)
+
+
 async def update_page_property(
     page_id: str,
     properties: dict[str, Any],

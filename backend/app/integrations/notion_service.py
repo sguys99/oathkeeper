@@ -43,6 +43,16 @@ async def get_deal_content(page_id: str) -> str:
     return _blocks_to_text(blocks)
 
 
+async def archive_deal_page(notion_page_id: str) -> bool:
+    """Archive the source deal page in Notion. Returns True on success."""
+    try:
+        await notion_client.archive_page(notion_page_id)
+        return True
+    except Exception:
+        logger.warning("Failed to archive Notion page %s", notion_page_id, exc_info=True)
+        return False
+
+
 async def save_analysis_to_notion(
     analysis: AnalysisResult,
     deal_page_id: str | None = None,
