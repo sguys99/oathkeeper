@@ -28,7 +28,7 @@ export function ResourceCard({
               </div>
             </div>
           )}
-          {resource.duration_months !== null && (
+          {resource.duration_months != null && (
             <div className="flex items-start gap-3">
               <Clock className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div>
@@ -39,7 +39,7 @@ export function ResourceCard({
               </div>
             </div>
           )}
-          {resource.total_cost !== null && (
+          {resource.total_cost != null && (
             <div className="flex items-start gap-3">
               <Banknote className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div>
@@ -50,7 +50,7 @@ export function ResourceCard({
               </div>
             </div>
           )}
-          {resource.expected_margin !== null && (
+          {resource.expected_margin != null && (
             <div className="flex items-start gap-3">
               <TrendingUp className="mt-0.5 h-5 w-5 text-muted-foreground" />
               <div>
