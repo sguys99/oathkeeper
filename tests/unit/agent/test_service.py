@@ -51,9 +51,23 @@ class TestAnalysisService:
         mock_deal_repo.get_by_id = AsyncMock(return_value=mock_deal)
         mock_deal_repo.update_status = AsyncMock()
 
-        # Setup mock graph
-        mock_graph = AsyncMock()
-        mock_graph.ainvoke.return_value = SAMPLE_GRAPH_RESULT
+        # Setup mock graph — astream yields dicts of {node_name: node_output}
+        async def fake_astream(input_dict):
+            yield {"deal_structuring": {"structured_deal": {"customer_name": "Acme"}}}
+            yield {
+                "scoring": {
+                    "scores": SAMPLE_GRAPH_RESULT["scores"],
+                    "total_score": 72.0,
+                    "verdict": "go",
+                },
+            }
+            yield {"resource_estimation": {"resource_estimate": {"duration_months": 4}}}
+            yield {"risk_analysis": {"risks": [{"category": "tech", "level": "MEDIUM"}]}}
+            yield {"similar_project": {"similar_projects": []}}
+            yield {"final_verdict": {"final_report": "# Report\n\nGo!"}}
+
+        mock_graph = MagicMock()
+        mock_graph.astream = fake_astream
         mock_build_graph.return_value = mock_graph
 
         # Setup mock analysis repo
@@ -61,9 +75,6 @@ class TestAnalysisService:
 
         service = AnalysisService()
         await service.run_analysis(deal_id)
-
-        # Verify graph was invoked
-        mock_graph.ainvoke.assert_awaited_once()
 
         # Verify analysis was saved
         mock_analysis_repo.create.assert_awaited_once()

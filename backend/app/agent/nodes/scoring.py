@@ -6,6 +6,8 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.base import (
+    build_company_context,
+    fetch_company_settings,
     format_company_context,
     format_scoring_criteria,
     logged_call_llm,
@@ -56,13 +58,16 @@ def make_scoring_node(db: AsyncSession, context_store: CompanyContextStore):
             # Fetch company context
             query_text = structured_deal.get("project_summary", "")
             context_results = await context_store.query(query_text, top_k=5)
-            company_context = format_company_context(context_results)
+            vector_context = format_company_context(context_results)
+
+            company_settings = await fetch_company_settings(db)
+            company_context = build_company_context(vector_context, company_settings)
 
             # Render prompts
             system_tpl = load_prompt("system")
             system_base = system_tpl.render_system(
                 company_context=company_context,
-                deal_criteria="",
+                deal_criteria=company_settings.get("deal_criteria", ""),
                 scoring_criteria=scoring_criteria,
             )
 

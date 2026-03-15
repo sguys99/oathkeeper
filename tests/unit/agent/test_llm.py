@@ -29,7 +29,7 @@ class TestGetLlm:
 
         llm = get_llm_uncached(temperature=0.0, max_tokens=2048)
 
-        assert llm.model_name == "openai/gpt-4o"
+        assert llm.model_name == "gpt-4o"
         assert llm.temperature == 0.0
         assert llm.max_tokens == 2048
 
@@ -41,7 +41,7 @@ class TestGetLlm:
 
         llm = get_llm_uncached(temperature=0.1, max_tokens=4096)
 
-        assert llm.model_name == "anthropic/claude-sonnet-4-5-20250929"
+        assert llm.model == "claude-sonnet-4-5-20250929"
         assert llm.temperature == 0.1
         assert llm.max_tokens == 4096
 

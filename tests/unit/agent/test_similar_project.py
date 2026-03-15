@@ -1,6 +1,7 @@
 """Tests for similar_project node."""
 
 import json
+import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -26,10 +27,11 @@ SAMPLE_SIMILAR = {
 
 class TestSimilarProjectNode:
     @pytest.mark.asyncio
-    @patch("backend.app.agent.nodes.similar_project.call_llm")
+    @patch("backend.app.agent.nodes.similar_project.update_log_parsed_output", new_callable=AsyncMock)
+    @patch("backend.app.agent.nodes.similar_project.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.load_prompt")
-    async def test_happy_path(self, mock_load_prompt, mock_call_llm):
-        mock_call_llm.return_value = json.dumps(SAMPLE_SIMILAR)
+    async def test_happy_path(self, mock_load_prompt, mock_logged_call, mock_update_log):
+        mock_logged_call.return_value = (json.dumps(SAMPLE_SIMILAR), uuid.uuid4())
 
         mock_tpl = MagicMock()
         mock_tpl.render.return_value = ("system", "user")
@@ -48,6 +50,7 @@ class TestSimilarProjectNode:
                     "tech_requirements": ["Python"],
                     "customer_industry": "제조",
                 },
+                "deal_id": str(uuid.uuid4()),
             },
         )
 
@@ -66,6 +69,7 @@ class TestSimilarProjectNode:
                     "tech_requirements": [],
                     "customer_industry": "IT",
                 },
+                "deal_id": str(uuid.uuid4()),
             },
         )
 
@@ -76,16 +80,16 @@ class TestSimilarProjectNode:
         project_store = AsyncMock()
 
         node = make_similar_project_node(project_store)
-        result = await node({"structured_deal": {}})
+        result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["similar_projects"] == []
         project_store.search_similar.assert_not_awaited()
 
     @pytest.mark.asyncio
-    @patch("backend.app.agent.nodes.similar_project.call_llm")
+    @patch("backend.app.agent.nodes.similar_project.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.load_prompt")
-    async def test_error_returns_empty(self, mock_load_prompt, mock_call_llm):
-        mock_call_llm.side_effect = RuntimeError("LLM error")
+    async def test_error_returns_empty(self, mock_load_prompt, mock_logged_call):
+        mock_logged_call.side_effect = RuntimeError("LLM error")
 
         mock_tpl = MagicMock()
         mock_tpl.render.return_value = ("system", "user")
@@ -102,6 +106,7 @@ class TestSimilarProjectNode:
                     "tech_requirements": [],
                     "customer_industry": "IT",
                 },
+                "deal_id": str(uuid.uuid4()),
             },
         )
 

@@ -1,7 +1,9 @@
-"""LLM client factory — LiteLLM router wrapping LangChain ChatModel."""
+"""LLM client factory — provider-aware LangChain ChatModel."""
 
 from functools import lru_cache
 
+from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
 from backend.app.utils.settings import get_settings
@@ -11,49 +13,48 @@ from backend.app.utils.settings import get_settings
 def get_llm(
     temperature: float = 0.0,
     max_tokens: int = 4096,
-) -> ChatOpenAI:
-    """Return a LangChain ChatModel backed by LiteLLM.
+) -> BaseChatModel:
+    """Return a LangChain ChatModel for the configured provider.
 
-    LiteLLM accepts ``openai/<model>`` and ``anthropic/<model>`` prefixes,
-    so we route through ``ChatOpenAI`` pointed at the LiteLLM-compatible
-    interface (same OpenAI SDK shape).
+    - ``openai`` → ``ChatOpenAI`` (model name e.g. ``gpt-4o``)
+    - ``claude`` → ``ChatAnthropic`` (model name e.g. ``claude-sonnet-4-5-20250929``)
     """
     settings = get_settings()
 
     if settings.llm_provider == "openai":
-        model_name = f"openai/{settings.openai_model}"
-        api_key = settings.openai_api_key
-    else:
-        model_name = f"anthropic/{settings.anthropic_model}"
-        api_key = settings.anthropic_api_key
+        return ChatOpenAI(
+            model=settings.openai_model,
+            api_key=settings.openai_api_key,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
-    return ChatOpenAI(
-        model=model_name,
-        api_key=api_key,
+    return ChatAnthropic(
+        model=settings.anthropic_model,
+        api_key=settings.anthropic_api_key,
         temperature=temperature,
         max_tokens=max_tokens,
-        # LiteLLM acts as a drop-in proxy; we use its router via the
-        # standard OpenAI SDK shape provided by langchain_openai.
     )
 
 
 def get_llm_uncached(
     temperature: float = 0.0,
     max_tokens: int = 4096,
-) -> ChatOpenAI:
+) -> BaseChatModel:
     """Non-cached variant — useful when per-call params differ."""
     settings = get_settings()
 
     if settings.llm_provider == "openai":
-        model_name = f"openai/{settings.openai_model}"
-        api_key = settings.openai_api_key
-    else:
-        model_name = f"anthropic/{settings.anthropic_model}"
-        api_key = settings.anthropic_api_key
+        return ChatOpenAI(
+            model=settings.openai_model,
+            api_key=settings.openai_api_key,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
 
-    return ChatOpenAI(
-        model=model_name,
-        api_key=api_key,
+    return ChatAnthropic(
+        model=settings.anthropic_model,
+        api_key=settings.anthropic_api_key,
         temperature=temperature,
         max_tokens=max_tokens,
     )

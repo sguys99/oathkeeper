@@ -1,6 +1,7 @@
 """Tests for scoring node."""
 
 import json
+import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -65,6 +66,12 @@ SAMPLE_SCORES = [
     },
 ]
 
+EMPTY_COMPANY_SETTINGS = {
+    "business_direction": "",
+    "deal_criteria": "",
+    "short_term_strategy": "",
+}
+
 
 class TestDetermineVerdict:
     def test_go(self):
@@ -100,17 +107,30 @@ class TestRecalculateScores:
 
 class TestScoringNode:
     @pytest.mark.asyncio
-    @patch("backend.app.agent.nodes.scoring.call_llm")
+    @patch("backend.app.agent.nodes.scoring.update_log_parsed_output", new_callable=AsyncMock)
+    @patch("backend.app.agent.nodes.scoring.logged_call_llm", new_callable=AsyncMock)
+    @patch("backend.app.agent.nodes.scoring.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.scoring.settings_repo")
     @patch("backend.app.agent.nodes.scoring.load_prompt")
-    async def test_happy_path(self, mock_load_prompt, mock_settings_repo, mock_call_llm):
+    async def test_happy_path(
+        self,
+        mock_load_prompt,
+        mock_settings_repo,
+        mock_fetch_settings,
+        mock_logged_call,
+        mock_update_log,
+    ):
         mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
-        mock_call_llm.return_value = json.dumps(
-            {
-                "scores": SAMPLE_SCORES,
-                "total_score": 72.0,
-                "verdict": "go",
-            },
+        mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
+        mock_logged_call.return_value = (
+            json.dumps(
+                {
+                    "scores": SAMPLE_SCORES,
+                    "total_score": 72.0,
+                    "verdict": "go",
+                },
+            ),
+            uuid.uuid4(),
         )
 
         mock_tpl = MagicMock()
@@ -122,21 +142,28 @@ class TestScoringNode:
         context_store.query.return_value = []
 
         node = make_scoring_node(AsyncMock(), context_store)
-        result = await node({"structured_deal": {"project_summary": "test"}})
+        result = await node(
+            {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
+        )
 
         assert len(result["scores"]) == 7
         assert isinstance(result["total_score"], float)
         assert result["verdict"] in ("go", "conditional_go", "no_go")
 
     @pytest.mark.asyncio
-    @patch("backend.app.agent.nodes.scoring.call_llm")
+    @patch("backend.app.agent.nodes.scoring.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.scoring.settings_repo")
     @patch("backend.app.agent.nodes.scoring.load_prompt")
-    async def test_error_returns_defaults(self, mock_load_prompt, mock_settings_repo, mock_call_llm):
+    async def test_error_returns_defaults(
+        self,
+        mock_load_prompt,
+        mock_settings_repo,
+        mock_fetch_settings,
+    ):
         mock_settings_repo.list_active_criteria = AsyncMock(side_effect=RuntimeError("DB error"))
 
         node = make_scoring_node(AsyncMock(), AsyncMock())
-        result = await node({"structured_deal": {}})
+        result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["scores"] == []
         assert result["verdict"] == "pending"

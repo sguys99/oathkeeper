@@ -99,7 +99,7 @@ def build_graph(db: AsyncSession):
     graph.add_node("deal_structuring", make_deal_structuring_node(db, context_store))
     graph.add_node("scoring", make_scoring_node(db, context_store))
     graph.add_node("resource_estimation", make_resource_estimation_node(db, project_store))
-    graph.add_node("risk_analysis", make_risk_analysis_node(context_store))
+    graph.add_node("risk_analysis", make_risk_analysis_node(db, context_store))
     graph.add_node("similar_project", make_similar_project_node(project_store))
     graph.add_node("final_verdict", make_final_verdict_node())
     graph.add_node("hold_verdict", hold_verdict_node)

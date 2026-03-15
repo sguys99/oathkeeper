@@ -1,5 +1,6 @@
 """Deal management endpoints."""
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Query, UploadFile, status
@@ -24,6 +25,8 @@ from backend.app.db.session import get_db
 from backend.app.integrations import notion_service
 from backend.app.utils.file_parser import FileParseError, UnsupportedFileType, extract_text
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/deals", tags=["deals"])
 
 
@@ -37,10 +40,24 @@ async def create_deal(
         if existing:
             raise DuplicateNotionDeal(existing.id)
 
+    # Build raw_input: Notion page content + user's additional info
+    raw_input_parts: list[str] = []
+    if body.notion_page_id:
+        try:
+            notion_content = await notion_service.get_deal_content(body.notion_page_id)
+            if notion_content:
+                raw_input_parts.append(notion_content)
+        except Exception:
+            logger.warning("Failed to fetch Notion page content for %s", body.notion_page_id)
+    if body.raw_input:
+        raw_input_parts.append(body.raw_input)
+
+    combined_raw_input = "\n\n---\n\n".join(raw_input_parts) if raw_input_parts else None
+
     deal = await deal_repo.create(
         db,
         title=body.title,
-        raw_input=body.raw_input,
+        raw_input=combined_raw_input,
         notion_page_id=body.notion_page_id,
         created_by=body.created_by,
     )

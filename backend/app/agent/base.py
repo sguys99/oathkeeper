@@ -157,3 +157,27 @@ def format_company_context(results: list[dict]) -> str:
     for item in results:
         sections.append(f"[{item.get('type', 'general')}] {item.get('content', '')}")
     return "\n\n".join(sections)
+
+
+async def fetch_company_settings(db) -> dict[str, str]:
+    """Fetch business_direction, deal_criteria, short_term_strategy from DB."""
+    from backend.app.db.repositories import settings_repo
+
+    keys = ["business_direction", "deal_criteria", "short_term_strategy"]
+    result: dict[str, str] = {}
+    for key in keys:
+        setting = await settings_repo.get_setting(db, key)
+        result[key] = setting.value if setting else ""
+    return result
+
+
+def build_company_context(vector_context: str, company_settings: dict[str, str]) -> str:
+    """Combine vector store context with DB company settings into a unified string."""
+    parts: list[str] = []
+    if company_settings.get("business_direction"):
+        parts.append(f"[사업 방향] {company_settings['business_direction']}")
+    if company_settings.get("short_term_strategy"):
+        parts.append(f"[단기 전략] {company_settings['short_term_strategy']}")
+    if vector_context:
+        parts.append(vector_context)
+    return "\n\n".join(parts)
