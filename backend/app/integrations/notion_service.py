@@ -43,13 +43,22 @@ async def get_deal_content(page_id: str) -> str:
     return _blocks_to_text(blocks)
 
 
-async def archive_deal_page(notion_page_id: str) -> bool:
-    """Archive the source deal page in Notion. Returns True on success."""
+async def archive_decision_pages(deal_page_id: str) -> bool:
+    """Archive ai decision pages linked to the deal page in Notion."""
     try:
-        await notion_client.archive_page(notion_page_id)
+        settings = get_settings()
+        pages = await notion_client.query_database(
+            settings.notion_decision_db_id,
+            filter={
+                "property": "deal",
+                "relation": {"contains": deal_page_id},
+            },
+        )
+        for page in pages:
+            await notion_client.archive_page(page["id"])
         return True
     except Exception:
-        logger.warning("Failed to archive Notion page %s", notion_page_id, exc_info=True)
+        logger.warning("Failed to archive decision pages for deal %s", deal_page_id, exc_info=True)
         return False
 
 

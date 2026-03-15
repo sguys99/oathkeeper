@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { href: "/", label: "분석 요청" },
   { href: "/deals", label: "Deal 현황" },
+  { href: "/agent-settings", label: "에이전트 설정" },
   { href: "/admin", label: "관리자" },
 ];
 

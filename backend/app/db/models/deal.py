@@ -41,4 +41,6 @@ class Deal(Base, TimestampMixin):
         back_populates="deal",
         uselist=False,
         lazy="selectin",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )

@@ -142,8 +142,8 @@ async def delete_deal(
     if deal.status == "analyzing":
         raise AnalysisInProgress(deal_id)
 
-    # Best-effort Notion archive
+    # Best-effort: archive ai decision pages linked to this deal
     if deal.notion_page_id:
-        await notion_service.archive_deal_page(deal.notion_page_id)
+        await notion_service.archive_decision_pages(deal.notion_page_id)
 
     await deal_repo.delete(db, deal_id)
