@@ -6,6 +6,7 @@ import { ScoringWeightsTab } from "./_components/scoring-weights-tab";
 import { TeamManagementTab } from "./_components/team-management-tab";
 import { CostSettingsTab } from "./_components/cost-settings-tab";
 import { ProjectHistoryTab } from "./_components/project-history-tab";
+import { PromptManagementTab } from "./_components/prompt-management-tab";
 
 export default function AdminPage() {
   return (
@@ -18,6 +19,7 @@ export default function AdminPage() {
           <TabsTrigger value="team">인력 관리</TabsTrigger>
           <TabsTrigger value="cost">비용 설정</TabsTrigger>
           <TabsTrigger value="history">프로젝트 이력</TabsTrigger>
+          <TabsTrigger value="prompts">프롬프트 관리</TabsTrigger>
         </TabsList>
         <TabsContent value="company">
           <CompanyInfoTab />
@@ -33,6 +35,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="history">
           <ProjectHistoryTab />
+        </TabsContent>
+        <TabsContent value="prompts">
+          <PromptManagementTab />
         </TabsContent>
       </Tabs>
     </div>
