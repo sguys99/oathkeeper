@@ -43,7 +43,9 @@ class AnalysisService:
                 logger.info("Graph built, starting execution for deal %s", deal_id)
 
                 result: dict = {}
-                async for event in graph.astream({"deal_input": deal.raw_input or ""}):
+                async for event in graph.astream(
+                    {"deal_input": deal.raw_input or "", "deal_id": str(deal_id)},
+                ):
                     for node_name, node_output in event.items():
                         result.update(node_output)
                         label = STEP_LABELS.get(node_name)

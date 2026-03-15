@@ -2,8 +2,9 @@
 
 import json
 import logging
+import uuid
 
-from backend.app.agent.base import call_llm
+from backend.app.agent.base import logged_call_llm
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 
@@ -28,7 +29,13 @@ def make_final_verdict_node():
             )
 
             # LLM returns raw markdown (not JSON)
-            markdown = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            markdown, _log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="final_verdict",
+            )
 
             return {"final_report": markdown, "status": "completed"}
 

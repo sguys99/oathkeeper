@@ -2,8 +2,9 @@
 
 import json
 import logging
+import uuid
 
-from backend.app.agent.base import call_llm, parse_json_response
+from backend.app.agent.base import logged_call_llm, parse_json_response, update_log_parsed_output
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 from backend.app.db.vector_store import ProjectHistoryStore
@@ -46,8 +47,15 @@ def make_similar_project_node(project_store: ProjectHistoryStore):
                 past_projects=json.dumps(past_projects, ensure_ascii=False),
             )
 
-            raw = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            raw, log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="similar_project",
+            )
             parsed = parse_json_response(raw)
+            await update_log_parsed_output(log_id, parsed)
 
             return {"similar_projects": parsed.get("similar_projects", past_projects)}
 

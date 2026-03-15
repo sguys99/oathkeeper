@@ -1,14 +1,16 @@
 """Scoring node — evaluate structured deal against 7 criteria."""
 
 import logging
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.base import (
-    call_llm,
     format_company_context,
     format_scoring_criteria,
+    logged_call_llm,
     parse_json_response,
+    update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
@@ -72,12 +74,27 @@ def make_scoring_node(db: AsyncSession, context_store: CompanyContextStore):
                 company_context=company_context,
             )
 
-            raw = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            raw, log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="scoring",
+            )
             parsed = parse_json_response(raw)
 
             # Server-side recalculation for accuracy
             scores, total_score = _recalculate_scores(parsed.get("scores", []))
             verdict = _determine_verdict(total_score)
+
+            await update_log_parsed_output(
+                log_id,
+                {
+                    "scores": scores,
+                    "total_score": total_score,
+                    "verdict": verdict,
+                },
+            )
 
             return {
                 "scores": scores,

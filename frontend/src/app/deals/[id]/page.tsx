@@ -92,10 +92,15 @@ export default function DealDetailPage({
           )}
 
           <div className="flex items-center justify-between border-t pt-6">
-            <NotionSaveButton
-              dealId={deal.id}
-              notionSavedAt={analysis.notion_saved_at}
-            />
+            <div className="flex items-center gap-3">
+              <NotionSaveButton
+                dealId={deal.id}
+                notionSavedAt={analysis.notion_saved_at}
+              />
+              <Link href={`/deals/${id}/logs`}>
+                <Button variant="outline">로그 보기</Button>
+              </Link>
+            </div>
             <Link href="/deals">
               <Button variant="outline">닫기</Button>
             </Link>

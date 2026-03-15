@@ -1,11 +1,13 @@
 """Risk analysis node — identify risks across 5 categories."""
 
 import logging
+import uuid
 
 from backend.app.agent.base import (
-    call_llm,
     format_company_context,
+    logged_call_llm,
     parse_json_response,
+    update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
@@ -33,8 +35,15 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
                 company_context=company_context,
             )
 
-            raw = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            raw, log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="risk_analysis",
+            )
             parsed = parse_json_response(raw)
+            await update_log_parsed_output(log_id, parsed)
 
             return {"risks": parsed.get("risks", [])}
 

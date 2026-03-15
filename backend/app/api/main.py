@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.exceptions import OathKeeperError, oathkeeper_exception_handler
-from backend.app.api.routers import analysis, deals, notion, prompts, settings, users
+from backend.app.api.routers import agent_logs, analysis, deals, notion, prompts, settings, users
 from backend.app.db.session import engine
 from backend.app.utils.logging import setup_logging
 from backend.app.utils.settings import get_settings
@@ -57,6 +57,7 @@ app.add_exception_handler(OathKeeperError, oathkeeper_exception_handler)
 app.include_router(users.router)
 app.include_router(deals.router)
 app.include_router(analysis.router)
+app.include_router(agent_logs.router)
 app.include_router(settings.router)
 app.include_router(notion.router)
 app.include_router(prompts.router)

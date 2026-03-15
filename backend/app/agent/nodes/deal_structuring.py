@@ -1,14 +1,16 @@
 """Deal structuring node — extract structured fields from raw deal text."""
 
 import logging
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.base import (
-    call_llm,
     format_company_context,
     format_scoring_criteria,
+    logged_call_llm,
     parse_json_response,
+    update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
@@ -50,8 +52,15 @@ def make_deal_structuring_node(
             )
 
             # Call LLM and parse
-            raw = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            raw, log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="deal_structuring",
+            )
             structured = parse_json_response(raw)
+            await update_log_parsed_output(log_id, structured)
 
             return {"structured_deal": structured, "status": "deal_structured"}
 

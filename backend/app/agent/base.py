@@ -3,6 +3,8 @@
 import json
 import logging
 import re
+import uuid
+from datetime import UTC, datetime
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -28,6 +30,69 @@ async def call_llm(
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
     response = await llm.ainvoke(messages)
     return response.content
+
+
+async def logged_call_llm(
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    deal_id: uuid.UUID,
+    node_name: str,
+    llm=None,
+) -> tuple[str, uuid.UUID]:
+    """Invoke the LLM with logging. Returns (raw_output, log_id).
+
+    Uses an independent DB session to avoid contention with parallel nodes.
+    """
+    from backend.app.db.repositories import agent_log_repo
+    from backend.app.db.session import AsyncSessionLocal
+
+    started_at = datetime.now(UTC)
+    raw_output: str | None = None
+    error_msg: str | None = None
+    log_id = uuid.uuid4()
+
+    try:
+        raw_output = await call_llm(system_prompt, user_prompt, llm=llm)
+    except Exception as exc:
+        error_msg = str(exc)
+        raise
+    finally:
+        completed_at = datetime.now(UTC)
+        duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+        try:
+            async with AsyncSessionLocal() as log_session:
+                log = await agent_log_repo.create(
+                    log_session,
+                    deal_id=deal_id,
+                    node_name=node_name,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    raw_output=raw_output,
+                    error=error_msg,
+                    duration_ms=duration_ms,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                )
+                log_id = log.id
+                await log_session.commit()
+        except Exception:
+            logger.exception("Failed to persist agent log for node=%s", node_name)
+
+    return raw_output, log_id
+
+
+async def update_log_parsed_output(log_id: uuid.UUID, parsed_output: dict | None) -> None:
+    """Update parsed_output on an existing AgentLog using an independent session."""
+    from backend.app.db.repositories import agent_log_repo
+    from backend.app.db.session import AsyncSessionLocal
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await agent_log_repo.update_parsed_output(session, log_id, parsed_output)
+            await session.commit()
+    except Exception:
+        logger.exception("Failed to update parsed_output for log_id=%s", log_id)
 
 
 def parse_json_response(content: str) -> dict:

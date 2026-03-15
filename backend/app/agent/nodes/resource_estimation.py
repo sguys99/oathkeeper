@@ -2,13 +2,15 @@
 
 import json
 import logging
+import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.base import (
-    call_llm,
     format_team_members,
+    logged_call_llm,
     parse_json_response,
+    update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
@@ -48,8 +50,15 @@ def make_resource_estimation_node(
                 past_projects=json.dumps(past_projects, ensure_ascii=False),
             )
 
-            raw = await call_llm(system_prompt, user_prompt)
+            deal_id = uuid.UUID(state["deal_id"])
+            raw, log_id = await logged_call_llm(
+                system_prompt,
+                user_prompt,
+                deal_id=deal_id,
+                node_name="resource_estimation",
+            )
             parsed = parse_json_response(raw)
+            await update_log_parsed_output(log_id, parsed)
 
             return {"resource_estimate": parsed}
 

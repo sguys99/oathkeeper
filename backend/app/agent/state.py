@@ -12,6 +12,7 @@ class AgentState(TypedDict, total=False):
     """
 
     # ── Input ──────────────────────────────────────────────────────────
+    deal_id: str  # UUID as string (set once at graph invocation)
     deal_input: str  # raw deal text (set once at graph invocation)
 
     # ── Intermediate results ───────────────────────────────────────────
