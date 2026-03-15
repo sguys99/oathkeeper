@@ -16,6 +16,7 @@ import { usePrompts, useUpdatePrompt } from "@/hooks/use-prompts";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { PromptResponse } from "@/lib/api/types";
+import { AgentFlowDiagram } from "./agent-flow-diagram";
 
 const PROMPT_LABELS: Record<string, string> = {
   system: "시스템 프롬프트",
@@ -95,96 +96,104 @@ export function PromptManagementTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label>프롬프트 선택</Label>
-        <Select value={selectedName} onValueChange={setSelectedName}>
-          <SelectTrigger>
-            <SelectValue placeholder="프롬프트를 선택하세요" />
-          </SelectTrigger>
-          <SelectContent>
-            {prompts?.map((p) => (
-              <SelectItem key={p.name} value={p.name}>
-                {PROMPT_LABELS[p.name] ?? p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {isLoading && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          로딩 중...
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[3fr_2fr]">
+      {/* Left: prompt editor */}
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label>프롬프트 선택</Label>
+          <Select value={selectedName} onValueChange={setSelectedName}>
+            <SelectTrigger>
+              <SelectValue placeholder="프롬프트를 선택하세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {prompts?.map((p) => (
+                <SelectItem key={p.name} value={p.name}>
+                  {PROMPT_LABELS[p.name] ?? p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
 
-      {selectedPrompt && formValues && (
-        <>
-          <div className="grid grid-cols-2 gap-4">
+        {isLoading && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            로딩 중...
+          </div>
+        )}
+
+        {selectedPrompt && formValues && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>버전</Label>
+                <Input
+                  value={formValues.version}
+                  onChange={(e) => handleChange("version", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>이름</Label>
+                <Input value={selectedPrompt.name} disabled />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label>버전</Label>
+              <Label>설명</Label>
               <Input
-                value={formValues.version}
-                onChange={(e) => handleChange("version", e.target.value)}
+                value={formValues.description}
+                onChange={(e) => handleChange("description", e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
-              <Label>이름</Label>
-              <Input value={selectedPrompt.name} disabled />
+              <Label>System Prompt</Label>
+              <Textarea
+                className="font-mono text-sm"
+                value={formValues.system_prompt}
+                onChange={(e) => handleChange("system_prompt", e.target.value)}
+                rows={12}
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>설명</Label>
-            <Input
-              value={formValues.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>System Prompt</Label>
-            <Textarea
-              className="font-mono text-sm"
-              value={formValues.system_prompt}
-              onChange={(e) => handleChange("system_prompt", e.target.value)}
-              rows={15}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>User Prompt</Label>
-            <Textarea
-              className="font-mono text-sm"
-              value={formValues.user_prompt}
-              onChange={(e) => handleChange("user_prompt", e.target.value)}
-              rows={15}
-            />
-          </div>
-
-          {selectedPrompt.output_schema && (
             <div className="space-y-2">
-              <Label>Output Schema (읽기 전용)</Label>
-              <pre className="overflow-auto rounded-md border bg-muted p-4 text-sm">
-                {JSON.stringify(selectedPrompt.output_schema, null, 2)}
-              </pre>
+              <Label>User Prompt</Label>
+              <Textarea
+                className="font-mono text-sm"
+                value={formValues.user_prompt}
+                onChange={(e) => handleChange("user_prompt", e.target.value)}
+                rows={12}
+              />
             </div>
-          )}
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSave}
-              disabled={updatePrompt.isPending || !isDirty}
-            >
-              {updatePrompt.isPending ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : null}
-              저장
-            </Button>
-          </div>
-        </>
-      )}
+            {selectedPrompt.output_schema && (
+              <div className="space-y-2">
+                <Label>Output Schema (읽기 전용)</Label>
+                <pre className="overflow-auto rounded-md border bg-muted p-4 text-sm">
+                  {JSON.stringify(selectedPrompt.output_schema, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSave}
+                disabled={updatePrompt.isPending || !isDirty}
+              >
+                {updatePrompt.isPending ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : null}
+                저장
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Right: architecture diagram */}
+      <div className="lg:sticky lg:top-8 lg:self-start lg:pt-16">
+        <AgentFlowDiagram selectedPrompt={selectedName} />
+      </div>
     </div>
   );
 }
