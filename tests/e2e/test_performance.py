@@ -87,6 +87,6 @@ class TestPerformance:
             total,
             failure_rate * 100,
         )
-        assert failure_rate <= 0.05, (
-            f"Failure rate {failure_rate:.0%} exceeds 5% threshold " f"({failures}/{total} failed)"
-        )
+        assert (
+            failure_rate <= 0.05
+        ), f"Failure rate {failure_rate:.0%} exceeds 5% threshold ({failures}/{total} failed)"

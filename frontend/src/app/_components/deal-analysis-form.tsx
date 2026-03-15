@@ -10,10 +10,12 @@ import { NotionDealSelector } from "./notion-deal-selector";
 import { FileUploadZone } from "./file-upload-zone";
 import { AnalysisProgress } from "./analysis-progress";
 import { useNotionDeals } from "@/hooks/use-notion";
-import { useCreateDeal, useUploadDocument } from "@/hooks/use-deals";
+import { useCreateDeal, useImportedNotionPageIds, useUploadDocument } from "@/hooks/use-deals";
 import { useTriggerAnalysis } from "@/hooks/use-analysis";
+import { ApiError } from "@/lib/api/client";
 import type { NotionDeal } from "@/lib/api/types";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function DealAnalysisForm() {
   const [selectedDeal, setSelectedDeal] = useState<NotionDeal | null>(null);
@@ -21,10 +23,14 @@ export function DealAnalysisForm() {
   const [file, setFile] = useState<File | null>(null);
   const [analyzingDealId, setAnalyzingDealId] = useState<string | null>(null);
 
+  const router = useRouter();
   const { data: notionData, isLoading: notionLoading } = useNotionDeals();
+  const { data: importedIds } = useImportedNotionPageIds();
   const createDeal = useCreateDeal();
   const uploadDoc = useUploadDocument();
   const triggerAnalysis = useTriggerAnalysis();
+
+  const importedPageIds = new Set(importedIds ?? []);
 
   const isSubmitting =
     createDeal.isPending || uploadDoc.isPending || triggerAnalysis.isPending;
@@ -53,7 +59,21 @@ export function DealAnalysisForm() {
 
       setAnalyzingDealId(deal.id);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+      if (
+        err instanceof ApiError &&
+        err.status === 409 &&
+        err.body?.existing_deal_id
+      ) {
+        toast.error("이미 분석된 Deal입니다", {
+          action: {
+            label: "결과 보기",
+            onClick: () =>
+              router.push(`/deals/${err.body.existing_deal_id}`),
+          },
+        });
+      } else {
+        toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+      }
     }
   }
 
@@ -81,6 +101,7 @@ export function DealAnalysisForm() {
             value={selectedDeal}
             onSelect={setSelectedDeal}
             disabled={notionLoading || isSubmitting}
+            importedPageIds={importedPageIds}
           />
           {notionLoading && (
             <p className="text-xs text-muted-foreground">

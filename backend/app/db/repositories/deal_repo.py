@@ -34,6 +34,12 @@ async def get_by_id(session: AsyncSession, deal_id: uuid.UUID) -> Deal | None:
     return await session.get(Deal, deal_id)
 
 
+async def get_by_notion_page_id(session: AsyncSession, notion_page_id: str) -> Deal | None:
+    stmt = select(Deal).where(Deal.notion_page_id == notion_page_id)
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def list_with_filters(
     session: AsyncSession,
     *,

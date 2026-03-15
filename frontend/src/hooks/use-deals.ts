@@ -1,7 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDeal, getDeal, listDeals, uploadDocument } from "@/lib/api/deals";
+import {
+  createDeal,
+  getDeal,
+  listDeals,
+  listImportedNotionPageIds,
+  uploadDocument,
+} from "@/lib/api/deals";
 import type { DealCreate } from "@/lib/api/types";
 
 export function useDeals(params?: {
@@ -39,6 +45,13 @@ export function useCreateDeal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
     },
+  });
+}
+
+export function useImportedNotionPageIds() {
+  return useQuery({
+    queryKey: ["imported-notion-page-ids"],
+    queryFn: listImportedNotionPageIds,
   });
 }
 

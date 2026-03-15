@@ -38,6 +38,15 @@ class AnalysisInProgress(OathKeeperError):
         )
 
 
+class DuplicateNotionDeal(OathKeeperError):
+    def __init__(self, existing_deal_id: uuid.UUID):
+        self.existing_deal_id = existing_deal_id
+        super().__init__(
+            f"A deal from this Notion page already exists (ID: {existing_deal_id})",
+            status_code=409,
+        )
+
+
 class NotionAPIError(OathKeeperError):
     def __init__(self, detail: str = "Notion API error"):
         super().__init__(detail, status_code=502)
@@ -47,7 +56,10 @@ async def oathkeeper_exception_handler(
     request: Request,
     exc: OathKeeperError,
 ) -> JSONResponse:
+    content: dict = {"detail": exc.detail}
+    if isinstance(exc, DuplicateNotionDeal):
+        content["existing_deal_id"] = str(exc.existing_deal_id)
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail},
+        content=content,
     )

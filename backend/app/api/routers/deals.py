@@ -3,15 +3,17 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.api.exceptions import DealNotFound, OathKeeperError
+from backend.app.api.exceptions import DealNotFound, DuplicateNotionDeal, OathKeeperError
 from backend.app.api.schemas.deal import (
     DealCreate,
     DealListResponse,
     DealResponse,
     DealStatus,
 )
+from backend.app.db.models.deal import Deal
 from backend.app.db.repositories import deal_repo
 from backend.app.db.session import get_db
 from backend.app.utils.file_parser import FileParseError, UnsupportedFileType, extract_text
@@ -24,6 +26,11 @@ async def create_deal(
     body: DealCreate,
     db: AsyncSession = Depends(get_db),
 ) -> DealResponse:
+    if body.notion_page_id:
+        existing = await deal_repo.get_by_notion_page_id(db, body.notion_page_id)
+        if existing:
+            raise DuplicateNotionDeal(existing.id)
+
     deal = await deal_repo.create(
         db,
         title=body.title,
@@ -56,6 +63,16 @@ async def list_deals(
         offset=offset,
         limit=limit,
     )
+
+
+@router.get("/notion-page-ids", response_model=list[str])
+async def list_imported_notion_page_ids(
+    db: AsyncSession = Depends(get_db),
+) -> list[str]:
+    """Return all notion_page_id values that already have deals."""
+    stmt = select(Deal.notion_page_id).where(Deal.notion_page_id.isnot(None))
+    result = await db.execute(stmt)
+    return [row[0] for row in result.all()]
 
 
 @router.get("/{deal_id}", response_model=DealResponse)

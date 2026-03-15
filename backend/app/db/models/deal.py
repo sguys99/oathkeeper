@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import CheckConstraint, ForeignKey, String, Text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base, JsonType, TimestampMixin
@@ -12,6 +12,12 @@ class Deal(Base, TimestampMixin):
         CheckConstraint(
             "status IN ('pending', 'analyzing', 'completed', 'failed')",
             name="ck_deals_status",
+        ),
+        Index(
+            "uq_deals_notion_page_id",
+            "notion_page_id",
+            unique=True,
+            postgresql_where=text("notion_page_id IS NOT NULL"),
         ),
     )
 

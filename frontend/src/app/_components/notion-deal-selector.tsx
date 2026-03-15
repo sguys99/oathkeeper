@@ -19,11 +19,13 @@ export function NotionDealSelector({
   value,
   onSelect,
   disabled,
+  importedPageIds,
 }: {
   deals: NotionDeal[];
   value: NotionDeal | null;
   onSelect: (deal: NotionDeal | null) => void;
   disabled?: boolean;
+  importedPageIds?: Set<string>;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,34 +46,48 @@ export function NotionDealSelector({
           <CommandList>
             <CommandEmpty>Deal을 찾을 수 없습니다</CommandEmpty>
             <CommandGroup>
-              {deals.map((deal) => (
-                <CommandItem
-                  key={deal.page_id}
-                  value={deal.deal_info}
-                  onSelect={() => {
-                    onSelect(deal.page_id === value?.page_id ? null : deal);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value?.page_id === deal.page_id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span>{deal.deal_info}</span>
-                    {deal.customer_name && (
-                      <span className="text-xs text-muted-foreground">
-                        {deal.customer_name}
-                        {deal.expected_amount
-                          ? ` · ${(deal.expected_amount / 100_000_000).toFixed(1)}억원`
-                          : ""}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
+              {deals.map((deal) => {
+                const isImported = importedPageIds?.has(deal.page_id) ?? false;
+                return (
+                  <CommandItem
+                    key={deal.page_id}
+                    value={deal.deal_info}
+                    disabled={isImported}
+                    onSelect={() => {
+                      if (isImported) return;
+                      onSelect(deal.page_id === value?.page_id ? null : deal);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value?.page_id === deal.page_id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className={isImported ? "text-muted-foreground" : ""}>
+                          {deal.deal_info}
+                        </span>
+                        {isImported && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            분석 완료
+                          </span>
+                        )}
+                      </div>
+                      {deal.customer_name && (
+                        <span className="text-xs text-muted-foreground">
+                          {deal.customer_name}
+                          {deal.expected_amount
+                            ? ` · ${(deal.expected_amount / 100_000_000).toFixed(1)}억원`
+                            : ""}
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
