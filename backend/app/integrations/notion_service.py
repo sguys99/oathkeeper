@@ -137,6 +137,19 @@ def _extract_title(prop: dict[str, Any]) -> str:
     return items[0]["plain_text"] if items else ""
 
 
+def _find_title_value(props: dict[str, Any]) -> str:
+    """Find the title property by type and extract its plain text.
+
+    Every Notion database has exactly one property with type ``"title"``.
+    This helper locates it regardless of the property name, making the
+    code resilient to Notion column renames.
+    """
+    for prop in props.values():
+        if isinstance(prop, dict) and prop.get("type") == "title":
+            return _extract_title(prop)
+    return ""
+
+
 def _extract_rich_text(prop: dict[str, Any]) -> str | None:
     """Extract plain text from a Rich Text property."""
     items = prop.get("rich_text") or []
@@ -214,8 +227,8 @@ def _parse_project_history_page(page: dict[str, Any]) -> NotionProjectHistory:
     props = page.get("properties", {})
     return NotionProjectHistory(
         page_id=page["id"],
-        project_name=_extract_title(props.get("project_name", {})),
-        summary=_extract_rich_text(props.get("summary", {})),
+        project_name=_extract_rich_text(props.get("project_name", {})) or "",
+        summary=_extract_title(props.get("summary", {})),
         industry=_extract_select(props.get("industry", {})),
         tech_stack=_extract_multi_select(props.get("tech_stack", {})),
         duration_months=_extract_number(props.get("duration_months", {})),
