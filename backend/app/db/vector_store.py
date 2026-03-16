@@ -93,9 +93,9 @@ class ProjectHistoryStore:
     """Store and search similar past projects via Pinecone.
 
     Index: project-history (1536-dim, cosine similarity)
-    Metadata: project_name, industry, tech_stack, scale, duration_months,
-              planned_headcount, actual_headcount, result, lessons_learned,
-              contract_amount, summary
+    Metadata: project_name, industry, tech_stack, duration_months,
+              planned_headcount, actual_headcount, contract_amount, summary,
+              embedded_at, notion_last_edited
     """
 
     def __init__(self) -> None:
@@ -108,15 +108,17 @@ class ProjectHistoryStore:
         project_id: str,
         summary: str,
         metadata: dict,
+        notion_last_edited: str | None = None,
     ) -> str:
         """Embed project summary and upsert with full metadata.
 
         Args:
             project_id: Unique project identifier.
             summary: Text summary used for embedding.
-            metadata: Dict with project_name, industry, tech_stack, scale,
+            metadata: Dict with project_name, industry, tech_stack,
                       duration_months, planned_headcount, actual_headcount,
-                      result, lessons_learned, contract_amount.
+                      contract_amount.
+            notion_last_edited: Notion page last_edited_time for change tracking.
 
         Returns:
             The Pinecone vector ID.
@@ -124,10 +126,21 @@ class ProjectHistoryStore:
         vector = await self._embeddings.aembed_query(summary)
         vec_id = f"project-{project_id}"
         meta = {**metadata, "summary": _truncate(summary)}
-        if "lessons_learned" in meta:
-            meta["lessons_learned"] = _truncate(meta["lessons_learned"], 5000)
+        meta["embedded_at"] = datetime.now(UTC).isoformat()
+        if notion_last_edited:
+            meta["notion_last_edited"] = notion_last_edited
         self._index.upsert(vectors=[{"id": vec_id, "values": vector, "metadata": meta}])
         return vec_id
+
+    def fetch_existing(self, project_ids: list[str]) -> dict[str, dict]:
+        """Fetch existing vectors by project IDs.
+
+        Returns:
+            Dict mapping vector ID to its metadata.
+        """
+        vec_ids = [f"project-{pid}" for pid in project_ids]
+        result = self._index.fetch(ids=vec_ids)
+        return {vid: v.metadata for vid, v in result.vectors.items()}
 
     async def search_similar(
         self,
@@ -161,9 +174,8 @@ class ProjectHistoryStore:
                 "industry": match.metadata.get("industry", ""),
                 "tech_stack": match.metadata.get("tech_stack", []),
                 "duration_months": match.metadata.get("duration_months", 0),
-                "result": match.metadata.get("result", ""),
-                "lessons_learned": match.metadata.get("lessons_learned", ""),
-                "scale": match.metadata.get("scale", ""),
+                "planned_headcount": match.metadata.get("planned_headcount", 0),
+                "actual_headcount": match.metadata.get("actual_headcount", 0),
                 "contract_amount": match.metadata.get("contract_amount", 0),
                 "summary": match.metadata.get("summary", ""),
             }

@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from backend.app.api.schemas.notion import NotionDeal, NotionSaveResponse
+from backend.app.api.schemas.project_history import NotionProjectHistory
 from backend.app.db.models.analysis_result import AnalysisResult
 from backend.app.integrations import notion_client
 from backend.app.utils.settings import get_settings
@@ -36,6 +37,13 @@ async def list_deals() -> list[NotionDeal]:
     settings = get_settings()
     pages = await notion_client.query_database(settings.notion_deal_db_id)
     return [_parse_deal_page(page) for page in pages]
+
+
+async def list_project_history() -> list[NotionProjectHistory]:
+    """Fetch all projects from the Notion project history DB."""
+    settings = get_settings()
+    pages = await notion_client.query_database(settings.notion_project_history_db_id)
+    return [_parse_project_history_page(page) for page in pages]
 
 
 async def get_deal_content(page_id: str) -> str:
@@ -175,6 +183,12 @@ def _extract_select(prop: dict[str, Any]) -> str | None:
     return select.get("name")
 
 
+def _extract_multi_select(prop: dict[str, Any]) -> list[str]:
+    """Extract names from a Multi-select property."""
+    items = prop.get("multi_select") or []
+    return [item["name"] for item in items if "name" in item]
+
+
 # ---------------------------------------------------------------------------
 # Page parsing
 # ---------------------------------------------------------------------------
@@ -192,6 +206,23 @@ def _parse_deal_page(page: dict[str, Any]) -> NotionDeal:
         date=_extract_date_as_datetime(props.get("date", {})),
         author=_extract_person(props.get("author", {})),
         status=_extract_select(props.get("status", {})),
+    )
+
+
+def _parse_project_history_page(page: dict[str, Any]) -> NotionProjectHistory:
+    """Map a Notion page object to a NotionProjectHistory schema."""
+    props = page.get("properties", {})
+    return NotionProjectHistory(
+        page_id=page["id"],
+        project_name=_extract_title(props.get("project_name", {})),
+        summary=_extract_rich_text(props.get("summary", {})),
+        industry=_extract_select(props.get("industry", {})),
+        tech_stack=_extract_multi_select(props.get("tech_stack", {})),
+        duration_months=_extract_number(props.get("duration_months", {})),
+        planned_headcount=_extract_number(props.get("planned_headcount", {})),
+        actual_headcount=_extract_number(props.get("actual_headcount", {})),
+        contract_amount=_extract_number(props.get("contract_amount", {})),
+        last_edited_time=page.get("last_edited_time"),
     )
 
 
