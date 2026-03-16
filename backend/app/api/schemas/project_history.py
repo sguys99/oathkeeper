@@ -24,6 +24,10 @@ class ProjectHistoryListResponse(BaseModel):
     embedded_count: int
 
 
+class PageContentResponse(BaseModel):
+    content: str
+
+
 class EmbedRequest(BaseModel):
     project_ids: list[str] | None = None  # None이면 미임베딩 전체 대상
 

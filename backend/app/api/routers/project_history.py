@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from backend.app.api.schemas.project_history import (
     EmbedRequest,
     EmbedResponse,
+    PageContentResponse,
     ProjectHistoryListResponse,
 )
 from backend.app.services import project_history_service
@@ -16,6 +17,13 @@ router = APIRouter(prefix="/api/project-history", tags=["project-history"])
 async def list_project_history():
     """List all project history from Notion with embedding status."""
     return await project_history_service.list_projects_with_status()
+
+
+@router.get("/{page_id}/content", response_model=PageContentResponse)
+async def get_page_content(page_id: str):
+    """Get the body content of a Notion project history page."""
+    content = await project_history_service.get_page_content(page_id)
+    return PageContentResponse(content=content)
 
 
 @router.post("/embed", response_model=EmbedResponse)

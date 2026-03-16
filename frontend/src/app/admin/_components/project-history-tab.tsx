@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,9 +11,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useProjectHistory, useEmbedProjects } from "@/hooks/use-project-history";
+import {
+  useProjectHistory,
+  useEmbedProjects,
+  usePageContent,
+} from "@/hooks/use-project-history";
 import { toast } from "sonner";
-import { Loader2, Database } from "lucide-react";
+import { Loader2, Database, ChevronRight, ChevronDown } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 function EmbedStatusBadge({
@@ -39,9 +44,41 @@ function EmbedStatusBadge({
   return <Badge variant="outline">미임베딩</Badge>;
 }
 
+function ExpandedContent({ pageId }: { pageId: string }) {
+  const { data, isLoading } = usePageContent(pageId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        로딩 중...
+      </div>
+    );
+  }
+
+  return (
+    <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+      {data?.content || "페이지 내용이 없습니다"}
+    </p>
+  );
+}
+
 export function ProjectHistoryTab() {
   const { data, isLoading } = useProjectHistory();
   const embedMutation = useEmbedProjects();
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  function toggleExpand(pageId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pageId)) {
+        next.delete(pageId);
+      } else {
+        next.add(pageId);
+      }
+      return next;
+    });
+  }
 
   async function handleEmbed() {
     try {
@@ -103,38 +140,68 @@ export function ProjectHistoryTab() {
                 </TableCell>
               </TableRow>
             ) : (
-              projects.map((p) => (
-                <TableRow key={p.page_id}>
-                  <TableCell className="font-medium">
-                    {p.project_name || "-"}
-                  </TableCell>
-                  <TableCell>{p.industry ?? "-"}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {p.tech_stack.map((t) => (
-                        <Badge key={t} variant="secondary" className="text-xs">
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{p.duration_months ?? "-"}</TableCell>
-                  <TableCell>
-                    {p.planned_headcount ?? "-"} / {p.actual_headcount ?? "-"}
-                  </TableCell>
-                  <TableCell>
-                    {p.contract_amount != null
-                      ? formatCurrency(p.contract_amount)
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <EmbedStatusBadge
-                      isEmbedded={p.is_embedded}
-                      needsUpdate={p.needs_update}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
+              projects.map((p) => {
+                const isExpanded = expandedIds.has(p.page_id);
+                return (
+                  <Fragment key={p.page_id}>
+                    <TableRow
+                      className="cursor-pointer"
+                      onClick={() => toggleExpand(p.page_id)}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-1">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          {p.project_name || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>{p.industry ?? "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {p.tech_stack.map((t) => (
+                            <Badge
+                              key={t}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{p.duration_months ?? "-"}</TableCell>
+                      <TableCell>
+                        {p.planned_headcount ?? "-"} /{" "}
+                        {p.actual_headcount ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        {p.contract_amount != null
+                          ? formatCurrency(p.contract_amount)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <EmbedStatusBadge
+                          isEmbedded={p.is_embedded}
+                          needsUpdate={p.needs_update}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="bg-muted/50 px-8 py-3"
+                        >
+                          <ExpandedContent pageId={p.page_id} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>

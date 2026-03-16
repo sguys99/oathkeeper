@@ -53,6 +53,15 @@ async def list_projects_with_status() -> ProjectHistoryListResponse:
     )
 
 
+async def get_page_content(page_id: str) -> str:
+    """Fetch the body content of a Notion project history page as plain text."""
+    from backend.app.integrations import notion_client
+    from backend.app.integrations.notion_service import _blocks_to_text
+
+    blocks = await notion_client.get_page_content(page_id)
+    return _blocks_to_text(blocks)
+
+
 async def embed_projects(project_ids: list[str] | None = None) -> EmbedResponse:
     """Embed project history into Pinecone with incremental logic."""
     projects = await notion_service.list_project_history()
