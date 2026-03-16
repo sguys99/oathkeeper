@@ -168,7 +168,7 @@ OathKeeper는 B2B AI 개발 Deal의 Go/No-Go 의사결정을 지원하는 에이
 - [x] `tests/unit/agent/test_resource_estimation.py`
 - [x] `tests/unit/agent/test_risk_analysis.py`
 - [x] `tests/unit/agent/test_graph.py` — 전체 그래프 흐름 테스트 (모든 에이전트 mock)
-- [ ] `tests/integration/test_analysis_e2e.py` — 실제 LLM 호출 통합 테스트 (`@pytest.mark.integration`)
+- [x] `tests/integration/test_analysis_e2e.py` — 실제 LLM 호출 통합 테스트 (`@pytest.mark.integration`)
 
 ---
 
