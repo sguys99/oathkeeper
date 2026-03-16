@@ -16,7 +16,7 @@ OathKeeper is a B2B AI development deal Go/No-Go decision support agent. It anal
 
 ```bash
 # Environment setup
-make init          # Initialize production environment (Python 3.12.9)
+make init          # Initialize production environment (Python 3.12.12)
 make init-dev      # Initialize dev environment + pre-commit hooks
 
 # Development
@@ -38,27 +38,32 @@ uv run pytest -k "test_function_name"  # Single test function
 make docker-build     # Build production Docker images
 make docker-prod-up   # Start all production services
 make docker-prod-down # Stop all production services
+
+# Frontend (run from frontend/)
+npm run dev            # Start Next.js dev server (port 3000)
+npm run build          # Production build
+npx playwright test    # Run E2E tests
 ```
 
 ## Architecture
 
-**Stack:** Python 3.12.12, FastAPI, LangGraph, LiteLLM (OpenAI GPT-4o / Claude Sonnet routing), Pinecone, PostgreSQL (async via SQLAlchemy + asyncpg), Next.js 15 + shadcn/ui frontend
+**Stack:** Python 3.12.12, FastAPI, LangGraph, LiteLLM (OpenAI GPT-4o / Claude Sonnet routing), Pinecone, PostgreSQL (async via SQLAlchemy + asyncpg), Next.js 16 + shadcn/ui frontend
 
 ### Backend (`backend/app/`)
 
 - `api/main.py` — FastAPI app factory with CORS, exception handlers, structlog middleware
-- `api/routers/` — 5 routers: `deals`, `analysis`, `settings`, `users`, `notion`
+- `api/routers/` — 7 routers: `deals`, `analysis`, `settings`, `users`, `notion`, `agent_logs`, `prompts`
 - `api/schemas/` — Pydantic request/response models
 - `api/exceptions.py` — Custom exceptions (`DealNotFound`, `AnalysisInProgress`, etc.)
 - `agent/graph.py` — LangGraph StateGraph orchestration (see flow below)
-- `agent/nodes/` — 7 node classes (one per analysis step)
+- `agent/nodes/` — 7 node factories (factory function → async node), shared utilities in `base.py` (`call_llm`, `logged_call_llm`, `parse_json_response`)
 - `agent/state.py` — `AgentState` TypedDict shared across nodes
 - `agent/llm.py` — LiteLLM-backed LLM factory (routes to `openai/gpt-4o` or `anthropic/claude-sonnet`)
 - `agent/embeddings.py` — Embedding client for vector operations
 - `agent/prompt_loader.py` — Jinja2-based YAML prompt renderer
 - `agent/service.py` — High-level service tying graph execution to DB persistence
-- `db/models/` — 6 SQLAlchemy models: `Deal`, `AnalysisResult`, `ScoringCriteria`, `CompanySettings`, `TeamMember`, `User`
-- `db/repositories/` — Async CRUD repos: `deal_repo`, `analysis_repo`, `settings_repo`, `user_repo`
+- `db/models/` — 7 SQLAlchemy models: `Deal`, `AnalysisResult`, `ScoringCriteria`, `CompanySetting`, `TeamMember`, `User`, `AgentLog`
+- `db/repositories/` — Async CRUD repos: `deal_repo`, `analysis_repo`, `settings_repo`, `user_repo`, `agent_log_repo`
 - `db/vector_store.py` — `CompanyContextStore` and `ProjectHistoryStore` (Pinecone wrappers)
 - `db/seed.py` — Default scoring criteria, company settings, team member data
 - `integrations/notion_client.py` — Low-level Notion API operations
@@ -95,13 +100,15 @@ should_continue_or_hold (conditional)
 
 ### Frontend (`frontend/src/`)
 
-- **Next.js 15 App Router** with TailwindCSS v4, shadcn/ui, React Query
+- **Next.js 16 App Router** with TailwindCSS v4, shadcn/ui, React Query
 - `/` — Deal input page (Notion selector, text input, file upload, SSE progress)
 - `/deals` — Dashboard with search, filters, pagination
 - `/deals/[id]` — Analysis results (radar chart, scores, resources, risks, similar projects, recommendations)
+- `/deals/[id]/logs` — Agent execution log viewer per deal
 - `/admin` — 5-tab settings (company info, scoring weights, team management, cost settings, project history)
-- `lib/api/` — Typed fetch-based API client
-- `hooks/` — React Query hooks (`use-deals`, `use-analysis`, `use-settings`, `use-notion`)
+- `/agent-settings` — Agent configuration and prompt management
+- `lib/api/` — Typed fetch-based API client (email-based auth via `X-User-Email` header, no JWT)
+- `hooks/` — React Query hooks (`use-deals`, `use-analysis`, `use-settings`, `use-notion`, `use-agent-logs`, `use-prompts`)
 
 ### Data Persistence
 
@@ -113,6 +120,7 @@ should_continue_or_hold (conditional)
 
 - `Deal` ← FK → `User` (created_by)
 - `Deal` → 1:1 → `AnalysisResult`
+- `Deal` → 1:many → `AgentLog` (cascade delete)
 
 ## API Endpoints
 
@@ -127,6 +135,10 @@ should_continue_or_hold (conditional)
 - `POST /api/notion/{deal_id}/save-to-notion` — Save analysis to Notion
 - `/api/settings/` — CRUD for scoring criteria, company settings, team members, costs
 - `/api/users/` — User CRUD
+- `GET /api/agent-logs/{deal_id}` — Agent execution logs for a deal
+- `GET /api/prompts/` — List prompt templates
+- `PUT /api/prompts/{name}` — Update a prompt template
+- `GET /health` — Health check
 
 ## Configuration
 
