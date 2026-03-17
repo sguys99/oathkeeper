@@ -21,7 +21,7 @@ def _make_notion_page(
     deal_info: str = "xx철강 AI 비전 프로젝트",
     customer_name: str | None = "xx철강",
     expected_amount: int | None = 100_000_000,
-    deadline: str | None = "2026-06-01",
+    duration_months: int | None = 6,
     date: str | None = "2026-03-01",
     author_name: str | None = "홍길동",
     status: str | None = "미분석",
@@ -31,7 +31,7 @@ def _make_notion_page(
         "deal_info": {"title": [{"plain_text": deal_info}] if deal_info else []},
         "customer_name": {"rich_text": [{"plain_text": customer_name}] if customer_name else []},
         "expected_amount": {"number": expected_amount},
-        "deadline": {"date": {"start": deadline} if deadline else None},
+        "duration_months": {"number": duration_months},
         "date": {"date": {"start": date} if date else None},
         "author": {"people": [{"name": author_name}] if author_name else []},
         "status": {"select": {"name": status} if status else None},
@@ -106,7 +106,7 @@ class TestListDeals:
                     deal_info="",
                     customer_name=None,
                     expected_amount=None,
-                    deadline=None,
+                    duration_months=None,
                     date=None,
                     author_name=None,
                     status=None,
@@ -122,7 +122,7 @@ class TestListDeals:
         assert deal.deal_info == ""
         assert deal.customer_name is None
         assert deal.expected_amount is None
-        assert deal.deadline is None
+        assert deal.duration_months is None
         assert deal.date is None
         assert deal.author is None
         assert deal.status is None
@@ -140,7 +140,7 @@ class TestGetDealContent:
         props = _make_notion_page(
             customer_name="성대 보일러",
             expected_amount=50_000_000,
-            deadline="2026-05-14",
+            duration_months=3,
         )["properties"]
         mock_nc.get_page_properties = AsyncMock(return_value=props)
         mock_nc.get_page_content = AsyncMock(
@@ -152,7 +152,7 @@ class TestGetDealContent:
         assert "[딜 기본 정보]" in result
         assert "고객명: 성대 보일러" in result
         assert "예상 금액: 50,000,000" in result
-        assert "납기: 2026-05-14" in result
+        assert "수행 기간(개월): 3" in result
         assert "[상세 내용]" in result
         assert "프로젝트 개요입니다." in result
         assert "기술 요구사항: AI 비전" in result
@@ -260,7 +260,7 @@ class TestPropertiesToText:
             deal_info="AI 비전 프로젝트",
             customer_name="성대 보일러",
             expected_amount=50_000_000,
-            deadline="2026-05-14",
+            duration_months=3,
             date="2026-03-15",
             author_name="유광명",
         )["properties"]
@@ -270,7 +270,7 @@ class TestPropertiesToText:
         assert "딜 정보: AI 비전 프로젝트" in result
         assert "고객명: 성대 보일러" in result
         assert "예상 금액: 50,000,000" in result
-        assert "납기: 2026-05-14" in result
+        assert "수행 기간(개월): 3" in result
         assert "등록일: 2026-03-15" in result
         assert "작성자: 유광명" in result
 
@@ -282,7 +282,7 @@ class TestPropertiesToText:
         props = _make_notion_page(
             customer_name="테스트",
             expected_amount=None,
-            deadline=None,
+            duration_months=None,
             author_name=None,
         )["properties"]
 
@@ -290,7 +290,7 @@ class TestPropertiesToText:
 
         assert "고객명: 테스트" in result
         assert "예상 금액" not in result
-        assert "납기" not in result
+        assert "수행 기간" not in result
         assert "작성자" not in result
 
 

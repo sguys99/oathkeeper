@@ -18,7 +18,11 @@ export function DealOverviewSidebar({
       key: "expected_amount",
       format: (v) => formatCurrency(v as number),
     },
-    { label: "납기", key: "deadline" },
+    {
+      label: "수행 기간",
+      key: "duration_months",
+      format: (v) => `${v}개월`,
+    },
     { label: "결제 조건", key: "payment_terms" },
   ];
 

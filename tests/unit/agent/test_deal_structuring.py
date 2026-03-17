@@ -17,7 +17,7 @@ SAMPLE_STRUCTURED = {
     "project_summary": "AI 기반 품질 검사 시스템",
     "tech_requirements": ["Python", "TensorFlow"],
     "expected_amount": 500000000,
-    "deadline": "2026-06-30",
+    "duration_months": 6,
     "payment_terms": "3/3/4",
     "special_notes": None,
     "missing_fields": [],

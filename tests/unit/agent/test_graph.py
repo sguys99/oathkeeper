@@ -13,7 +13,7 @@ class TestRouteAfterStructuring:
     def test_hold_when_many_missing_fields(self):
         state = {
             "structured_deal": {
-                "missing_fields": ["customer_name", "expected_amount", "deadline"],
+                "missing_fields": ["customer_name", "expected_amount", "duration_months"],
             },
         }
         sends = _route_after_structuring(state)
@@ -58,7 +58,7 @@ class TestHoldVerdictNode:
     def test_returns_hold_state(self):
         state = {
             "structured_deal": {
-                "missing_fields": ["customer_name", "budget", "deadline"],
+                "missing_fields": ["customer_name", "budget", "duration_months"],
             },
         }
         result = hold_verdict_node(state)

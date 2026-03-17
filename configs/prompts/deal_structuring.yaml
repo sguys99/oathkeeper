@@ -27,7 +27,7 @@ user_prompt: |
     "project_summary": "요청 배경, 목적, 기대 효과 요약 (string | null)",
     "tech_requirements": ["필요 기술 스택 목록 (list[string])"],
     "expected_amount": 0,
-    "deadline": "요구 납기 (string | null)",
+    "duration_months": "수행 기간 - 개월 수 (integer | null)",
     "payment_terms": "결제 조건 (string | null)",
     "special_notes": "보안 요건, 특별 요구, 제약 조건 (string | null)",
     "missing_fields": ["미입력/불명확 항목 목록 (list[string])"]
@@ -52,8 +52,8 @@ output_schema:
         type: string
     expected_amount:
       type: ["integer", "null"]
-    deadline:
-      type: ["string", "null"]
+    duration_months:
+      type: ["integer", "null"]
     payment_terms:
       type: ["string", "null"]
     special_notes:
@@ -69,7 +69,7 @@ output_schema:
     - project_summary
     - tech_requirements
     - expected_amount
-    - deadline
+    - duration_months
     - payment_terms
     - special_notes
     - missing_fields

@@ -179,7 +179,7 @@ def mock_notion_service():
                 "deal_info": "xx철강 AI 프로젝트",
                 "customer_name": "xx철강",
                 "expected_amount": 500_000_000,
-                "deadline": "2026-09-30",
+                "duration_months": 6,
                 "author": "김영수",
                 "status": "미분석",
             },

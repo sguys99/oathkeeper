@@ -9,9 +9,8 @@ STRUCTURED_DEAL = {
     "customer_name": "xx철강",
     "customer_industry": "제조",
     "expected_amount": 500_000_000,
-    "duration_months": 6,
     "tech_requirements": ["컴퓨터 비전", "딥러닝", "엣지 디바이스"],
-    "deadline": "2026-09-30",
+    "duration_months": 6,
     "additional_info": "고로 라인 실시간 이미지 분석, 기존 MES 연동",
     "missing_fields": [],
 }

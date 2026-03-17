@@ -12,7 +12,7 @@ class NotionDeal(BaseModel):
     deal_info: str  # Title 속성 (고객사 + 프로젝트명)
     customer_name: str | None = None
     expected_amount: int | None = None
-    deadline: str | None = None
+    duration_months: int | None = None
     date: datetime | None = None
     author: str | None = None  # Person 속성에서 이름 추출
     status: str | None = None  # 미분석 / 분석중 / 완료

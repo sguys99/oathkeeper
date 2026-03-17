@@ -215,7 +215,7 @@ def _parse_deal_page(page: dict[str, Any]) -> NotionDeal:
         deal_info=_extract_title(props.get("deal_info", {})),
         customer_name=_extract_rich_text(props.get("customer_name", {})),
         expected_amount=_extract_number(props.get("expected_amount", {})),
-        deadline=_extract_date(props.get("deadline", {})),
+        duration_months=_extract_number(props.get("duration_months", {})),
         date=_extract_date_as_datetime(props.get("date", {})),
         author=_extract_person(props.get("author", {})),
         status=_extract_select(props.get("status", {})),
@@ -255,9 +255,9 @@ def _properties_to_text(props: dict[str, Any]) -> str:
     if amount is not None:
         parts.append(f"예상 금액: {amount:,}")
 
-    deadline = _extract_date(props.get("deadline", {}))
-    if deadline:
-        parts.append(f"납기: {deadline}")
+    duration_months = _extract_number(props.get("duration_months", {}))
+    if duration_months is not None:
+        parts.append(f"수행 기간(개월): {duration_months}")
 
     date = _extract_date(props.get("date", {}))
     if date:
