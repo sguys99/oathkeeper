@@ -1,6 +1,5 @@
 """Final verdict node — generate executive markdown report."""
 
-import json
 import logging
 import uuid
 
@@ -20,12 +19,12 @@ def make_final_verdict_node():
             tpl = load_prompt("final_verdict")
             system_prompt, user_prompt = tpl.render(
                 structured_deal=state.get("structured_deal", {}),
-                scores=json.dumps(state.get("scores", []), ensure_ascii=False),
+                scores=state.get("scores", []),
                 total_score=state.get("total_score", 0.0),
                 verdict=state.get("verdict", "pending"),
-                resource_estimate=json.dumps(state.get("resource_estimate", {}), ensure_ascii=False),
-                risks=json.dumps(state.get("risks", []), ensure_ascii=False),
-                similar_projects=json.dumps(state.get("similar_projects", []), ensure_ascii=False),
+                resource_estimate=state.get("resource_estimate", {}),
+                risks=state.get("risks", []),
+                similar_projects=state.get("similar_projects", []),
             )
 
             # LLM returns raw markdown (not JSON)
