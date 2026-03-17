@@ -53,12 +53,19 @@ async def list_projects_with_status() -> ProjectHistoryListResponse:
     )
 
 
-async def get_page_content(page_id: str) -> str:
-    """Fetch the body content of a Notion project history page as plain text."""
+async def get_page_content(page_id: str, *, as_markdown: bool = False) -> str:
+    """Fetch the body content of a Notion project history page.
+
+    Args:
+        page_id: Notion page ID.
+        as_markdown: If True, return Markdown; otherwise plain text.
+    """
     from backend.app.integrations import notion_client
-    from backend.app.integrations.notion_service import _blocks_to_text
+    from backend.app.integrations.notion_service import _blocks_to_markdown, _blocks_to_text
 
     blocks = await notion_client.get_page_content(page_id)
+    if as_markdown:
+        return _blocks_to_markdown(blocks)
     return _blocks_to_text(blocks)
 
 

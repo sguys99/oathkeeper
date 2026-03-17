@@ -289,6 +289,93 @@ def _blocks_to_text(blocks: list[dict[str, Any]], depth: int = 0) -> str:
     return "\n".join(lines)
 
 
+def _rich_texts_to_markdown(rich_texts: list[dict[str, Any]]) -> str:
+    """Convert Notion rich_text array to Markdown, preserving annotations."""
+    parts: list[str] = []
+    for rt in rich_texts:
+        text = rt.get("plain_text", "")
+        if not text:
+            continue
+        annotations = rt.get("annotations", {})
+        if annotations.get("code"):
+            text = f"`{text}`"
+        if annotations.get("bold"):
+            text = f"**{text}**"
+        if annotations.get("italic"):
+            text = f"*{text}*"
+        if annotations.get("strikethrough"):
+            text = f"~~{text}~~"
+        parts.append(text)
+    return "".join(parts)
+
+
+def _blocks_to_markdown(blocks: list[dict[str, Any]], depth: int = 0) -> str:
+    """Convert Notion blocks to Markdown, preserving structure and annotations."""
+    _LIST_TYPES = {"bulleted_list_item", "numbered_list_item", "to_do"}
+    lines: list[str] = []
+    indent = "  " * depth
+    numbered_counter = 0
+    prev_type = ""
+
+    for block in blocks:
+        block_type = block.get("type", "")
+        data = block.get(block_type, {})
+        rich_texts = data.get("rich_text") or []
+        text = _rich_texts_to_markdown(rich_texts)
+
+        # Insert blank line between different block groups for CommonMark separation
+        if lines and not (prev_type in _LIST_TYPES and block_type in _LIST_TYPES):
+            lines.append("")
+
+        if block_type == "numbered_list_item":
+            numbered_counter += 1
+        else:
+            numbered_counter = 0
+
+        if block_type in ("heading_1", "heading_2", "heading_3"):
+            level = {"heading_1": "#", "heading_2": "##", "heading_3": "###"}[block_type]
+            if text.strip():
+                lines.append(f"{level} {text}")
+        elif block_type == "bulleted_list_item":
+            if text.strip():
+                lines.append(f"{indent}- {text}")
+        elif block_type == "numbered_list_item":
+            if text.strip():
+                lines.append(f"{indent}{numbered_counter}. {text}")
+        elif block_type == "to_do":
+            checked = data.get("checked", False)
+            marker = "[x]" if checked else "[ ]"
+            if text.strip():
+                lines.append(f"{indent}- {marker} {text}")
+        elif block_type == "quote":
+            if text.strip():
+                lines.append(f"{indent}> {text}")
+        elif block_type == "code":
+            language = data.get("language", "")
+            lines.append(f"{indent}```{language}")
+            if text:
+                lines.append(f"{indent}{text}")
+            lines.append(f"{indent}```")
+        elif block_type == "divider":
+            lines.append("---")
+        elif block_type == "toggle":
+            if text.strip():
+                lines.append(f"{indent}**{text}**")
+        else:
+            if text.strip():
+                lines.append(f"{indent}{text}")
+
+        children = block.get("children", [])
+        if children:
+            child_text = _blocks_to_markdown(children, depth + 1)
+            if child_text:
+                lines.append(child_text)
+
+        prev_type = block_type
+
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Decision page builders
 # ---------------------------------------------------------------------------

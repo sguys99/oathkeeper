@@ -22,7 +22,7 @@ async def list_project_history():
 @router.get("/{page_id}/content", response_model=PageContentResponse)
 async def get_page_content(page_id: str):
     """Get the body content of a Notion project history page."""
-    content = await project_history_service.get_page_content(page_id)
+    content = await project_history_service.get_page_content(page_id, as_markdown=True)
     return PageContentResponse(content=content)
 
 

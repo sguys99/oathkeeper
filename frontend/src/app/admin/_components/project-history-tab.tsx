@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -58,9 +59,9 @@ function ExpandedContent({ pageId }: { pageId: string }) {
   }
 
   return (
-    <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-      {data?.content || "페이지 내용이 없습니다"}
-    </p>
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      <ReactMarkdown>{data?.content || "페이지 내용이 없습니다"}</ReactMarkdown>
+    </div>
   );
 }
 
