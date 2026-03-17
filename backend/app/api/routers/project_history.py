@@ -26,6 +26,12 @@ async def get_page_content(page_id: str):
     return PageContentResponse(content=content)
 
 
+@router.delete("/{page_id}/embedding", status_code=204)
+async def delete_embedding(page_id: str):
+    """Delete embedding for a project from Pinecone."""
+    await project_history_service.delete_embedding(page_id)
+
+
 @router.post("/embed", response_model=EmbedResponse)
 async def embed_project_history(body: EmbedRequest | None = None):
     """Run incremental embedding for project history."""

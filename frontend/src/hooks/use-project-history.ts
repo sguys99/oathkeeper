@@ -5,6 +5,7 @@ import {
   listProjectHistory,
   getPageContent,
   embedProjects,
+  deleteEmbedding,
 } from "@/lib/api/project-history";
 import type { EmbedRequest } from "@/lib/api/types";
 
@@ -27,6 +28,16 @@ export function useEmbedProjects() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data?: EmbedRequest) => embedProjects(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-history"] });
+    },
+  });
+}
+
+export function useDeleteEmbedding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (pageId: string) => deleteEmbedding(pageId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-history"] });
     },

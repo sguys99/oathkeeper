@@ -62,6 +62,12 @@ async def get_page_content(page_id: str) -> str:
     return _blocks_to_text(blocks)
 
 
+async def delete_embedding(page_id: str) -> None:
+    """Delete a project embedding from Pinecone."""
+    store = ProjectHistoryStore()
+    await store.delete(page_id)
+
+
 async def embed_projects(project_ids: list[str] | None = None) -> EmbedResponse:
     """Embed project history into Pinecone with incremental logic."""
     projects = await notion_service.list_project_history()

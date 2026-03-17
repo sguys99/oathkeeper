@@ -14,10 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import {
   useProjectHistory,
   useEmbedProjects,
+  useDeleteEmbedding,
   usePageContent,
 } from "@/hooks/use-project-history";
 import { toast } from "sonner";
-import { Loader2, Database, ChevronRight, ChevronDown } from "lucide-react";
+import { Loader2, Database, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 function EmbedStatusBadge({
@@ -66,6 +67,7 @@ function ExpandedContent({ pageId }: { pageId: string }) {
 export function ProjectHistoryTab() {
   const { data, isLoading } = useProjectHistory();
   const embedMutation = useEmbedProjects();
+  const deleteMutation = useDeleteEmbedding();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   function toggleExpand(pageId: string) {
@@ -82,7 +84,7 @@ export function ProjectHistoryTab() {
 
   async function handleEmbed() {
     try {
-      const result = await embedMutation.mutateAsync();
+      const result = await embedMutation.mutateAsync(undefined);
       toast.success(
         `임베딩 완료: ${result.embedded}개 처리, ${result.skipped}개 스킵${result.failed > 0 ? `, ${result.failed}개 실패` : ""}`,
       );
@@ -183,10 +185,33 @@ export function ProjectHistoryTab() {
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <EmbedStatusBadge
-                          isEmbedded={p.is_embedded}
-                          needsUpdate={p.needs_update}
-                        />
+                        <div className="flex items-center gap-2">
+                          <EmbedStatusBadge
+                            isEmbedded={p.is_embedded}
+                            needsUpdate={p.needs_update}
+                          />
+                          {p.is_embedded && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              disabled={deleteMutation.isPending}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteMutation.mutate(p.page_id, {
+                                  onSuccess: () =>
+                                    toast.success(
+                                      `${p.project_name} 임베딩이 삭제되었습니다`,
+                                    ),
+                                  onError: () =>
+                                    toast.error("임베딩 삭제에 실패했습니다"),
+                                });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                     {isExpanded && (
