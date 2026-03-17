@@ -120,7 +120,7 @@ oathkeeper/
 ├── backend/
 │   └── app/
 │       ├── api/               # FastAPI 라우터, Pydantic 스키마
-│       │   ├── routers/       # deals, analysis, users, settings, notion
+│       │   ├── routers/       # deals, analysis, users, settings, notion, agent_logs, prompts, project_history
 │       │   └── schemas/       # 요청/응답 스키마
 │       ├── agent/             # LangGraph 에이전트
 │       │   ├── graph.py       # 메인 그래프 정의
@@ -132,8 +132,11 @@ oathkeeper/
 │       │   ├── models/        # SQLAlchemy ORM 모델
 │       │   ├── repositories/  # CRUD 리포지토리
 │       │   ├── migrations/    # Alembic 마이그레이션
+│       │   ├── vector_store.py # Pinecone Vector Store 래퍼
 │       │   ├── pinecone_client.py
 │       │   └── seed.py        # 시드 데이터
+│       ├── services/          # 비즈니스 로직 서비스
+│       │   └── project_history_service.py
 │       ├── integrations/      # 외부 서비스 연동
 │       │   ├── notion_client.py
 │       │   ├── notion_service.py
@@ -150,8 +153,10 @@ oathkeeper/
 │       ├── app/               # Next.js App Router 페이지
 │       │   ├── _components/   # 홈 페이지 (Deal 분석 요청)
 │       │   ├── deals/         # Deal 현황 대시보드
-│       │   │   └── [id]/      # Deal 상세 분석 결과
-│       │   └── admin/         # 관리자 설정 페이지
+│       │   │   └── [id]/      # Deal 상세 분석 결과 + 로그
+│       │   ├── admin/         # 관리자 설정 페이지
+│       │   ├── agent-logs/    # 에이전트 실행 로그
+│       │   └── agent-settings/ # 에이전트 설정 및 프롬프트 관리
 │       ├── components/
 │       │   ├── ui/            # shadcn/ui 컴포넌트
 │       │   ├── common/        # 공통 컴포넌트 (차트, 배지 등)
@@ -181,7 +186,10 @@ oathkeeper/
 | `/` | Deal 분석 요청 페이지 |
 | `/deals` | Deal 현황 대시보드 |
 | `/deals/:id` | Deal 상세 분석 결과 |
+| `/deals/:id/logs` | Deal별 에이전트 실행 로그 |
 | `/admin` | 관리자 설정 페이지 |
+| `/agent-logs` | 에이전트 실행 로그 |
+| `/agent-settings` | 에이전트 설정 및 프롬프트 관리 |
 
 ---
 
@@ -189,7 +197,7 @@ oathkeeper/
 
 ### 사전 요구사항
 
-- Python 3.12.12+
+- Python 3.12+
 - [uv](https://docs.astral.sh/uv/) 패키지 매니저
 - Node.js 18+ (프론트엔드)
 - Docker & Docker Compose (데이터베이스)
@@ -223,25 +231,48 @@ cp .env.example .env
 `.env` 파일에 필요한 값을 입력합니다:
 
 ```env
-# LLM 설정 (openai 또는 claude)
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
+# 애플리케이션
+APP_NAME="Oath Keeper"
+APP_VERSION="0.1.0"
+DEBUG=True
+ENVIRONMENT=development
 
 # 데이터베이스
-DATABASE_URL=postgresql://user:password@localhost:5432/oathkeeper
+DATABASE_URL=postgresql+asyncpg://oathkeeper:oathkeeper@localhost:5432/oathkeeper
 
-# Notion 연동
-NOTION_API_KEY=secret_...
-NOTION_DEAL_DB_ID=...
-NOTION_DECISION_DB_ID=...
+# LLM 설정 (openai 또는 claude)
+LLM_PROVIDER=openai
 
-# Slack 알림
-SLACK_WEBHOOK_URL=https://hooks.slack.com/...
+# OpenAI
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# Anthropic Claude
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
 
 # Pinecone Vector DB
-PINECONE_API_KEY=...
-PINECONE_ENVIRONMENT=...
+PINECONE_API_KEY=
+PINECONE_ENVIRONMENT=
+PINECONE_COMPANY_CONTEXT_INDEX=company-context
+PINECONE_PROJECT_HISTORY_INDEX=project-history
+
+# Notion 연동
+NOTION_API_KEY=
+NOTION_DEAL_DB_ID=
+NOTION_DECISION_DB_ID=
+NOTION_PROJECT_HISTORY_DB_ID=
+
+# Slack 알림
+SLACK_WEBHOOK_URL=
+
+# 모니터링
+SENTRY_DSN=
+LOG_LEVEL=INFO
+
+# CORS
+CORS_ORIGINS=["http://localhost:3000"]
 ```
 
 ### 실행
