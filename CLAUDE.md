@@ -16,8 +16,8 @@ OathKeeper is a B2B AI development deal Go/No-Go decision support agent. It anal
 
 ```bash
 # Environment setup
-make init          # Initialize production environment (Python 3.12.12)
-make init-dev      # Initialize dev environment + pre-commit hooks
+make init          # Initialize production environment (Python 3.12.9)
+make init-dev      # Initialize dev environment (Python 3.12.12) + pre-commit hooks
 
 # Development
 make run           # Start FastAPI server (uvicorn via main.py)
@@ -28,9 +28,9 @@ make migrate       # Run Alembic migrations (alembic upgrade head)
 make seed          # Insert seed data (scoring criteria, company settings, team members)
 
 # Testing (default runs unit tests only)
-uv run pytest                          # Unit tests (default via -m unit)
-uv run pytest -m integration           # Integration tests (require API keys)
-uv run pytest -m e2e --timeout=200     # E2E tests (require running services)
+make test                              # Unit tests (default via -m unit)
+make test-integration                  # Integration tests (require API keys)
+make test-e2e                          # E2E tests (require running services, --timeout=200)
 uv run pytest tests/path/test_file.py  # Single test file
 uv run pytest -k "test_function_name"  # Single test function
 
@@ -42,7 +42,7 @@ make docker-prod-down # Stop all production services
 # Frontend (run from frontend/)
 npm run dev            # Start Next.js dev server (port 3000)
 npm run build          # Production build
-npx playwright test    # Run E2E tests
+npm run test:e2e       # Run Playwright E2E tests
 ```
 
 ## Architecture
@@ -52,11 +52,12 @@ npx playwright test    # Run E2E tests
 ### Backend (`backend/app/`)
 
 - `api/main.py` — FastAPI app factory with CORS, exception handlers, structlog middleware
-- `api/routers/` — 7 routers: `deals`, `analysis`, `settings`, `users`, `notion`, `agent_logs`, `prompts`
+- `api/routers/` — 8 routers: `deals`, `analysis`, `settings`, `users`, `notion`, `agent_logs`, `prompts`, `project_history`
 - `api/schemas/` — Pydantic request/response models
 - `api/exceptions.py` — Custom exceptions (`DealNotFound`, `AnalysisInProgress`, etc.)
 - `agent/graph.py` — LangGraph StateGraph orchestration (see flow below)
-- `agent/nodes/` — 7 node factories (factory function → async node), shared utilities in `base.py` (`call_llm`, `logged_call_llm`, `parse_json_response`)
+- `agent/nodes/` — 6 node factories (factory function → async node) + inline `hold_verdict_node` in `graph.py`
+- `agent/base.py` — Shared utilities (`call_llm`, `logged_call_llm`, `parse_json_response`, `MISSING_FIELDS_THRESHOLD`)
 - `agent/state.py` — `AgentState` TypedDict shared across nodes
 - `agent/llm.py` — LiteLLM-backed LLM factory (routes to `openai/gpt-4o` or `anthropic/claude-sonnet`)
 - `agent/embeddings.py` — Embedding client for vector operations
@@ -107,6 +108,7 @@ should_continue_or_hold (conditional)
 - `/deals/[id]/logs` — Agent execution log viewer per deal
 - `/admin` — 5-tab settings (company info, scoring weights, team management, cost settings, project history)
 - `/agent-settings` — Agent configuration and prompt management
+- `/agent-logs` — Agent execution log viewer (all deals)
 - `lib/api/` — Typed fetch-based API client (email-based auth via `X-User-Email` header, no JWT)
 - `hooks/` — React Query hooks (`use-deals`, `use-analysis`, `use-settings`, `use-notion`, `use-agent-logs`, `use-prompts`)
 
