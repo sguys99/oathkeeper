@@ -98,6 +98,11 @@ async def embed_projects(project_ids: list[str] | None = None) -> EmbedResponse:
             continue
 
         try:
+            page_content = await get_page_content(project.page_id)
+            embed_text = project.summary
+            if page_content:
+                embed_text = f"{project.summary}\n\n{page_content}"
+
             metadata = {
                 "project_name": project.project_name or "",
                 "industry": project.industry or "",
@@ -109,7 +114,7 @@ async def embed_projects(project_ids: list[str] | None = None) -> EmbedResponse:
             }
             await store.upsert(
                 project_id=project.page_id,
-                summary=project.summary,
+                summary=embed_text,
                 metadata=metadata,
                 notion_last_edited=project.last_edited_time,
             )
