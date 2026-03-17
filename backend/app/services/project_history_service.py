@@ -105,9 +105,7 @@ async def embed_projects(project_ids: list[str] | None = None) -> EmbedResponse:
 
         try:
             page_content = await get_page_content(project.page_id)
-            embed_text = project.summary
-            if page_content:
-                embed_text = f"{project.summary}\n\n{page_content}"
+            embed_text = page_content if page_content else project.summary
 
             metadata = {
                 "project_name": project.project_name or "",
