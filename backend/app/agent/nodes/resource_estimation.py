@@ -1,6 +1,5 @@
 """Resource estimation node — calculate team, duration, and cost."""
 
-import json
 import logging
 import uuid
 
@@ -46,7 +45,7 @@ def make_resource_estimation_node(
                 structured_deal=structured_deal,
                 team_members=team_members,
                 company_rates=company_rates,
-                past_projects=json.dumps(past_projects, ensure_ascii=False),
+                past_projects=past_projects,
             )
 
             deal_id = uuid.UUID(state["deal_id"])
