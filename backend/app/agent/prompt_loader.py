@@ -15,6 +15,7 @@ _jinja_env = Environment(
     keep_trailing_newline=True,
     undefined=Undefined,
 )
+_jinja_env.policies["json.dumps_kwargs"] = {"ensure_ascii": False}
 
 
 class PromptNotFoundError(Exception):
