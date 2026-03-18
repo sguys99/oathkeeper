@@ -1,4 +1,4 @@
-"""Settings repository — CRUD for scoring_criteria, company_settings, team_members."""
+"""Settings repository — CRUD for scoring_criteria, company_settings, team_members, cost_items."""
 
 import uuid
 
@@ -6,6 +6,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.db.models.company_setting import CompanySetting
+from backend.app.db.models.cost_item import CostItem
 from backend.app.db.models.scoring_criteria import ScoringCriteria
 from backend.app.db.models.team_member import TeamMember
 
@@ -132,5 +133,53 @@ async def update_team_member(
 
 async def delete_team_member(session: AsyncSession, member_id: uuid.UUID) -> bool:
     result = await session.execute(delete(TeamMember).where(TeamMember.id == member_id))
+    await session.flush()
+    return result.rowcount > 0
+
+
+# ---------------------------------------------------------------------------
+# CostItem
+# ---------------------------------------------------------------------------
+
+
+async def list_cost_items(session: AsyncSession) -> list[CostItem]:
+    result = await session.execute(select(CostItem).order_by(CostItem.name))
+    return list(result.scalars().all())
+
+
+async def create_cost_item(
+    session: AsyncSession,
+    *,
+    name: str,
+    amount: int,
+    description: str | None = None,
+) -> CostItem:
+    item = CostItem(
+        id=uuid.uuid4(),
+        name=name,
+        amount=amount,
+        description=description,
+    )
+    session.add(item)
+    await session.flush()
+    return item
+
+
+async def update_cost_item(
+    session: AsyncSession,
+    item_id: uuid.UUID,
+    **kwargs,
+) -> CostItem | None:
+    item = await session.get(CostItem, item_id)
+    if item is None:
+        return None
+    for key, value in kwargs.items():
+        setattr(item, key, value)
+    await session.flush()
+    return item
+
+
+async def delete_cost_item(session: AsyncSession, item_id: uuid.UUID) -> bool:
+    result = await session.execute(delete(CostItem).where(CostItem.id == item_id))
     await session.flush()
     return result.rowcount > 0

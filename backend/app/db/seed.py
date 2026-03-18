@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.db.models.company_setting import CompanySetting
+from backend.app.db.models.cost_item import CostItem
 from backend.app.db.models.scoring_criteria import ScoringCriteria
 from backend.app.db.models.team_member import TeamMember
 from backend.app.db.session import AsyncSessionLocal
@@ -93,6 +94,13 @@ TEAM_MEMBER_DEFAULTS = [
     {"name": "이PM", "role": "PM", "monthly_rate": 1000},
 ]
 
+COST_ITEM_DEFAULTS = [
+    {"name": "HW 서버 비용", "amount": 0, "description": "하드웨어 서버 구매/임대 비용"},
+    {"name": "SW 라이선스 비용", "amount": 0, "description": "소프트웨어 라이선스 비용"},
+    {"name": "클라우드 인프라 비용", "amount": 0, "description": "클라우드 인프라 사용 비용"},
+    {"name": "기타 비용", "amount": 0, "description": "기타 프로젝트 관련 비용"},
+]
+
 
 async def seed_scoring_criteria(session: AsyncSession) -> int:
     """Insert default scoring criteria if table is empty. Returns count."""
@@ -136,18 +144,34 @@ async def seed_team_members(session: AsyncSession) -> int:
     return count
 
 
+async def seed_cost_items(session: AsyncSession) -> int:
+    """Insert default cost items if table is empty. Returns count."""
+    result = await session.execute(select(CostItem.id).limit(1))
+    if result.scalar_one_or_none() is not None:
+        return 0
+
+    count = 0
+    for item in COST_ITEM_DEFAULTS:
+        cost_item = CostItem(id=uuid.uuid4(), **item)
+        session.add(cost_item)
+        count += 1
+    return count
+
+
 async def run_seed() -> None:
     """Run all seed functions."""
     async with AsyncSessionLocal() as session:
         criteria_count = await seed_scoring_criteria(session)
         settings_count = await seed_company_settings(session)
         members_count = await seed_team_members(session)
+        cost_items_count = await seed_cost_items(session)
         await session.commit()
 
     print(
         f"Seeded {criteria_count} scoring criteria, "
         f"{settings_count} company settings, "
-        f"{members_count} team members.",
+        f"{members_count} team members, "
+        f"{cost_items_count} cost items.",
     )
 
 

@@ -4,68 +4,208 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpsertCompanySetting, useCompanySetting } from "@/hooks/use-settings";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  useCostItems,
+  useCreateCostItem,
+  useUpdateCostItem,
+  useDeleteCostItem,
+} from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import type { CostItemCreate, CostItemResponse } from "@/lib/api/types";
 
-const COST_KEYS = [
-  { key: "cost_hw_server", label: "HW 서버 비용" },
-  { key: "cost_sw_license", label: "SW 라이선스 비용" },
-  { key: "cost_cloud_infra", label: "클라우드 인프라 비용" },
-  { key: "cost_etc", label: "기타 비용" },
-];
+function CostItemFormDialog({
+  open,
+  onOpenChange,
+  item,
+  onSubmit,
+  isPending,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  item: CostItemResponse | null;
+  onSubmit: (data: CostItemCreate) => void;
+  isPending: boolean;
+}) {
+  const [name, setName] = useState(item?.name ?? "");
+  const [amount, setAmount] = useState(item?.amount?.toString() ?? "");
+  const [description, setDescription] = useState(item?.description ?? "");
 
-function CostField({ settingKey, label }: { settingKey: string; label: string }) {
-  const { data, isLoading } = useCompanySetting(settingKey);
-  const upsert = useUpsertCompanySetting();
-  const [value, setValue] = useState<string | null>(null);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{item ? "비용 항목 수정" : "비용 항목 추가"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>항목명</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>비용 (원)</Label>
+            <Input
+              inputMode="numeric"
+              value={amount}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9]/g, "");
+                setAmount(v);
+              }}
+              placeholder="숫자 입력"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>설명</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="선택 사항"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={() =>
+                onSubmit({
+                  name,
+                  amount: parseInt(amount) || 0,
+                  description: description || null,
+                })
+              }
+              disabled={!name || amount === "" || isPending}
+            >
+              {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+              {item ? "수정" : "추가"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-  const displayValue = value ?? data?.value ?? "";
+export function CostSettingsTab() {
+  const { data: items, isLoading } = useCostItems();
+  const createItem = useCreateCostItem();
+  const updateItem = useUpdateCostItem();
+  const deleteItem = useDeleteCostItem();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<CostItemResponse | null>(null);
 
-  async function handleSave() {
+  async function handleSubmit(data: CostItemCreate) {
     try {
-      await upsert.mutateAsync({
-        key: settingKey,
-        value: displayValue,
-        description: label,
-      });
-      toast.success(`${label} 저장 완료`);
+      if (editing) {
+        await updateItem.mutateAsync({ itemId: editing.id, data });
+        toast.success("비용 항목이 수정되었습니다");
+      } else {
+        await createItem.mutateAsync(data);
+        toast.success("비용 항목이 추가되었습니다");
+      }
+      setDialogOpen(false);
+      setEditing(null);
     } catch {
       toast.error("저장에 실패했습니다");
     }
   }
 
-  return (
-    <div className="flex items-end gap-2">
-      <div className="flex-1 space-y-1">
-        <Label className="text-sm">{label}</Label>
-        <Input
-          value={displayValue}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="비용 또는 설명 입력"
-          disabled={isLoading}
-        />
-      </div>
-      <Button
-        size="sm"
-        onClick={handleSave}
-        disabled={upsert.isPending || isLoading}
-      >
-        {upsert.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "저장"}
-      </Button>
-    </div>
-  );
-}
+  async function handleDelete(id: string) {
+    try {
+      await deleteItem.mutateAsync(id);
+      toast.success("비용 항목이 삭제되었습니다");
+    } catch {
+      toast.error("삭제에 실패했습니다");
+    }
+  }
 
-export function CostSettingsTab() {
+  if (isLoading) {
+    return <div className="py-8 text-center text-muted-foreground">로딩 중...</div>;
+  }
+
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        프로젝트 비용 산정에 사용되는 항목별 비용을 설정합니다.
-      </p>
-      {COST_KEYS.map(({ key, label }) => (
-        <CostField key={key} settingKey={key} label={label} />
-      ))}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setDialogOpen(true);
+          }}
+        >
+          <Plus className="mr-1 h-4 w-4" />
+          비용 항목 추가
+        </Button>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>항목명</TableHead>
+              <TableHead>비용</TableHead>
+              <TableHead>설명</TableHead>
+              <TableHead className="w-[100px]" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items?.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>{formatCurrency(item.amount)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {item.description ?? "-"}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        setEditing(item);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <CostItemFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        item={editing}
+        onSubmit={handleSubmit}
+        isPending={createItem.isPending || updateItem.isPending}
+      />
     </div>
   );
 }

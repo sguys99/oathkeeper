@@ -10,6 +10,9 @@ from backend.app.api.schemas.settings import (
     CompanySettingBatchUpsert,
     CompanySettingResponse,
     CompanySettingUpsert,
+    CostItemCreate,
+    CostItemResponse,
+    CostItemUpdate,
     ScoringCriteriaResponse,
     TeamMemberCreate,
     TeamMemberResponse,
@@ -148,4 +151,62 @@ async def delete_team_member(
     deleted = await settings_repo.delete_team_member(db, member_id)
     if not deleted:
         raise OathKeeperError(f"Team member {member_id} not found", status_code=404)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# ---------------------------------------------------------------------------
+# Cost Items
+# ---------------------------------------------------------------------------
+
+
+@router.get("/cost-items", response_model=list[CostItemResponse])
+async def list_cost_items(
+    db: AsyncSession = Depends(get_db),
+) -> list[CostItemResponse]:
+    items = await settings_repo.list_cost_items(db)
+    return [CostItemResponse.model_validate(i) for i in items]
+
+
+@router.post(
+    "/cost-items",
+    response_model=CostItemResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_cost_item(
+    body: CostItemCreate,
+    db: AsyncSession = Depends(get_db),
+) -> CostItemResponse:
+    item = await settings_repo.create_cost_item(
+        db,
+        name=body.name,
+        amount=body.amount,
+        description=body.description,
+    )
+    return CostItemResponse.model_validate(item)
+
+
+@router.put("/cost-items/{item_id}", response_model=CostItemResponse)
+async def update_cost_item(
+    item_id: uuid.UUID,
+    body: CostItemUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> CostItemResponse:
+    update_data = body.model_dump(exclude_unset=True)
+    if not update_data:
+        raise OathKeeperError("No fields to update", status_code=400)
+    item = await settings_repo.update_cost_item(db, item_id, **update_data)
+    if item is None:
+        raise OathKeeperError(f"Cost item {item_id} not found", status_code=404)
+    await db.refresh(item)
+    return CostItemResponse.model_validate(item)
+
+
+@router.delete("/cost-items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cost_item(
+    item_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    deleted = await settings_repo.delete_cost_item(db, item_id)
+    if not deleted:
+        raise OathKeeperError(f"Cost item {item_id} not found", status_code=404)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

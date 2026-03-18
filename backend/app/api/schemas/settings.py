@@ -87,3 +87,27 @@ class TeamMemberResponse(OrmBase):
     available_from: date | None = None
     created_at: datetime
     updated_at: datetime
+
+
+# --- Cost Items ---
+
+
+class CostItemCreate(BaseModel):
+    name: str
+    amount: int = Field(ge=0)
+    description: str | None = None
+
+
+class CostItemUpdate(BaseModel):
+    name: str | None = None
+    amount: int | None = Field(default=None, ge=0)
+    description: str | None = None
+
+
+class CostItemResponse(OrmBase):
+    id: uuid.UUID
+    name: str
+    amount: int
+    description: str | None = None
+    created_at: datetime
+    updated_at: datetime
