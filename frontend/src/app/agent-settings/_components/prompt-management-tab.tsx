@@ -54,6 +54,12 @@ export function PromptManagementTab() {
   const selectedPrompt = prompts?.find((p) => p.name === selectedName) ?? null;
 
   useEffect(() => {
+    if (prompts && prompts.length > 0 && !selectedName) {
+      setSelectedName("system");
+    }
+  }, [prompts, selectedName]);
+
+  useEffect(() => {
     if (selectedPrompt) {
       const values = getFormValues(selectedPrompt);
       setFormValues(values);
