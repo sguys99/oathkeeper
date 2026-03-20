@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useBatchUpsertCompanySettings,
   useCompanySetting,
+  useSaveCompanyDefaults,
 } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -35,6 +36,7 @@ function useCompanySettings() {
 export function CompanyInfoTab() {
   const { serverValues, isLoading } = useCompanySettings();
   const batchUpsert = useBatchUpsertCompanySettings();
+  const saveDefaults = useSaveCompanyDefaults();
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [initialized, setInitialized] = useState(false);
 
@@ -57,17 +59,29 @@ export function CompanyInfoTab() {
     setFormValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  function buildItems() {
+    return COMPANY_KEYS.map(({ key, label }) => ({
+      key,
+      value: displayValues[key] ?? "",
+      description: label,
+    }));
+  }
+
   async function handleSave() {
     try {
-      const items = COMPANY_KEYS.map(({ key, label }) => ({
-        key,
-        value: displayValues[key] ?? "",
-        description: label,
-      }));
-      await batchUpsert.mutateAsync({ items });
+      await batchUpsert.mutateAsync({ items: buildItems() });
       toast.success("회사 정보가 저장되었습니다");
     } catch {
       toast.error("저장에 실패했습니다");
+    }
+  }
+
+  async function handleSaveDefaults() {
+    try {
+      await saveDefaults.mutateAsync({ items: buildItems() });
+      toast.success("기본값으로 저장되었습니다");
+    } catch {
+      toast.error("기본값 저장에 실패했습니다");
     }
   }
 
@@ -85,7 +99,17 @@ export function CompanyInfoTab() {
           />
         </div>
       ))}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleSaveDefaults}
+          disabled={saveDefaults.isPending || isLoading}
+        >
+          {saveDefaults.isPending ? (
+            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+          ) : null}
+          기본값으로 저장
+        </Button>
         <Button
           onClick={handleSave}
           disabled={batchUpsert.isPending || isLoading || !isDirty}

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   batchUpsertCompanySettings,
+  saveCompanyDefaults,
   createCostItem,
   createTeamMember,
   deleteCostItem,
@@ -71,6 +72,12 @@ export function useBatchUpsertCompanySettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company-setting"] });
     },
+  });
+}
+
+export function useSaveCompanyDefaults() {
+  return useMutation({
+    mutationFn: (data: CompanySettingBatchUpsert) => saveCompanyDefaults(data),
   });
 }
 

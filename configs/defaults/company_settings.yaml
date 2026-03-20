@@ -1,50 +1,54 @@
 name: company_settings
-version: "1.0"
-description: "기본 회사 설정값 (사업 방향, 딜 기준, 전략, 마진율)"
-
+version: '1.0'
+description: 기본 회사 설정값 (사업 방향, 딜 기준, 전략, 마진율)
 items:
-  - key: "business_direction"
-    value: |
-      - AI/ML 기반 B2B 솔루션 개발 및 공급
-      - 데이터 분석 플랫폼 구축 컨설팅
-      - 클라우드 네이티브 애플리케이션 개발
-      - 기존 시스템 AI 전환 (레거시 모더나이제이션)
-    description: "사업 방향 및 범위"
-
-  - key: "deal_criteria"
-    value: |
-      - 최소 마진율: 20% 이상
-      - 선호 산업군: 금융, 제조, 유통, 공공
-      - 최소 계약 규모: 5,000만원 이상
-      - 프로젝트 기간: 3개월 ~ 12개월
-      - 기술 스택 적합성: Python, Cloud(AWS/GCP) 기반 프로젝트 우선
-      - 레퍼런스 확보 가능성 고려
-    description: "딜 평가 기본 기준"
-
-  - key: "short_term_strategy"
-    value: |
-      - 기존 고객사 재계약 및 확장 딜 우선 추진
-      - 금융/제조 분야 신규 레퍼런스 2건 이상 확보
-      - 자사 솔루션 PoC 성공률 80% 이상 유지
-      - 파트너사 협업 채널 구축 (SI 업체 2곳 이상)
-    description: "단기 전략 방향 (6개월 이내)"
-
-  - key: "mid_term_strategy"
-    value: |
-      - SaaS 형태 자사 제품 출시 (MVP)
-      - 산업별 특화 솔루션 패키지화
-      - 기술 블로그 및 컨퍼런스 발표를 통한 브랜드 인지도 확보
-      - 핵심 인력 충원 (ML 엔지니어, 데이터 엔지니어)
-    description: "중기 전략 방향 (6개월 ~ 1년)"
-
-  - key: "long_term_strategy"
-    value: |
-      - 자사 AI 플랫폼 제품화 및 시장 진입
-      - 해외 시장 진출 (동남아 우선)
-      - 전략적 투자 유치 (시리즈 A)
-      - 산업별 데이터셋 및 모델 자산화
-    description: "장기 전략 방향 (1년 이상)"
-
-  - key: "minimum_margin_rate"
-    value: "20"
-    description: "최소 허용 마진율 (%)"
+- key: business_direction
+  value: "우리회사는 Vision AI/ML 기반 B2B 솔루션 개발 및 공급하는 사업을 주력으로 한다.\n우리의 미션은 AI를 활용한 우수한\
+    \ 제품과 서비스로 모든 산업을 혁신하는 것이다.\n\n주요 제품 및 서비스는 다음과 같다.\n1. 온프레미스(On-premise) 기반 Computer\
+    \ Vision MLOps 플랫폼\n - 주요 기능: 데이터 업로드/ 선별/ 레이블링(class, bounding box, point cloud\
+    \ 등)/ 품질 관리, VIsion AI 모델(CNN, Yolo 등) 학습/ 평가/ 배포/ 모니터링\n - 특장점: 레이블링/ 모델 개발 및\
+    \ 성능 개선 비용/ 기간 20% 이상 단축 가능\n\n2. VA(Video Analytics) 솔루션\n - 주요 기능: 다양한 요구사항(이벤트,\
+    \ 시나리오)이 반영된 AI 기반 CCTV 영상 관제 기능, 실시간/ 영상 클립 기반 이벤트 알람 및 로그, 통계분석 대시보드\n - 특장점:\
+    \ MLOps 플랫폼과 연동하여 지속적인 모델 개선 및 배포 자동화 가능, 필요 시 고객 맞춤형 모델/ 시나리오 대응 알고리즘 개발/ 제공\
+    \ 가능\n - 활용 분야: 공공장소(공항, 야구장) 사람 동선 및 혼잡 분석, 공공 시설/ 작업장 안전 관제(안전 장구 착용, 위험물 접근,\
+    \ 화재/ 사고 감지 등), 생산 현황 관리, 제품 결함 탐지 등\n\n3. Vision Foundation Model\n - 주요 기능:\
+    \ 데이터 수집/ 재학습 없이, 프롬프트 만으로 모델(예: 제품 물량 탐지, 위험 상황 감시) 제공\n - 특장점: 데이터 수집/ 재학습 불필요,\
+    \ MLOps 플랫폼/ VA 솔루션과 연동하여 동작/ 서비스 가능\n\n4. R&D 프로젝트\n - 주요 내용: 각 산업 별 고객사(제조,\
+    \ 물류, 건설, 해운 등) 또는 국내외 기관과 협업하여 신기술 개발 및 PoC 수행\n - 실행 분야: Computer Vision, 합성\
+    \ 데이터 생성, VLM(Vision Language Model), Physical AI, Robotics 등 \n"
+  description: 사업 방향
+- key: deal_criteria
+  value: |-
+    - 최소 마진율: 10% 이상 (전략적 의사결정 제외)
+    - 선호 산업군: 제조, 건설, 플랜트(정유/ 화학/ 에너지), 조선, 공공
+    - 최소 계약 규모: 8,000만원 이상
+    - 프로젝트 기간: 2개월 ~ 12개월
+    - 기술 스택 적합성: Cloud(AWS/GCP) 기반 프로젝트 우선
+    - 레퍼런스 확보 가능성 고려
+  description: Deal 선정 기준
+- key: short_term_strategy
+  value: "- 우리 회사 제품과 솔루션(MLOps, VA)을 고객 맞춤형으로 커스터마이징하지 않고 납품/ 설치하여 추가 엔지니어링 리소스가\
+    \ 발생하지 않는 사업 우선 수행\n- 커스터마이징 요구(MLOps 플랫폼 관리 데이터 유형 추가, VA 이벤트 시나리오 추가, 대시보드 수정\
+    \ 등)가 있는 경우 시장 확장, 신규 시장 진입 등 비즈니스 효과를 고려하여 전략적으로 진행  \n- 신규 모델/ 신규 시나리오 개발이 필요한\
+    \ 경우 개발 성공 난이도, 투입 엔지니어링 리소스를 고려하여 의사 결정(성공 확률 80% 이상, 사업별 추가 공수 3MM 이하)\n- 기존\
+    \ 고객사 재계약 및 확장 딜 우선 수행\n- 제품 재사용이 어렵고 서비스 전체를 신규 개발해야하는 사업(SI) 지양\n- 정형 및 시계열\
+    \ 데이터, LLM, Agent application 등 우리 회사 제품 및 서비스와 관계 없는 사업은 지양 (신규 고객 확정을 고려하여 전략적\
+    \ 선택 가능)"
+  description: 단기 전략
+- key: mid_term_strategy
+  value: |-
+    - SaaS 형태 자사 제품 출시
+    - Vision Foundation Model 구독 사업
+    - 산업별 특화 솔루션 패키지화
+    - 테크 서밋 및 컨퍼런스 발표를 통한 브랜드 인지도 확보
+    - 핵심 인력 충원 (ML 엔지니어, 데이터 엔지니어)
+  description: 중기 전략
+- key: long_term_strategy
+  value: |-
+    - 자사 AI 플랫폼 제품화 및 시장 진입
+    - 해외 시장 진출 (북미/ 유럽)
+    - 산업별 데이터셋 및 모델 자산화
+  description: 장기 전략
+- key: minimum_margin_rate
+  value: '20'
+  description: 최소 허용 마진율 (%)

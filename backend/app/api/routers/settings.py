@@ -2,6 +2,7 @@
 
 import uuid
 
+import yaml
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,7 @@ from backend.app.api.schemas.settings import (
     TeamMemberUpdate,
     WeightUpdateRequest,
 )
+from backend.app.db.defaults_loader import DEFAULTS_DIR
 from backend.app.db.repositories import settings_repo
 from backend.app.db.session import get_db
 
@@ -65,6 +67,45 @@ async def batch_upsert_company_settings(
     for s in settings:
         await db.refresh(s)
     return [CompanySettingResponse.model_validate(s) for s in settings]
+
+
+def _literal_str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+def _get_yaml_dumper() -> type[yaml.Dumper]:
+    dumper = yaml.Dumper
+    dumper.add_representer(str, _literal_str_representer)
+    return dumper
+
+
+@router.put("/company/save-defaults")
+async def save_company_defaults(body: CompanySettingBatchUpsert) -> dict[str, str]:
+    path = DEFAULTS_DIR / "company_settings.yaml"
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    existing = {item["key"]: item for item in data.get("items", [])}
+    for item in body.items:
+        existing[item.key] = {
+            "key": item.key,
+            "value": item.value,
+            "description": item.description,
+        }
+    data["items"] = list(existing.values())
+
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(
+            data,
+            f,
+            Dumper=_get_yaml_dumper(),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+    return {"message": "기본값이 저장되었습니다"}
 
 
 @router.get("/company/{key}", response_model=CompanySettingResponse)
