@@ -105,22 +105,6 @@ export function PromptManagementTab() {
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[3fr_2fr]">
       {/* Left: prompt editor */}
       <div className="space-y-6">
-        <div className="space-y-2">
-          <Label>프롬프트 선택</Label>
-          <Select value={selectedName} onValueChange={setSelectedName}>
-            <SelectTrigger>
-              <SelectValue placeholder="프롬프트를 선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {prompts?.map((p) => (
-                <SelectItem key={p.name} value={p.name}>
-                  {PROMPT_LABELS[p.name] ?? p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {isLoading && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -128,21 +112,38 @@ export function PromptManagementTab() {
           </div>
         )}
 
+        <div className="grid grid-cols-3 gap-6">
+          <div className="min-w-0 space-y-2">
+            <Label>프롬프트 선택</Label>
+            <Select value={selectedName} onValueChange={setSelectedName}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="프롬프트를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {prompts?.map((p) => (
+                  <SelectItem key={p.name} value={p.name}>
+                    {PROMPT_LABELS[p.name] ?? p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-0 space-y-2">
+            <Label>버전</Label>
+            <Input
+              value={formValues?.version ?? ""}
+              onChange={(e) => handleChange("version", e.target.value)}
+              disabled={!formValues}
+            />
+          </div>
+          <div className="min-w-0 space-y-2">
+            <Label>이름</Label>
+            <Input value={selectedPrompt?.name ?? ""} disabled />
+          </div>
+        </div>
+
         {selectedPrompt && formValues && (
           <>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>버전</Label>
-                <Input
-                  value={formValues.version}
-                  onChange={(e) => handleChange("version", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>이름</Label>
-                <Input value={selectedPrompt.name} disabled />
-              </div>
-            </div>
 
             <div className="space-y-2">
               <Label>설명</Label>
