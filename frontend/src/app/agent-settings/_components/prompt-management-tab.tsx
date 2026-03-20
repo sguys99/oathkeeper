@@ -117,7 +117,9 @@ export function PromptManagementTab() {
             <Label>프롬프트 선택</Label>
             <Select value={selectedName} onValueChange={setSelectedName}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="프롬프트를 선택하세요" />
+                <SelectValue placeholder="프롬프트를 선택하세요">
+                  {PROMPT_LABELS[selectedName] ?? selectedName}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {prompts?.map((p) => (
