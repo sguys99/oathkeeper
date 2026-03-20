@@ -1,0 +1,44 @@
+name: team_members
+version: "1.0"
+description: "기본 팀 멤버 목록 및 월 단가"
+
+items:
+  - name: "김BE"
+    role: "BE"
+    monthly_rate: 1500
+
+  - name: "이BE"
+    role: "BE"
+    monthly_rate: 2000
+
+  - name: "김dev"
+    role: "DevOps"
+    monthly_rate: 1000
+
+  - name: "이dev"
+    role: "DevOps"
+    monthly_rate: 1500
+
+  - name: "김FE"
+    role: "FE"
+    monthly_rate: 1500
+
+  - name: "이FE"
+    role: "FE"
+    monthly_rate: 1000
+
+  - name: "김ML"
+    role: "MLE"
+    monthly_rate: 2000
+
+  - name: "이ML"
+    role: "MLE"
+    monthly_rate: 1500
+
+  - name: "김PM"
+    role: "PM"
+    monthly_rate: 2000
+
+  - name: "이PM"
+    role: "PM"
+    monthly_rate: 1000
