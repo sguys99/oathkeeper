@@ -23,6 +23,7 @@ import {
   useCreateCostItem,
   useUpdateCostItem,
   useDeleteCostItem,
+  useSaveCostItemsDefaults,
 } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
@@ -112,6 +113,7 @@ export function CostSettingsTab() {
   const createItem = useCreateCostItem();
   const updateItem = useUpdateCostItem();
   const deleteItem = useDeleteCostItem();
+  const saveDefaults = useSaveCostItemsDefaults();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CostItemResponse | null>(null);
 
@@ -140,13 +142,38 @@ export function CostSettingsTab() {
     }
   }
 
+  async function handleSaveDefaults() {
+    if (!items) return;
+    try {
+      const defaultItems = items.map((item) => ({
+        name: item.name,
+        amount: item.amount,
+        description: item.description,
+      }));
+      await saveDefaults.mutateAsync({ items: defaultItems });
+      toast.success("기본값으로 저장되었습니다");
+    } catch {
+      toast.error("기본값 저장에 실패했습니다");
+    }
+  }
+
   if (isLoading) {
     return <div className="py-8 text-center text-muted-foreground">로딩 중...</div>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleSaveDefaults}
+          disabled={saveDefaults.isPending}
+        >
+          {saveDefaults.isPending && (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          )}
+          기본값으로 저장
+        </Button>
         <Button
           onClick={() => {
             setEditing(null);

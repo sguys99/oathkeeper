@@ -36,6 +36,17 @@ class WeightUpdateRequest(BaseModel):
         return self
 
 
+class ScoringCriteriaDefaultItem(BaseModel):
+    name: str
+    weight: float = Field(ge=0, le=1)
+    description: str | None = None
+    display_order: int
+
+
+class ScoringCriteriaDefaultsSave(BaseModel):
+    items: list[ScoringCriteriaDefaultItem]
+
+
 # --- Company Settings ---
 
 
@@ -68,6 +79,10 @@ class TeamMemberCreate(BaseModel):
     available_from: date | None = None
 
 
+class TeamMemberDefaultsSave(BaseModel):
+    items: list[TeamMemberCreate]
+
+
 class TeamMemberUpdate(BaseModel):
     name: str | None = None
     role: Literal["PM", "FE", "BE", "MLE", "DevOps"] | None = None
@@ -96,6 +111,10 @@ class CostItemCreate(BaseModel):
     name: str
     amount: int = Field(ge=0)
     description: str | None = None
+
+
+class CostItemDefaultsSave(BaseModel):
+    items: list[CostItemCreate]
 
 
 class CostItemUpdate(BaseModel):

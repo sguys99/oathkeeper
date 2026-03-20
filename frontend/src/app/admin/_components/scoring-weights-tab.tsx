@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { useCriteria, useUpdateWeights } from "@/hooks/use-settings";
+import {
+  useCriteria,
+  useUpdateWeights,
+  useSaveScoringCriteriaDefaults,
+} from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function ScoringWeightsTab() {
   const { data: criteria, isLoading } = useCriteria();
   const updateWeights = useUpdateWeights();
+  const saveDefaults = useSaveScoringCriteriaDefaults();
   const [weights, setWeights] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -39,6 +44,22 @@ export function ScoringWeightsTab() {
       toast.success("가중치가 저장되었습니다");
     } catch {
       toast.error("저장에 실패했습니다");
+    }
+  }
+
+  async function handleSaveDefaults() {
+    if (!criteria) return;
+    try {
+      const items = criteria.map((c) => ({
+        name: c.name,
+        weight: weights[c.id] ?? c.weight,
+        description: c.description,
+        display_order: c.display_order,
+      }));
+      await saveDefaults.mutateAsync({ items });
+      toast.success("기본값으로 저장되었습니다");
+    } catch {
+      toast.error("기본값 저장에 실패했습니다");
     }
   }
 
@@ -87,15 +108,27 @@ export function ScoringWeightsTab() {
         >
           합계: {totalPercent}% {isValid ? "" : "(100%여야 합니다)"}
         </span>
-        <Button
-          onClick={handleSave}
-          disabled={!isValid || updateWeights.isPending}
-        >
-          {updateWeights.isPending && (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-          )}
-          저장
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSaveDefaults}
+            disabled={saveDefaults.isPending}
+          >
+            {saveDefaults.isPending && (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            )}
+            기본값으로 저장
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!isValid || updateWeights.isPending}
+          >
+            {updateWeights.isPending && (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            )}
+            저장
+          </Button>
+        </div>
       </div>
     </div>
   );

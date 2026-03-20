@@ -31,6 +31,7 @@ import {
   useCreateTeamMember,
   useUpdateTeamMember,
   useDeleteTeamMember,
+  useSaveTeamMembersDefaults,
 } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
@@ -121,6 +122,7 @@ export function TeamManagementTab() {
   const createMember = useCreateTeamMember();
   const updateMember = useUpdateTeamMember();
   const deleteMember = useDeleteTeamMember();
+  const saveDefaults = useSaveTeamMembersDefaults();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TeamMemberResponse | null>(null);
 
@@ -140,6 +142,21 @@ export function TeamManagementTab() {
     }
   }
 
+  async function handleSaveDefaults() {
+    if (!members) return;
+    try {
+      const items = members.map((m) => ({
+        name: m.name,
+        role: m.role as TeamMemberCreate["role"],
+        monthly_rate: m.monthly_rate,
+      }));
+      await saveDefaults.mutateAsync({ items });
+      toast.success("기본값으로 저장되었습니다");
+    } catch {
+      toast.error("기본값 저장에 실패했습니다");
+    }
+  }
+
   async function handleDelete(id: string) {
     try {
       await deleteMember.mutateAsync(id);
@@ -155,7 +172,17 @@ export function TeamManagementTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleSaveDefaults}
+          disabled={saveDefaults.isPending}
+        >
+          {saveDefaults.isPending && (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          )}
+          기본값으로 저장
+        </Button>
         <Button
           onClick={() => {
             setEditing(null);

@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   batchUpsertCompanySettings,
   saveCompanyDefaults,
+  saveScoringCriteriaDefaults,
+  saveTeamMembersDefaults,
+  saveCostItemsDefaults,
   createCostItem,
   createTeamMember,
   deleteCostItem,
@@ -21,8 +24,11 @@ import type {
   CompanySettingBatchUpsert,
   CompanySettingUpsert,
   CostItemCreate,
+  CostItemDefaultsSave,
   CostItemUpdate,
+  ScoringCriteriaDefaultsSave,
   TeamMemberCreate,
+  TeamMemberDefaultsSave,
   TeamMemberUpdate,
   WeightUpdateRequest,
 } from "@/lib/api/types";
@@ -41,6 +47,13 @@ export function useUpdateWeights() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["criteria"] });
     },
+  });
+}
+
+export function useSaveScoringCriteriaDefaults() {
+  return useMutation({
+    mutationFn: (data: ScoringCriteriaDefaultsSave) =>
+      saveScoringCriteriaDefaults(data),
   });
 }
 
@@ -124,6 +137,13 @@ export function useDeleteTeamMember() {
   });
 }
 
+export function useSaveTeamMembersDefaults() {
+  return useMutation({
+    mutationFn: (data: TeamMemberDefaultsSave) =>
+      saveTeamMembersDefaults(data),
+  });
+}
+
 export function useCostItems() {
   return useQuery({
     queryKey: ["cost-items"],
@@ -159,5 +179,11 @@ export function useDeleteCostItem() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cost-items"] });
     },
+  });
+}
+
+export function useSaveCostItemsDefaults() {
+  return useMutation({
+    mutationFn: (data: CostItemDefaultsSave) => saveCostItemsDefaults(data),
   });
 }

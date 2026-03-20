@@ -12,10 +12,13 @@ from backend.app.api.schemas.settings import (
     CompanySettingResponse,
     CompanySettingUpsert,
     CostItemCreate,
+    CostItemDefaultsSave,
     CostItemResponse,
     CostItemUpdate,
+    ScoringCriteriaDefaultsSave,
     ScoringCriteriaResponse,
     TeamMemberCreate,
+    TeamMemberDefaultsSave,
     TeamMemberResponse,
     TeamMemberUpdate,
     WeightUpdateRequest,
@@ -50,6 +53,34 @@ async def update_weights(
     for c in updated:
         await db.refresh(c)
     return [ScoringCriteriaResponse.model_validate(c) for c in updated]
+
+
+@router.put("/criteria/save-defaults")
+async def save_criteria_defaults(body: ScoringCriteriaDefaultsSave) -> dict[str, str]:
+    path = DEFAULTS_DIR / "scoring_criteria.yaml"
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    data["items"] = [
+        {
+            "name": item.name,
+            "weight": item.weight,
+            "description": item.description,
+            "display_order": item.display_order,
+        }
+        for item in body.items
+    ]
+
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(
+            data,
+            f,
+            Dumper=_get_yaml_dumper(),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+    return {"message": "기본값이 저장되었습니다"}
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +199,33 @@ async def create_team_member(
     return TeamMemberResponse.model_validate(member)
 
 
+@router.put("/team-members/save-defaults")
+async def save_team_members_defaults(body: TeamMemberDefaultsSave) -> dict[str, str]:
+    path = DEFAULTS_DIR / "team_members.yaml"
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    data["items"] = [
+        {
+            "name": item.name,
+            "role": item.role,
+            "monthly_rate": item.monthly_rate,
+        }
+        for item in body.items
+    ]
+
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(
+            data,
+            f,
+            Dumper=_get_yaml_dumper(),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+    return {"message": "기본값이 저장되었습니다"}
+
+
 @router.put("/team-members/{member_id}", response_model=TeamMemberResponse)
 async def update_team_member(
     member_id: uuid.UUID,
@@ -224,6 +282,33 @@ async def create_cost_item(
         description=body.description,
     )
     return CostItemResponse.model_validate(item)
+
+
+@router.put("/cost-items/save-defaults")
+async def save_cost_items_defaults(body: CostItemDefaultsSave) -> dict[str, str]:
+    path = DEFAULTS_DIR / "cost_items.yaml"
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    data["items"] = [
+        {
+            "name": item.name,
+            "amount": item.amount,
+            "description": item.description,
+        }
+        for item in body.items
+    ]
+
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(
+            data,
+            f,
+            Dumper=_get_yaml_dumper(),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+    return {"message": "기본값이 저장되었습니다"}
 
 
 @router.put("/cost-items/{item_id}", response_model=CostItemResponse)
