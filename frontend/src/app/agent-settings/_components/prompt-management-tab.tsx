@@ -197,7 +197,7 @@ export function PromptManagementTab() {
       </div>
 
       {/* Right: architecture diagram */}
-      <div className="lg:sticky lg:top-8 lg:self-start lg:pt-16">
+      <div className="lg:sticky lg:top-8 lg:mt-44 lg:self-start">
         <AgentFlowDiagram selectedPrompt={selectedName} />
       </div>
     </div>

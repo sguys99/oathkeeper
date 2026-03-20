@@ -95,10 +95,19 @@ TEAM_MEMBER_DEFAULTS = [
 ]
 
 COST_ITEM_DEFAULTS = [
-    {"name": "HW 서버 비용", "amount": 0, "description": "하드웨어 서버 구매/임대 비용"},
-    {"name": "SW 라이선스 비용", "amount": 0, "description": "소프트웨어 라이선스 비용"},
     {"name": "클라우드 인프라 비용", "amount": 0, "description": "클라우드 인프라 사용 비용"},
     {"name": "기타 비용", "amount": 0, "description": "기타 프로젝트 관련 비용"},
+    {
+        "name": "HW 서버(고사양)",
+        "amount": 20000000,
+        "description": "Vision Analytics 모델 및 대시보드 배포용",
+    },
+    {
+        "name": "HW 서버(저사양)",
+        "amount": 5000000,
+        "description": "Vision Analytics 모델 및 대시보드 배포용",
+    },
+    {"name": "SW 라이선스 비용", "amount": 0, "description": "소프트웨어 라이선스 비용"},
 ]
 
 
