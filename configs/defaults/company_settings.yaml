@@ -1,6 +1,6 @@
 name: company_settings
 version: '1.0'
-description: 기본 회사 설정값 (사업 방향, 딜 기준, 전략, 마진율)
+description: 기본 회사 설정값 (사업 방향, 딜 기준, 전략)
 items:
 - key: business_direction
   value: "우리회사는 Vision AI/ML 기반 B2B 솔루션 개발 및 공급하는 사업을 주력으로 한다.\n우리의 미션은 AI를 활용한 우수한\
@@ -49,6 +49,3 @@ items:
     - 해외 시장 진출 (북미/ 유럽)
     - 산업별 데이터셋 및 모델 자산화
   description: 장기 전략
-- key: minimum_margin_rate
-  value: '20'
-  description: 최소 허용 마진율 (%)
