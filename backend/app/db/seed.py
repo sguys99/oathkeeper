@@ -34,16 +34,17 @@ async def seed_scoring_criteria(session: AsyncSession) -> int:
 
 
 async def seed_company_settings(session: AsyncSession) -> int:
-    """Insert default company settings if table is empty. Returns count."""
-    result = await session.execute(select(CompanySetting.key).limit(1))
-    if result.scalar_one_or_none() is not None:
-        return 0
-
+    """Upsert default company settings from YAML. Returns count of new inserts."""
     count = 0
     for item in COMPANY_SETTINGS_DEFAULTS:
-        setting = CompanySetting(**item)
-        session.add(setting)
-        count += 1
+        existing = await session.get(CompanySetting, item["key"])
+        if existing is None:
+            session.add(CompanySetting(**item))
+            count += 1
+        else:
+            existing.value = item["value"]
+            if "description" in item:
+                existing.description = item["description"]
     return count
 
 

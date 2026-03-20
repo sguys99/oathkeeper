@@ -4,16 +4,46 @@ description: "기본 회사 설정값 (사업 방향, 딜 기준, 전략, 마진
 
 items:
   - key: "business_direction"
-    value: "AI/ML 기반 B2B 솔루션 개발"
+    value: |
+      - AI/ML 기반 B2B 솔루션 개발 및 공급
+      - 데이터 분석 플랫폼 구축 컨설팅
+      - 클라우드 네이티브 애플리케이션 개발
+      - 기존 시스템 AI 전환 (레거시 모더나이제이션)
     description: "사업 방향 및 범위"
 
   - key: "deal_criteria"
-    value: '{"min_margin_rate": 20, "preferred_industries": ["금융", "제조", "유통"]}'
-    description: "딜 평가 기본 기준 (JSON)"
+    value: |
+      - 최소 마진율: 20% 이상
+      - 선호 산업군: 금융, 제조, 유통, 공공
+      - 최소 계약 규모: 5,000만원 이상
+      - 프로젝트 기간: 3개월 ~ 12개월
+      - 기술 스택 적합성: Python, Cloud(AWS/GCP) 기반 프로젝트 우선
+      - 레퍼런스 확보 가능성 고려
+    description: "딜 평가 기본 기준"
 
   - key: "short_term_strategy"
-    value: "기존 고객 확대 및 레퍼런스 확보"
-    description: "단기 전략 방향"
+    value: |
+      - 기존 고객사 재계약 및 확장 딜 우선 추진
+      - 금융/제조 분야 신규 레퍼런스 2건 이상 확보
+      - 자사 솔루션 PoC 성공률 80% 이상 유지
+      - 파트너사 협업 채널 구축 (SI 업체 2곳 이상)
+    description: "단기 전략 방향 (6개월 이내)"
+
+  - key: "mid_term_strategy"
+    value: |
+      - SaaS 형태 자사 제품 출시 (MVP)
+      - 산업별 특화 솔루션 패키지화
+      - 기술 블로그 및 컨퍼런스 발표를 통한 브랜드 인지도 확보
+      - 핵심 인력 충원 (ML 엔지니어, 데이터 엔지니어)
+    description: "중기 전략 방향 (6개월 ~ 1년)"
+
+  - key: "long_term_strategy"
+    value: |
+      - 자사 AI 플랫폼 제품화 및 시장 진입
+      - 해외 시장 진출 (동남아 우선)
+      - 전략적 투자 유치 (시리즈 A)
+      - 산업별 데이터셋 및 모델 자산화
+    description: "장기 전략 방향 (1년 이상)"
 
   - key: "minimum_margin_rate"
     value: "20"
