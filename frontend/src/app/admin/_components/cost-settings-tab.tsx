@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,12 @@ function CostItemFormDialog({
   const [name, setName] = useState(item?.name ?? "");
   const [amount, setAmount] = useState(item?.amount?.toString() ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
+
+  useEffect(() => {
+    setName(item?.name ?? "");
+    setAmount(item?.amount?.toString() ?? "");
+    setDescription(item?.description ?? "");
+  }, [item]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
