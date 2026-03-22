@@ -39,7 +39,15 @@ def _recalculate_scores(scores: list[dict]) -> tuple[list[dict], float]:
         weight = float(s.get("weight", 0))
         weighted = round(score * weight, 2)
         total += weighted
-        recalculated.append({**s, "score": score, "weight": weight, "weighted_score": weighted})
+        recalculated.append(
+            {
+                "criterion": s.get("criterion", ""),
+                "score": score,
+                "weight": weight,
+                "weighted_score": weighted,
+                "rationale": s.get("rationale", ""),
+            },
+        )
     return recalculated, round(total, 2)
 
 
@@ -75,7 +83,6 @@ def make_scoring_node(context_store: CompanyContextStore):
                 system_base=system_base,
                 structured_deal=structured_deal,
                 scoring_criteria=scoring_criteria,
-                company_context=company_context,
             )
 
             deal_id = uuid.UUID(state["deal_id"])

@@ -1,19 +1,33 @@
 name: scoring
-version: "1.0"
+version: "2.0"
 description: >
-  구조화된 Deal을 7개 평가 기준으로 0-100점 스코어링하고 Go/No-Go 판단을 제시한다.
+  구조화된 Deal을 평가 기준별로 0-100점 스코어링한다. 점수와 근거만 도출하며,
+  가중 합산 및 판단은 서버에서 수행한다.
 
 system_prompt: |
   {{ system_base }}
 
-  당신의 역할은 구조화된 Deal 정보를 아래 평가 기준에 따라 각각 0~100점으로 평가하는 것입니다.
-  각 기준별로 점수와 한 문장 근거를 제시하고, 가중 합산하여 종합 점수와 판단을 도출하세요.
+  당신의 역할은 구조화된 Deal 정보를 평가 기준에 따라 각각 0~100점으로 평가하는 것입니다.
+  각 기준별로 점수와 구체적 근거를 제시하세요.
 
-  ## 판단 로직
-  - 종합 70점 이상 → Go
-  - 종합 40~69점 → Conditional Go
-  - 종합 40점 미만 → No-Go
-  - 필수 항목 미입력 과다 → Hold (pending)
+  ## 평가 프로세스
+  각 기준에 대해 다음 단계를 따르세요:
+  1. 해당 기준과 관련된 Deal 정보를 식별한다
+  2. 긍정적 요소와 부정적 요소를 각각 나열한다
+  3. 정보가 부족한 부분을 명시한다
+  4. 종합하여 0~100점을 부여한다
+
+  ## 점수 기준 (Score Anchoring)
+  - **80~100점 (우수)**: 해당 기준에서 명확한 강점이 있고, 리스크가 거의 없음
+  - **60~79점 (양호)**: 대체로 긍정적이나 일부 주의가 필요한 요소 존재
+  - **40~59점 (보통)**: 긍정/부정 요소가 혼재하거나 정보 부족으로 판단이 불확실
+  - **20~39점 (미흡)**: 부정적 요소가 우세하거나 심각한 우려사항 존재
+  - **0~19점 (부적합)**: 해당 기준에서 명백한 결격 사유가 있음
+
+  ## 정보 부족 시 처리 원칙
+  - 해당 기준의 판단에 필요한 핵심 정보가 누락된 경우, 보수적으로 40~50점 범위를 부여한다.
+  - 근거에 "정보 부족"임을 명시하고, 어떤 정보가 추가로 필요한지 기술한다.
+  - 부분적 정보만 있는 경우, 확인된 사실과 추론을 구분하여 기술한다.
 
 user_prompt: |
   아래 구조화된 Deal 정보를 평가하세요.
@@ -23,15 +37,26 @@ user_prompt: |
   {{ structured_deal | tojson }}
   ```
 
-  ## 적용할 평가 기준 및 가중치
+  ## 평가 기준 및 가중치
   {% for c in scoring_criteria %}
-  - {{ c.name }} (가중치: {{ c.weight }}): {{ c.description }}
-  {% endfor %}
-
-  {% if company_context %}
-  ## 회사 컨텍스트 (참고)
-  {{ company_context }}
+  ### {{ loop.index }}. {{ c.name }} (가중치: {{ c.weight }})
+  {{ c.description }}
+  {% if c.name == "기술 적합성" %}
+  평가 포인트: 기존 기술 스택과의 일치도, 신규 기술 학습 비용, 기술적 난이도, PoC 필요 여부
+  {% elif c.name == "수익성" %}
+  평가 포인트: 예상 매출 대비 비용 비율, 마진율(목표 20% 이상), 결제 조건의 현금흐름 영향, 숨은 비용 가능성
+  {% elif c.name == "리소스 가용성" %}
+  평가 포인트: 필요 인력 대비 가용 인력, 핵심 역할 확보 가능성, 다른 프로젝트와의 일정 충돌, 외주 필요성
+  {% elif c.name == "납기 리스크" %}
+  평가 포인트: 요구 기간 대비 예상 소요 기간, 버퍼 확보 여부, 마일스톤 현실성, 병목 구간 존재 여부
+  {% elif c.name == "요구사항 명확성" %}
+  평가 포인트: 요구사항 구체성 수준, 범위 변경 가능성, 성공 기준 정의 여부, 기술 요구사항과 비즈니스 요구 일치도
+  {% elif c.name == "전략적 가치" %}
+  평가 포인트: 레퍼런스 케이스로서의 가치, 신규 시장/산업 진출 기회, 기술 축적 효과, 장기 파트너십 가능성
+  {% elif c.name == "고객 리스크" %}
+  평가 포인트: 고객사 규모 및 안정성, 지불 능력, 의사결정 구조 명확성, 과거 협업 이력(있는 경우)
   {% endif %}
+  {% endfor %}
 
   다음 JSON 형식으로 응답하세요:
   ```json
@@ -41,14 +66,17 @@ user_prompt: |
         "criterion": "기준명",
         "score": 0,
         "weight": 0.0,
-        "weighted_score": 0.0,
-        "rationale": "판단 근거 한 문장"
+        "rationale": "2~3문장. 핵심 근거와 주요 긍정/부정 요소를 구체적으로 기술. 정보 부족 시 해당 사실을 명시."
       }
-    ],
-    "total_score": 0.0,
-    "verdict": "go | conditional_go | no_go | pending"
+    ]
   }
   ```
+
+  주의사항:
+  - 모든 평가 기준에 대해 빠짐없이 scores를 작성하세요.
+  - score는 0~100 사이 정수입니다.
+  - weight는 위에 제시된 가중치를 그대로 사용하세요.
+  - rationale은 해당 Deal 고유의 구체적 사실에 기반해야 하며, 일반적 서술을 피하세요.
 
 output_schema:
   type: object
@@ -61,19 +89,12 @@ output_schema:
           criterion:
             type: string
           score:
-            type: number
+            type: integer
             minimum: 0
             maximum: 100
           weight:
             type: number
-          weighted_score:
-            type: number
           rationale:
             type: string
-        required: [criterion, score, weight, weighted_score, rationale]
-    total_score:
-      type: number
-    verdict:
-      type: string
-      enum: [go, conditional_go, no_go, pending]
-  required: [scores, total_score, verdict]
+        required: [criterion, score, weight, rationale]
+  required: [scores]

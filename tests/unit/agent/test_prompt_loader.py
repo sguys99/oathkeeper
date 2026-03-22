@@ -88,11 +88,9 @@ class TestPromptRendering:
             scoring_criteria=[
                 {"name": "기술 적합성", "weight": 0.2, "description": "기술 스택 매칭"},
             ],
-            company_context="B2B AI 전문 기업",
         )
         assert "customer_name" in rendered
         assert "기술 적합성" in rendered
-        assert "B2B AI 전문 기업" in rendered
 
     def test_resource_estimation_with_team(self):
         tpl = load_prompt("resource_estimation")
