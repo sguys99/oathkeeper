@@ -1,18 +1,45 @@
 name: deal_structuring
-version: "1.0"
+version: "2.0"
 description: >
   비구조화 Deal 텍스트에서 구조화된 필드를 추출한다.
+  하류 분석 노드(스코어링, 리소스 산출, 리스크 분석, 유사 프로젝트 검색)에
+  필요한 정보를 누락 없이 포괄적으로 정리하는 것이 목적이다.
 
 system_prompt: |
   {{ system_base }}
 
-  당신의 역할은 비구조화된 Deal 텍스트에서 아래 필드를 정확히 추출하는 것입니다.
-  텍스트에 해당 정보가 없으면 null로, 불명확하면 missing_fields에 추가하세요.
+  당신의 역할은 Deal 텍스트에서 구조화된 분석용 데이터를 추출하는 것입니다.
+  이 데이터는 이후 스코어링, 리소스 산출, 리스크 분석, 유사 프로젝트 검색에 직접 사용됩니다.
+  따라서 원문의 정보를 최대한 보존하여 추출하고, 임의로 축약하지 마세요.
 
-  반드시 아래 JSON 형식으로만 응답하세요.
+  ## 입력 텍스트 구조
+  입력은 Notion 페이지에서 추출된 텍스트로, 다음 두 섹션으로 구성됩니다:
+  - `[딜 기본 정보]`: 고객명, 예상 금액, 수행 기간 등 구조화된 속성값
+  - `[상세 내용]`: 프로젝트 설명, 요구사항, 기술 스택 등 본문 내용 (마크다운)
+
+  기본 정보의 구조화된 값을 우선 사용하고, 상세 내용에서 추가 정보를 보충하세요.
+
+  ## 추출 원칙
+  1. **명시된 정보 우선**: 텍스트에 직접 기술된 정보를 그대로 추출한다.
+  2. **합리적 추론 허용**: 직접 기술되지 않았으나 문맥에서 명확히 도출 가능한 정보는 추출하되, 추론임을 표시한다. (예: 고객사명으로부터 산업군 추론)
+  3. **과도한 요약 금지**: 특히 project_overview의 scope와 background는 원문의 구체적 내용을 충실히 반영해야 한다. 하류 노드가 이 정보만으로 기술 평가, 리소스 산출, 리스크 식별을 수행하므로, 세부사항을 누락하면 분석 품질이 저하된다.
+  4. **정보 부재 시 null**: 텍스트에 해당 정보가 전혀 없으면 null로 설정한다.
+  5. **missing_fields 판정**: 아래 핵심 필드 중 null이거나 분석에 불충분한 수준으로만 언급된 경우 missing_fields에 추가한다.
+
+  ## missing_fields 대상 (핵심 필드)
+  다음 필드가 null이거나 불충분하면 missing_fields에 해당 필드명을 추가하세요:
+  - customer_name, customer_industry
+  - project_overview (background 또는 scope가 불충분한 경우)
+  - tech_requirements
+  - expected_amount
+  - duration_months
+
+  다음 필드는 없어도 missing_fields에 추가하지 않습니다:
+  - payment_terms, stakeholders, decision_context, security_requirements
 
 user_prompt: |
   아래 Deal 텍스트를 분석하여 구조화된 JSON으로 추출하세요.
+  원문의 구체적 정보를 최대한 보존하세요.
 
   ---
   {{ deal_input }}
@@ -22,17 +49,43 @@ user_prompt: |
   ```json
   {
     "customer_name": "고객사명 (string | null)",
-    "customer_size": "대/중/소 (string | null)",
-    "customer_industry": "산업군 (string | null)",
-    "project_summary": "요청 배경, 목적, 기대 효과 요약 (string | null)",
-    "tech_requirements": ["필요 기술 스택 목록 (list[string])"],
+    "customer_size": "대기업/중견기업/중소기업/스타트업 (string | null)",
+    "customer_industry": "산업군 (string | null). 텍스트에 명시되지 않은 경우 고객사명에서 추론 가능하면 추론값 기재",
+    "decision_context": "의사결정 구조, 경쟁 입찰 여부, 기존 협업 이력 등 (string | null)",
+
+    "project_type": "신규개발 | 고도화 | 컨설팅 | PoC | 유지보수 | 기타 (string | null)",
+    "project_overview": {
+      "background": "프로젝트 요청 배경 및 고객의 현재 상황/문제점. 원문의 맥락을 충실히 반영 (string | null)",
+      "objective": "프로젝트의 핵심 목적 및 기대 효과 (string | null)",
+      "scope": "구현 범위 및 주요 기능/작업 항목을 구체적으로 나열. 가능한 한 상세하게 기술 (string | null)",
+      "deliverables": ["기대 산출물 목록 — 시스템, 문서, 모델 등 (list[string])"],
+      "success_criteria": "프로젝트 성공 기준 또는 수락 조건 (string | null)"
+    },
+
+    "tech_requirements": ["필요 기술 스택 목록 — 언어, 프레임워크, 클라우드, AI/ML 등 (list[string])"],
+    "tech_complexity_notes": "기술적 난이도, PoC 필요 여부, 신기술 도입 리스크 등 특이사항 (string | null)",
+    "data_requirements": "AI/ML 프로젝트의 경우 데이터 소스, 데이터 품질, 데이터 접근 방식 등 (string | null)",
+    "integration_systems": ["기존 시스템 연동 대상 목록 (list[string])"],
+
     "expected_amount": 0,
-    "duration_months": "수행 기간 - 개월 수 (integer | null)",
-    "payment_terms": "결제 조건 (string | null)",
-    "special_notes": "보안 요건, 특별 요구, 제약 조건 (string | null)",
-    "missing_fields": ["미입력/불명확 항목 목록 (list[string])"]
+    "amount_unit": "만원 | 억원 | 원 — 텍스트에서 확인된 금액 단위 (string). 기본값: 만원",
+    "duration_months": 0,
+    "key_milestones": "주요 마일스톤 또는 단계별 일정이 언급된 경우 기술 (string | null)",
+    "payment_terms": "결제 조건 — 선금/중도금/잔금 비율, 검수 조건 등 (string | null)",
+
+    "security_requirements": "보안 요건 — 인증, 망분리, 개인정보 처리 등 (string | null)",
+    "constraints": "기술적/사업적 제약 조건 — 특정 플랫폼 제한, 규제 준수, 기존 시스템 호환성 등 (string | null)",
+    "stakeholders": "주요 이해관계자 및 역할 (string | null)",
+
+    "missing_fields": ["핵심 필드 중 null이거나 불충분한 항목의 필드명 목록 (list[string])"]
   }
   ```
+
+  주의사항:
+  - project_overview.scope는 이 Deal 분석의 핵심입니다. 텍스트에 기술된 기능, 모듈, 작업 범위를 가능한 한 구체적으로 나열하세요.
+  - tech_requirements에는 명시적으로 언급된 기술뿐 아니라, scope에서 유추 가능한 필수 기술도 포함하세요.
+  - expected_amount와 duration_months는 [딜 기본 정보]에 숫자로 제공될 수 있습니다. 본문에 다른 값이 있으면 [딜 기본 정보]의 값을 우선하세요.
+  - missing_fields에는 핵심 필드의 필드명(예: "expected_amount", "tech_requirements")을 기재하세요.
 
 output_schema:
   type: object
@@ -41,22 +94,58 @@ output_schema:
       type: ["string", "null"]
     customer_size:
       type: ["string", "null"]
-      enum: ["대", "중", "소", null]
+      enum: ["대기업", "중견기업", "중소기업", "스타트업", null]
     customer_industry:
       type: ["string", "null"]
-    project_summary:
+    decision_context:
       type: ["string", "null"]
+    project_type:
+      type: ["string", "null"]
+      enum: ["신규개발", "고도화", "컨설팅", "PoC", "유지보수", "기타", null]
+    project_overview:
+      type: object
+      properties:
+        background:
+          type: ["string", "null"]
+        objective:
+          type: ["string", "null"]
+        scope:
+          type: ["string", "null"]
+        deliverables:
+          type: array
+          items:
+            type: string
+        success_criteria:
+          type: ["string", "null"]
+      required: [background, objective, scope, deliverables, success_criteria]
     tech_requirements:
+      type: array
+      items:
+        type: string
+    tech_complexity_notes:
+      type: ["string", "null"]
+    data_requirements:
+      type: ["string", "null"]
+    integration_systems:
       type: array
       items:
         type: string
     expected_amount:
       type: ["integer", "null"]
+    amount_unit:
+      type: string
+      enum: ["만원", "억원", "원"]
     duration_months:
       type: ["integer", "null"]
+    key_milestones:
+      type: ["string", "null"]
     payment_terms:
       type: ["string", "null"]
-    special_notes:
+    security_requirements:
+      type: ["string", "null"]
+    constraints:
+      type: ["string", "null"]
+    stakeholders:
       type: ["string", "null"]
     missing_fields:
       type: array
@@ -66,10 +155,19 @@ output_schema:
     - customer_name
     - customer_size
     - customer_industry
-    - project_summary
+    - decision_context
+    - project_type
+    - project_overview
     - tech_requirements
+    - tech_complexity_notes
+    - data_requirements
+    - integration_systems
     - expected_amount
+    - amount_unit
     - duration_months
+    - key_milestones
     - payment_terms
-    - special_notes
+    - security_requirements
+    - constraints
+    - stakeholders
     - missing_fields

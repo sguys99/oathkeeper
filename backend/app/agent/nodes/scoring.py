@@ -65,7 +65,13 @@ def make_scoring_node(context_store: CompanyContextStore):
             scoring_criteria = format_scoring_criteria(criteria)
 
             # Fetch company context
-            query_text = structured_deal.get("project_summary", "")
+            overview = structured_deal.get("project_overview", {})
+            if isinstance(overview, dict):
+                query_text = " ".join(
+                    filter(None, [overview.get("objective", ""), overview.get("scope", "")]),
+                )
+            else:
+                query_text = str(overview) if overview else ""
             context_results = await context_store.query(query_text, top_k=5)
             vector_context = format_company_context(context_results)
 

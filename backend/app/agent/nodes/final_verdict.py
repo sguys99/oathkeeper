@@ -28,7 +28,13 @@ def make_final_verdict_node(context_store: CompanyContextStore):
             async with AsyncSessionLocal() as db:
                 company_settings = await fetch_company_settings(db)
 
-            query_text = structured_deal.get("project_summary", "")
+            overview = structured_deal.get("project_overview", {})
+            if isinstance(overview, dict):
+                query_text = " ".join(
+                    filter(None, [overview.get("objective", ""), overview.get("scope", "")]),
+                )
+            else:
+                query_text = str(overview) if overview else ""
             context_results = await context_store.query(query_text, top_k=5)
             vector_context = format_company_context(context_results)
             company_context = build_company_context(vector_context, company_settings)

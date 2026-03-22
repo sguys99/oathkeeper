@@ -31,8 +31,15 @@ def make_similar_project_node(
             structured_deal = state.get("structured_deal", {})
 
             # Build a search query from structured deal fields
+            overview = structured_deal.get("project_overview", {})
+            if isinstance(overview, dict):
+                overview_text = " ".join(
+                    filter(None, [overview.get("objective", ""), overview.get("scope", "")]),
+                )
+            else:
+                overview_text = str(overview) if overview else ""
             parts = [
-                structured_deal.get("project_summary", ""),
+                overview_text,
                 " ".join(structured_deal.get("tech_requirements", [])),
                 structured_deal.get("customer_industry", ""),
             ]

@@ -42,7 +42,13 @@ def make_resource_estimation_node(
                 company_settings = await fetch_company_settings(db)
 
             # Fetch similar past projects for reference
-            deal_text = structured_deal.get("project_summary", "")
+            overview = structured_deal.get("project_overview", {})
+            if isinstance(overview, dict):
+                deal_text = " ".join(
+                    filter(None, [overview.get("objective", ""), overview.get("scope", "")]),
+                )
+            else:
+                deal_text = str(overview) if overview else ""
             past_projects = await project_store.search_similar(deal_text, top_k=3)
 
             # Build system base prompt with company context
