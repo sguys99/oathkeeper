@@ -16,7 +16,7 @@ OathKeeper is a B2B AI development deal Go/No-Go decision support agent. It anal
 
 ```bash
 # Environment setup
-make init          # Initialize production environment (Python 3.12.9)
+make init          # Initialize production environment (Python 3.12.12)
 make init-dev      # Initialize dev environment (Python 3.12.12) + pre-commit hooks
 
 # Development
@@ -43,6 +43,7 @@ make docker-prod-down # Stop all production services
 npm run dev            # Start Next.js dev server (port 3000)
 npm run build          # Production build
 npm run test:e2e       # Run Playwright E2E tests
+npm run test:e2e:ui    # Run Playwright E2E tests with UI
 ```
 
 ## Architecture
@@ -63,10 +64,13 @@ npm run test:e2e       # Run Playwright E2E tests
 - `agent/embeddings.py` — Embedding client for vector operations
 - `agent/prompt_loader.py` — Jinja2-based YAML prompt renderer
 - `agent/service.py` — High-level service tying graph execution to DB persistence
-- `db/models/` — 7 SQLAlchemy models: `Deal`, `AnalysisResult`, `ScoringCriteria`, `CompanySetting`, `TeamMember`, `User`, `AgentLog`
+- `db/models/` — 9 SQLAlchemy models: `Deal`, `AnalysisResult`, `ScoringCriteria`, `CompanySetting`, `TeamMember`, `User`, `AgentLog`, `CostItem`
 - `db/repositories/` — Async CRUD repos: `deal_repo`, `analysis_repo`, `settings_repo`, `user_repo`, `agent_log_repo`
 - `db/vector_store.py` — `CompanyContextStore` and `ProjectHistoryStore` (Pinecone wrappers)
 - `db/seed.py` — Default scoring criteria, company settings, team member data
+- `db/defaults_loader.py` — YAML-based defaults loading from `configs/defaults/`
+- `db/pinecone_client.py` — Pinecone client initialization
+- `services/project_history_service.py` — Project history business logic
 - `integrations/notion_client.py` — Low-level Notion API operations
 - `integrations/notion_service.py` — High-level Notion deal sync and result saving
 - `integrations/slack_client.py` — Slack webhook notifications
