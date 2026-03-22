@@ -135,9 +135,31 @@ class TestPromptRendering:
             ],
             resource_estimate={
                 "duration_months": 3,
-                "total_cost": 5000,
-                "expected_margin": 21.4,
-                "team_composition": [{"role": "PM", "count": 1}],
+                "duration_with_buffer": 3.6,
+                "cost_breakdown": {
+                    "labor_cost": 4000,
+                    "overhead_cost": 1000,
+                    "total_cost": 5000,
+                    "cost_calculation": "PM 1명 x 1000만원 x 3개월",
+                },
+                "profitability": {
+                    "deal_amount": 6000,
+                    "estimated_cost": 5000,
+                    "expected_margin": 0.167,
+                    "margin_assessment": "목표 마진(20%) 미달",
+                },
+                "team_composition": [
+                    {"role": "PM", "count": 1, "duration_months": 3},
+                ],
+                "work_breakdown": [
+                    {
+                        "area": "데이터 파이프라인",
+                        "is_reusable": True,
+                        "reuse_ratio": 0.6,
+                        "effort_person_months": 1.2,
+                        "description": "기존 파이프라인 모듈 재활용",
+                    },
+                ],
             },
             risks=[
                 {

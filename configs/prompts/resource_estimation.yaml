@@ -1,18 +1,34 @@
 name: resource_estimation
-version: "1.0"
+version: "2.0"
 description: >
-  Deal의 기술 요구사항과 규모를 바탕으로 투입 인력, 기간, 예산을 산출한다.
+  Deal의 기술 요구사항, 규모, 복잡도를 단계적으로 분석하여
+  개발 기간, 팀 구성, 예산을 산출한다. 기존 자산 재활용 영역과
+  신규 개발 영역을 구분하고, 프로젝트 페이즈별 인력 투입 계획을 포함한다.
 
 system_prompt: |
   {{ system_base }}
 
-  당신의 역할은 Deal의 기술 요구사항, 규모, 복잡도를 분석하여 예상 투입 인력 구성, 기간, 소요 예산을 산출하는 것입니다.
-  회사의 인건비 단가와 현재 인력 현황, 과거 유사 프로젝트 실적을 참고하여 현실적인 산출을 수행하세요.
+  당신은 B2B AI 개발 프로젝트의 리소스 산출 전문 PM입니다.
+  Deal의 기술 요구사항, 규모, 복잡도를 체계적으로 분석하여 개발 기간, 팀 구성, 예산을 산출합니다.
 
-  산출 시 근거를 반드시 포함하세요 (예: "유사 프로젝트 평균 3개월 소요").
+  ## 산출 프로세스 (반드시 순서대로 수행)
+  1. **범위 분석**: 프로젝트 scope에서 주요 작업 영역(모듈/기능)을 식별
+  2. **재활용 vs 신규 개발 판별**: 각 작업 영역에서 기존 제품·라이브러리·과거 프로젝트 자산을 재활용 가능한 부분과 신규 개발이 필요한 부분을 구분
+  3. **공수 산정**: 각 작업 영역별 예상 공수(인·월) 산정. 재활용 영역은 커스터마이징/연동 공수만, 신규 영역은 전체 개발 공수를 산정
+  4. **페이즈 설계**: 프로젝트를 단계(설계, 개발, 테스트/안정화 등)로 나누고, 각 단계별 기간과 필요 역할 결정
+  5. **팀 구성 결정**: 역할별 투입 인원 수와 투입 기간 결정. 실제 팀원 가용성 반영
+  6. **비용 산출**: 인건비 + 기타 비용(인프라, 라이선스 등) 합산
+  7. **마진 계산**: 산출 비용과 Deal 예상 금액을 비교하여 수익성 평가
+  8. **리스크 버퍼**: 기술적 불확실성, 요구사항 변경 가능성을 고려한 여유분(10~30%) 산정
+
+  ## 공수 산정 기준
+  - 유사 프로젝트 실적이 있으면 해당 데이터를 1차 기준으로 활용
+  - 유사 프로젝트가 없으면 업계 일반 기준으로 산정하되, 불확실성을 명시
+  - 재활용 영역: 기존 자산 대비 커스터마이징 비율로 공수 추정 (예: 기존 모듈 60% 재활용 → 40% 공수)
+  - 신규 개발 영역: 기술 난이도에 따라 보수적으로 산정
 
 user_prompt: |
-  아래 Deal 정보를 바탕으로 소요 인력·기간·예산을 산출하세요.
+  아래 Deal 정보를 바탕으로 소요 인력·기간·예산을 단계적으로 산출하세요.
 
   ## 구조화된 Deal 정보
   ```json
@@ -22,7 +38,7 @@ user_prompt: |
   ## 팀원 현황 및 월 단가
   {% if team_members %}
   {% for m in team_members %}
-  - {{ m.name }} ({{ m.role }}): 월 {{ m.monthly_rate | int }}만원{% if m.is_available %}, 투입 가능{% else %}, 현재 {{ m.current_project }}에 투입 중{% endif %}
+  - {{ m.name }} ({{ m.role }}): 월 {{ m.monthly_rate | int }}만원{% if m.is_available %}, 투입 가능{% else %}, 현재 {{ m.current_project }}에 투입 중{% if m.available_from %} ({{ m.available_from }}부터 가용){% endif %}{% endif %}
   {% endfor %}
   {% else %}
   (팀원 정보가 제공되지 않았습니다. 일반적인 인건비 기준으로 산출하세요.)
@@ -34,46 +50,130 @@ user_prompt: |
   {% endif %}
 
   {% if past_projects %}
-  ## 유사 프로젝트 참고
+  ## 유사 프로젝트 실적
   {% for p in past_projects %}
-  - {{ p.project_name }}: {{ p.duration_months }}개월, {{ p.tech_stack | join(', ') }}
+  ### {{ loop.index }}. {{ p.project_name }} (유사도: {{ p.similarity_score }})
+  - 기술 스택: {{ p.tech_stack | join(', ') if p.tech_stack else '정보 없음' }}
+  - 소요 기간: {{ p.duration_months }}개월
+  - 계획 인력: {{ p.planned_headcount }}명 → 실제 투입: {{ p.actual_headcount }}명
+  - 계약 금액: {{ p.contract_amount | int }}만원
+  {% if p.summary %}- 요약: {{ p.summary }}{% endif %}
   {% endfor %}
   {% endif %}
 
   다음 JSON 형식으로 응답하세요:
   ```json
   {
+    "work_breakdown": [
+      {
+        "area": "작업 영역명",
+        "is_reusable": false,
+        "reuse_ratio": 0.0,
+        "effort_person_months": 0.0,
+        "description": "산정 근거. 재활용 시 어떤 기존 자산 활용하는지 명시"
+      }
+    ],
+    "phases": [
+      {
+        "name": "페이즈명 (예: 설계, 개발, 테스트/안정화)",
+        "duration_months": 0.0,
+        "roles_needed": ["PM", "BE"]
+      }
+    ],
     "team_composition": [
-      {"role": "PM", "count": 1, "monthly_rate": 0}
+      {
+        "role": "PM",
+        "count": 1,
+        "monthly_rate": 0,
+        "duration_months": 0.0,
+        "assigned_members": ["실제 팀원명 또는 '외부 충원 필요'"]
+      }
     ],
     "duration_months": 0.0,
-    "total_cost": 0,
-    "expected_margin": 0.0,
-    "rationale": "산출 근거 설명"
+    "risk_buffer_ratio": 0.0,
+    "duration_with_buffer": 0.0,
+    "cost_breakdown": {
+      "labor_cost": 0,
+      "overhead_cost": 0,
+      "total_cost": 0,
+      "cost_calculation": "산출 수식 (예: PM 1명 x 1000만원 x 5개월 + ...)"
+    },
+    "profitability": {
+      "deal_amount": 0,
+      "estimated_cost": 0,
+      "expected_margin": 0.0,
+      "margin_assessment": "마진 적정성 평가 (목표 20% 이상 기준)"
+    },
+    "rationale": "전체 산출 핵심 근거 요약"
   }
   ```
+
+  주의사항:
+  - work_breakdown의 각 영역에 대해 재활용 가능 여부를 반드시 판단하세요. 회사의 기존 기술 스택과 과거 프로젝트를 참고하세요.
+  - reuse_ratio: 0.0(완전 신규)~1.0(완전 재활용). effort_person_months는 재활용 비율 반영 후 실제 소요 공수.
+  - team_composition의 duration_months는 해당 역할의 실제 투입 기간 (전체 프로젝트 기간과 다를 수 있음).
+  - monthly_rate는 실제 팀원 정보가 있으면 해당 단가를, 없으면 회사 비용 기준을 사용.
+  - profitability.deal_amount는 structured_deal의 expected_amount 사용. 금액 단위(amount_unit)에 주의하여 만원 단위로 통일.
+  - expected_margin = (deal_amount - estimated_cost) / deal_amount (0.0~1.0).
+  - risk_buffer_ratio: 기술적 불확실성과 요구사항 명확성에 따라 0.1~0.3 범위.
+  - 유사 프로젝트의 계획 대비 실제 인력 차이가 있다면, 이를 산출에 반영하세요.
 
 output_schema:
   type: object
   properties:
+    work_breakdown:
+      type: array
+      items:
+        type: object
+        properties:
+          area: {type: string}
+          is_reusable: {type: boolean}
+          reuse_ratio: {type: number}
+          effort_person_months: {type: number}
+          description: {type: string}
+        required: [area, is_reusable, reuse_ratio, effort_person_months, description]
+    phases:
+      type: array
+      items:
+        type: object
+        properties:
+          name: {type: string}
+          duration_months: {type: number}
+          roles_needed:
+            type: array
+            items: {type: string}
+        required: [name, duration_months, roles_needed]
     team_composition:
       type: array
       items:
         type: object
         properties:
-          role:
-            type: string
-          count:
-            type: integer
-          monthly_rate:
-            type: integer
-        required: [role, count, monthly_rate]
-    duration_months:
-      type: number
-    total_cost:
-      type: integer
-    expected_margin:
-      type: number
-    rationale:
-      type: string
-  required: [team_composition, duration_months, total_cost, expected_margin, rationale]
+          role: {type: string}
+          count: {type: integer}
+          monthly_rate: {type: integer}
+          duration_months: {type: number}
+          assigned_members:
+            type: array
+            items: {type: string}
+        required: [role, count, monthly_rate, duration_months]
+    duration_months: {type: number}
+    risk_buffer_ratio: {type: number}
+    duration_with_buffer: {type: number}
+    cost_breakdown:
+      type: object
+      properties:
+        labor_cost: {type: integer}
+        overhead_cost: {type: integer}
+        total_cost: {type: integer}
+        cost_calculation: {type: string}
+      required: [labor_cost, overhead_cost, total_cost, cost_calculation]
+    profitability:
+      type: object
+      properties:
+        deal_amount: {type: integer}
+        estimated_cost: {type: integer}
+        expected_margin: {type: number}
+        margin_assessment: {type: string}
+      required: [deal_amount, estimated_cost, expected_margin, margin_assessment]
+    rationale: {type: string}
+  required: [work_breakdown, phases, team_composition, duration_months, risk_buffer_ratio, duration_with_buffer, cost_breakdown, profitability, rationale]

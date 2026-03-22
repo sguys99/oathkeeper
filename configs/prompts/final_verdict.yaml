@@ -25,10 +25,11 @@ user_prompt: |
   {% endfor %}
 
   ## 소요 산출
-  - 예상 기간: {{ resource_estimate.duration_months }}개월
-  - 예상 비용: {{ resource_estimate.total_cost }}만원
-  - 예상 마진: {{ resource_estimate.expected_margin }}%
-  - 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명{% if not loop.last %}, {% endif %}{% endfor %}
+  - 예상 기간: {{ resource_estimate.duration_months }}개월 (버퍼 포함: {{ resource_estimate.duration_with_buffer }}개월)
+  - 예상 비용: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원 + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  - 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
+  - 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명({{ t.duration_months }}개월){% if not loop.last %}, {% endif %}{% endfor %}
+  - 주요 작업: {% for w in resource_estimate.work_breakdown %}{{ w.area }}{% if w.is_reusable %} (재활용 {{ (w.reuse_ratio * 100) | int }}%){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
   ## 리스크 분석
   {% for r in risks %}
