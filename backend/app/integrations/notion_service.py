@@ -59,7 +59,7 @@ async def get_deal_content(page_id: str) -> str:
     if prop_text:
         sections.append(f"[딜 기본 정보]\n{prop_text}")
 
-    body_text = _blocks_to_text(blocks)
+    body_text = _blocks_to_markdown(blocks)
     if body_text:
         sections.append(f"[상세 내용]\n{body_text}")
 
