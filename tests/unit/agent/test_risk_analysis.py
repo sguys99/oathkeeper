@@ -42,12 +42,10 @@ class TestRiskAnalysisNode:
     @patch("backend.app.agent.nodes.risk_analysis.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.fetch_company_settings", new_callable=AsyncMock)
-    @patch("backend.app.agent.nodes.risk_analysis.settings_repo")
     @patch("backend.app.agent.nodes.risk_analysis.load_prompt")
     async def test_happy_path(
         self,
         mock_load_prompt,
-        mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
@@ -57,7 +55,6 @@ class TestRiskAnalysisNode:
         mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
 
-        mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = (json.dumps(SAMPLE_RISKS), uuid.uuid4())
 
@@ -81,12 +78,10 @@ class TestRiskAnalysisNode:
     @patch("backend.app.agent.nodes.risk_analysis.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.risk_analysis.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.risk_analysis.fetch_company_settings", new_callable=AsyncMock)
-    @patch("backend.app.agent.nodes.risk_analysis.settings_repo")
     @patch("backend.app.agent.nodes.risk_analysis.load_prompt")
     async def test_error_returns_empty(
         self,
         mock_load_prompt,
-        mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
         mock_session_local,
@@ -95,7 +90,7 @@ class TestRiskAnalysisNode:
         mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
 
-        mock_settings_repo.list_active_criteria = AsyncMock(side_effect=RuntimeError("DB error"))
+        mock_fetch_settings.side_effect = RuntimeError("DB error")
 
         context_store = AsyncMock()
         context_store.query.return_value = []

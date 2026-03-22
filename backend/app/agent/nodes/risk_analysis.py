@@ -7,14 +7,12 @@ from backend.app.agent.base import (
     build_company_context,
     fetch_company_settings,
     format_company_context,
-    format_scoring_criteria,
     logged_call_llm,
     parse_json_response,
     update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
-from backend.app.db.repositories import settings_repo
 from backend.app.db.session import AsyncSessionLocal
 from backend.app.db.vector_store import CompanyContextStore
 
@@ -28,11 +26,9 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
         try:
             structured_deal = state.get("structured_deal", {})
 
-            # Fetch scoring criteria and company settings from DB (own session for concurrency safety)
+            # Fetch company settings from DB (own session for concurrency safety)
             async with AsyncSessionLocal() as db:
-                criteria = await settings_repo.list_active_criteria(db)
                 company_settings = await fetch_company_settings(db)
-            scoring_criteria = format_scoring_criteria(criteria)
 
             # Fetch company context
             query_text = structured_deal.get("project_summary", "")
@@ -46,7 +42,6 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
             system_base = system_tpl.render_system(
                 company_context=company_context,
                 deal_criteria=company_settings.get("deal_criteria", ""),
-                scoring_criteria=scoring_criteria,
             )
 
             # Render prompts

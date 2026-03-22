@@ -68,7 +68,6 @@ def make_scoring_node(context_store: CompanyContextStore):
             system_base = system_tpl.render_system(
                 company_context=company_context,
                 deal_criteria=company_settings.get("deal_criteria", ""),
-                scoring_criteria=scoring_criteria,
             )
 
             tpl = load_prompt("scoring")

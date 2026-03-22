@@ -27,13 +27,32 @@ SAMPLE_SIMILAR = {
 
 class TestSimilarProjectNode:
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.similar_project.AsyncSessionLocal")
+    @patch("backend.app.agent.nodes.similar_project.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.load_prompt")
-    async def test_happy_path(self, mock_load_prompt, mock_logged_call, mock_update_log):
+    async def test_happy_path(
+        self,
+        mock_load_prompt,
+        mock_logged_call,
+        mock_update_log,
+        mock_fetch_settings,
+        mock_session_local,
+    ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+        mock_fetch_settings.return_value = {
+            "business_direction": "",
+            "deal_criteria": "",
+            "short_term_strategy": "",
+        }
+
         mock_logged_call.return_value = (json.dumps(SAMPLE_SIMILAR), uuid.uuid4())
 
         mock_tpl = MagicMock()
+        mock_tpl.render_system.return_value = "system base"
         mock_tpl.render.return_value = ("system", "user")
         mock_load_prompt.return_value = mock_tpl
 
@@ -42,7 +61,10 @@ class TestSimilarProjectNode:
             {"project_name": "Alpha", "similarity_score": 0.92},
         ]
 
-        node = make_similar_project_node(project_store)
+        context_store = AsyncMock()
+        context_store.query.return_value = []
+
+        node = make_similar_project_node(project_store, context_store)
         result = await node(
             {
                 "structured_deal": {
@@ -61,7 +83,7 @@ class TestSimilarProjectNode:
         project_store = AsyncMock()
         project_store.search_similar.return_value = []
 
-        node = make_similar_project_node(project_store)
+        node = make_similar_project_node(project_store, AsyncMock())
         result = await node(
             {
                 "structured_deal": {
@@ -79,26 +101,47 @@ class TestSimilarProjectNode:
     async def test_empty_structured_deal_skips(self):
         project_store = AsyncMock()
 
-        node = make_similar_project_node(project_store)
+        node = make_similar_project_node(project_store, AsyncMock())
         result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["similar_projects"] == []
         project_store.search_similar.assert_not_awaited()
 
     @pytest.mark.asyncio
+    @patch("backend.app.agent.nodes.similar_project.AsyncSessionLocal")
+    @patch("backend.app.agent.nodes.similar_project.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.similar_project.load_prompt")
-    async def test_error_returns_empty(self, mock_load_prompt, mock_logged_call):
+    async def test_error_returns_empty(
+        self,
+        mock_load_prompt,
+        mock_logged_call,
+        mock_fetch_settings,
+        mock_session_local,
+    ):
+        mock_session = AsyncMock()
+        mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
+        mock_fetch_settings.return_value = {
+            "business_direction": "",
+            "deal_criteria": "",
+            "short_term_strategy": "",
+        }
+
         mock_logged_call.side_effect = RuntimeError("LLM error")
 
         mock_tpl = MagicMock()
+        mock_tpl.render_system.return_value = "system base"
         mock_tpl.render.return_value = ("system", "user")
         mock_load_prompt.return_value = mock_tpl
 
         project_store = AsyncMock()
         project_store.search_similar.return_value = [{"project_name": "X"}]
 
-        node = make_similar_project_node(project_store)
+        context_store = AsyncMock()
+        context_store.query.return_value = []
+
+        node = make_similar_project_node(project_store, context_store)
         result = await node(
             {
                 "structured_deal": {

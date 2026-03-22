@@ -45,12 +45,10 @@ class TestDealStructuringNode:
     @patch("backend.app.agent.nodes.deal_structuring.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
-    @patch("backend.app.agent.nodes.deal_structuring.settings_repo")
     @patch("backend.app.agent.nodes.deal_structuring.load_prompt")
     async def test_happy_path(
         self,
         mock_load_prompt,
-        mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
@@ -61,7 +59,6 @@ class TestDealStructuringNode:
         mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
 
-        mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = (json.dumps(SAMPLE_STRUCTURED), uuid.uuid4())
 
@@ -82,12 +79,10 @@ class TestDealStructuringNode:
     @patch("backend.app.agent.nodes.deal_structuring.update_log_parsed_output", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
-    @patch("backend.app.agent.nodes.deal_structuring.settings_repo")
     @patch("backend.app.agent.nodes.deal_structuring.load_prompt")
     async def test_json_parse_failure(
         self,
         mock_load_prompt,
-        mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
@@ -98,7 +93,6 @@ class TestDealStructuringNode:
         mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
 
-        mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.return_value = ("not valid json", uuid.uuid4())
 
@@ -118,12 +112,10 @@ class TestDealStructuringNode:
     @patch("backend.app.agent.nodes.deal_structuring.AsyncSessionLocal")
     @patch("backend.app.agent.nodes.deal_structuring.logged_call_llm", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.deal_structuring.fetch_company_settings", new_callable=AsyncMock)
-    @patch("backend.app.agent.nodes.deal_structuring.settings_repo")
     @patch("backend.app.agent.nodes.deal_structuring.load_prompt")
     async def test_llm_exception(
         self,
         mock_load_prompt,
-        mock_settings_repo,
         mock_fetch_settings,
         mock_logged_call,
         mock_session_local,
@@ -133,7 +125,6 @@ class TestDealStructuringNode:
         mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_local.return_value.__aexit__ = AsyncMock(return_value=False)
 
-        mock_settings_repo.list_active_criteria = AsyncMock(return_value=[])
         mock_fetch_settings.return_value = EMPTY_COMPANY_SETTINGS
         mock_logged_call.side_effect = RuntimeError("LLM down")
 

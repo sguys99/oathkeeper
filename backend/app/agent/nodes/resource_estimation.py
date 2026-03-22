@@ -4,6 +4,9 @@ import logging
 import uuid
 
 from backend.app.agent.base import (
+    build_company_context,
+    fetch_company_settings,
+    format_company_context,
     format_team_members,
     logged_call_llm,
     parse_json_response,
@@ -13,13 +16,14 @@ from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
 from backend.app.db.repositories import settings_repo
 from backend.app.db.session import AsyncSessionLocal
-from backend.app.db.vector_store import ProjectHistoryStore
+from backend.app.db.vector_store import CompanyContextStore, ProjectHistoryStore
 
 logger = logging.getLogger(__name__)
 
 
 def make_resource_estimation_node(
     project_store: ProjectHistoryStore,
+    context_store: CompanyContextStore,
 ):
     """Factory — returns an async resource-estimation node."""
 
@@ -35,13 +39,27 @@ def make_resource_estimation_node(
                 rates_setting = await settings_repo.get_setting(db, "company_rates")
                 company_rates = rates_setting.value if rates_setting else ""
 
+                company_settings = await fetch_company_settings(db)
+
             # Fetch similar past projects for reference
             deal_text = structured_deal.get("project_summary", "")
             past_projects = await project_store.search_similar(deal_text, top_k=3)
 
+            # Build system base prompt with company context
+            context_results = await context_store.query(deal_text, top_k=5)
+            vector_context = format_company_context(context_results)
+            company_context = build_company_context(vector_context, company_settings)
+
+            system_tpl = load_prompt("system")
+            system_base = system_tpl.render_system(
+                company_context=company_context,
+                deal_criteria=company_settings.get("deal_criteria", ""),
+            )
+
             # Render prompts
             tpl = load_prompt("resource_estimation")
             system_prompt, user_prompt = tpl.render(
+                system_base=system_base,
                 structured_deal=structured_deal,
                 team_members=team_members,
                 company_rates=company_rates,

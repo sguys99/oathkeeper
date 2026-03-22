@@ -30,12 +30,14 @@ class TestResourceEstimationNode:
         new_callable=AsyncMock,
     )
     @patch("backend.app.agent.nodes.resource_estimation.logged_call_llm", new_callable=AsyncMock)
+    @patch("backend.app.agent.nodes.resource_estimation.fetch_company_settings", new_callable=AsyncMock)
     @patch("backend.app.agent.nodes.resource_estimation.settings_repo")
     @patch("backend.app.agent.nodes.resource_estimation.load_prompt")
     async def test_happy_path(
         self,
         mock_load_prompt,
         mock_settings_repo,
+        mock_fetch_settings,
         mock_logged_call,
         mock_update_log,
         mock_session_local,
@@ -46,16 +48,25 @@ class TestResourceEstimationNode:
 
         mock_settings_repo.list_team_members = AsyncMock(return_value=[])
         mock_settings_repo.get_setting = AsyncMock(return_value=None)
+        mock_fetch_settings.return_value = {
+            "business_direction": "",
+            "deal_criteria": "",
+            "short_term_strategy": "",
+        }
         mock_logged_call.return_value = (json.dumps(SAMPLE_ESTIMATE), uuid.uuid4())
 
         mock_tpl = MagicMock()
+        mock_tpl.render_system.return_value = "system base"
         mock_tpl.render.return_value = ("system", "user")
         mock_load_prompt.return_value = mock_tpl
 
         project_store = AsyncMock()
         project_store.search_similar.return_value = []
 
-        node = make_resource_estimation_node(project_store)
+        context_store = AsyncMock()
+        context_store.query.return_value = []
+
+        node = make_resource_estimation_node(project_store, context_store)
         result = await node(
             {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
         )
@@ -74,7 +85,7 @@ class TestResourceEstimationNode:
 
         mock_settings_repo.list_team_members = AsyncMock(side_effect=RuntimeError("fail"))
 
-        node = make_resource_estimation_node(AsyncMock())
+        node = make_resource_estimation_node(AsyncMock(), AsyncMock())
         result = await node({"structured_deal": {}, "deal_id": str(uuid.uuid4())})
 
         assert result["resource_estimate"] == {}

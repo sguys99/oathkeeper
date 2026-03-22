@@ -7,14 +7,12 @@ from backend.app.agent.base import (
     build_company_context,
     fetch_company_settings,
     format_company_context,
-    format_scoring_criteria,
     logged_call_llm,
     parse_json_response,
     update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
 from backend.app.agent.state import AgentState
-from backend.app.db.repositories import settings_repo
 from backend.app.db.session import AsyncSessionLocal
 from backend.app.db.vector_store import CompanyContextStore
 
@@ -32,9 +30,7 @@ def make_deal_structuring_node(
 
             # Fetch context for the system prompt (own session for concurrency safety)
             async with AsyncSessionLocal() as db:
-                criteria = await settings_repo.list_active_criteria(db)
                 company_settings = await fetch_company_settings(db)
-            scoring_criteria = format_scoring_criteria(criteria)
 
             context_results = await context_store.query(deal_input, top_k=5)
             vector_context = format_company_context(context_results)
@@ -46,7 +42,6 @@ def make_deal_structuring_node(
             system_base = system_tpl.render_system(
                 company_context=company_context,
                 deal_criteria=company_settings.get("deal_criteria", ""),
-                scoring_criteria=scoring_criteria,
             )
 
             tpl = load_prompt("deal_structuring")

@@ -18,7 +18,7 @@ class TestLoadPrompt:
     def test_load_system_prompt(self):
         tpl = load_prompt("system")
         assert tpl.name == "system"
-        assert tpl.version == "1.0"
+        assert tpl.version == "2.0"
 
     def test_load_deal_structuring(self):
         tpl = load_prompt("deal_structuring")
@@ -61,21 +61,17 @@ class TestPromptRendering:
         rendered = tpl.render_system(
             company_context="AI 솔루션 전문 기업",
             deal_criteria="계약 금액 5000만원 이상",
-            scoring_criteria=[
-                {"name": "기술 적합성", "weight": 20.0, "description": "자사 기술로 구현 가능한가"},
-                {"name": "수익성", "weight": 20.0, "description": "목표 마진을 충족하는가"},
-            ],
         )
         assert "AI 솔루션 전문 기업" in rendered
         assert "계약 금액 5000만원 이상" in rendered
-        assert "기술 적합성" in rendered
-        assert "20.0%" in rendered
+        assert "근거 기반 분석" in rendered
+        assert "보수적 평가" in rendered
 
     def test_system_prompt_without_context(self):
         tpl = load_prompt("system")
         rendered = tpl.render_system()
         assert "컨텍스트가 제공되지 않았습니다" in rendered
-        assert "기본 평가 기준" in rendered
+        assert "분석 원칙" in rendered
 
     def test_deal_structuring_render(self):
         tpl = load_prompt("deal_structuring")
