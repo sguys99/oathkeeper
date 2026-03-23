@@ -26,7 +26,6 @@ Ensure the following tools are installed before proceeding:
 | **uv** | latest | Python package manager |
 | **Node.js** | 18+ | Frontend runtime |
 | **Docker & Docker Compose** | latest | PostgreSQL & production deployment |
-| **Git** | latest | Version control |
 
 ---
 
@@ -129,6 +128,26 @@ Each database has a unique ID embedded in its URL. You need these IDs for the `.
 
 > **Tip:** You can also find Database IDs via the Notion API — use `POST https://api.notion.com/v1/search` with your integration token.
 
+### 2.7 Pinecone Setup
+
+OathKeeper uses [Pinecone](https://www.pinecone.io/) as a vector database to store past project embeddings for similarity matching. You need to create **one index** (`project-history`).
+
+1. Sign up at [Pinecone](https://www.pinecone.io/) and create a project
+2. Go to **API Keys** in the sidebar and copy your API key → paste it into `.env` as `PINECONE_API_KEY`
+3. Create a new index named `project-history` with the following settings — select **text-embedding-3-small** (OpenAI) as the embedding model:
+
+![Pinecone Index Configuration](imgs/0-5.pinecone-setting.png)
+
+| Setting | Value |
+|---------|-------|
+| **Embedding Model** | text-embedding-3-small (OpenAI) |
+| **Modality** | Text |
+| **Vector Type** | Dense |
+| **Dimension** | 1536 |
+| **Metric** | cosine |
+
+> **Note:** The dimension (1536) and metric (cosine) must match exactly — these correspond to OpenAI's `text-embedding-3-small` model output.
+
 ---
 
 ## 3. Installation
@@ -201,6 +220,8 @@ Choose one provider — either OpenAI or Anthropic Claude.
 > **Note:** Even when using Claude as the LLM provider, `OPENAI_API_KEY` is still required for the embedding model (`text-embedding-3-small`).
 
 ### Pinecone (Vector Database)
+
+See [Section 2.7: Pinecone Setup](#27-pinecone-setup) for how to create indexes.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
