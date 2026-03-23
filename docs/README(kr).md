@@ -32,51 +32,13 @@
 
 ## 시스템 아키텍처
 
-```
-[Sales] --> Notion DB Input
-                │
-                ▼  Notion API
-[Backend: Input Parser] <-- Document Upload / Additional Text
-                │
-                ▼
-       [Orchestrator Agent]
-                │
-     ┌──────────┼──────────┐
-     ▼          ▼          ▼
-[Deal Structuring] [Scoring] [Risk Analysis]
-     ▼              ▼            ▼
-[Resource Est.] [Similar Cases] [Final Verdict]
-                │
-     ┌──────────┼──────────┐
-     ▼          ▼          ▼
-[Frontend]  [Notion Save]  [Slack Alert]
-```
-
-영업 딜 입력이 Notion, 자유 텍스트, 문서 업로드를 통해 들어옵니다. LangGraph 오케스트레이터가 전문 에이전트 노드들을 통해 처리하고, 결과를 PostgreSQL과 Pinecone에 저장한 뒤 프론트엔드 대시보드, Notion, Slack으로 전달합니다.
+![Service Architecture](../img/service-architecture.png)
 
 ### LangGraph 에이전트 플로우
 
 LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 
-```
-deal_structuring_node
-        │
-        ▼
-should_continue_or_hold ── (>= 3 missing fields) ──> hold_verdict_node ──> END
-        │
-        ▼ (continue)
-   ┌────┴─────────────────────────┐
-   │      Parallel Execution      │
-   ├──────────────────────────────┤
-   │  scoring_node                │
-   │  resource_estimation_node    │
-   │  risk_analysis_node          │
-   │  similar_project_node        │
-   └────┬─────────────────────────┘
-        │ (fan-in)
-        ▼
- final_verdict_node ──> END
-```
+![Agent Flow](../img/agent-flow.png)
 
 | 노드 | 역할 |
 |---|---|

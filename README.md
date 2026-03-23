@@ -32,51 +32,13 @@ When 3 or more critical deal fields are missing, analysis short-circuits to Hold
 
 ## System Architecture
 
-```
-[Sales] --> Notion DB Input
-                │
-                ▼  Notion API
-[Backend: Input Parser] <-- Document Upload / Additional Text
-                │
-                ▼
-       [Orchestrator Agent]
-                │
-     ┌──────────┼──────────┐
-     ▼          ▼          ▼
-[Deal Structuring] [Scoring] [Risk Analysis]
-     ▼              ▼            ▼
-[Resource Est.] [Similar Cases] [Final Verdict]
-                │
-     ┌──────────┼──────────┐
-     ▼          ▼          ▼
-[Frontend]  [Notion Save]  [Slack Alert]
-```
-
-Sales deal input arrives via Notion, free text, or document upload. The LangGraph orchestrator processes it through specialized agent nodes, persists results to PostgreSQL and Pinecone, and delivers outputs to the frontend dashboard, Notion, and Slack.
+![Service Architecture](img/service-architecture.png)
 
 ### LangGraph Agent Flow
 
 LangGraph-based analysis pipeline (`backend/app/agent/graph.py`):
 
-```
-deal_structuring_node
-        │
-        ▼
-should_continue_or_hold ── (>= 3 missing fields) ──> hold_verdict_node ──> END
-        │
-        ▼ (continue)
-   ┌────┴─────────────────────────┐
-   │      Parallel Execution      │
-   ├──────────────────────────────┤
-   │  scoring_node                │
-   │  resource_estimation_node    │
-   │  risk_analysis_node          │
-   │  similar_project_node        │
-   └────┬─────────────────────────┘
-        │ (fan-in)
-        ▼
- final_verdict_node ──> END
-```
+![Agent Flow](img/agent-flow.png)
 
 | Node | Role |
 |---|---|
