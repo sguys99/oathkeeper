@@ -28,7 +28,7 @@
 
 핵심 딜 필드가 3개 이상 누락되면 스코어링 없이 Hold로 단축 판정됩니다.
 
----
+
 
 ## 시스템 아키텍처
 
@@ -40,19 +40,10 @@ LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 
 ![Agent Flow](../img/agent-flow.png)
 
-| 노드 | 역할 |
-|---|---|
-| Deal Structuring | 비정형 딜 텍스트에서 구조화된 필드 추출 |
-| Scoring | 7개 기준으로 딜 평가, Go/No-Go 권고안 생성 |
-| Resource Estimation | 인력, 기간, 예산 산출 |
-| Risk Analysis | 카테고리 및 심각도별 리스크 식별 |
-| Similar Project | 벡터 DB에서 Top-3 유사 과거 프로젝트 검색 |
-| Final Verdict | 모든 결과를 종합하여 경영진 리포트 생성 |
-| Hold Verdict | 핵심 필드 누락 시 단축 판정 |
 
 각 노드는 `backend/app/agent/nodes/` 아래 팩토리 함수로 구현되며, `AgentState`(TypedDict)를 통해 상태를 공유합니다. 조건 분기는 LangGraph의 `Send` API로 팬아웃됩니다.
 
----
+
 
 ## 기술 스택
 
@@ -65,12 +56,8 @@ LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 | **데이터베이스** | PostgreSQL 16 (SQLAlchemy 2.0 + asyncpg) |
 | **마이그레이션** | Alembic |
 | **프론트엔드** | Next.js 16, React 19, TypeScript 5, TailwindCSS v4, shadcn/ui |
-| **차트** | Recharts |
 | **상태 관리** | TanStack React Query 5 |
 | **연동** | Notion API |
-| **알림** | Slack Webhook |
-| **로깅** | structlog |
-| **에러 추적** | Sentry |
 | **배포** | Docker Compose, Nginx |
 
 ---
@@ -81,35 +68,35 @@ LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 oathkeeper/
 ├── backend/
 │   └── app/
-│       ├── api/                # FastAPI 라우터, Pydantic 스키마
-│       │   ├── routers/        # deals, analysis, users, settings, notion, agent_logs, prompts, project_history
-│       │   └── schemas/        # 요청/응답 스키마
-│       ├── agent/              # LangGraph 에이전트
-│       │   ├── graph.py        # 메인 그래프 정의
-│       │   ├── state.py        # AgentState (공유 상태)
-│       │   ├── llm.py          # LLM 클라이언트 (LiteLLM)
-│       │   ├── prompt_loader.py # YAML 프롬프트 로더 (Jinja2)
-│       │   └── nodes/          # 개별 에이전트 노드
-│       ├── db/                 # 데이터베이스 레이어
-│       │   ├── models/         # SQLAlchemy ORM 모델
-│       │   ├── repositories/   # CRUD 레포지토리
-│       │   ├── migrations/     # Alembic 마이그레이션
-│       │   ├── vector_store.py # Pinecone 벡터 스토어 래퍼
+│       ├── api/                     # FastAPI 라우터, Pydantic 스키마
+│       │   ├── routers/         
+│       │   └── schemas/        
+│       ├── agent/                   # LangGraph 에이전트
+│       │   ├── graph.py             # 메인 그래프 정의
+│       │   ├── state.py             # AgentState (공유 상태)
+│       │   ├── llm.py               # LLM 클라이언트 (LiteLLM)
+│       │   ├── prompt_loader.py     # YAML 프롬프트 로더 (Jinja2)
+│       │   └── nodes/               # 개별 에이전트 노드
+│       ├── db/                      # 데이터베이스 레이어
+│       │   ├── models/          
+│       │   ├── repositories/   
+│       │   ├── migrations/      
+│       │   ├── vector_store.py  
 │       │   ├── pinecone_client.py
-│       │   └── seed.py         # 시드 데이터
-│       ├── services/           # 비즈니스 로직 서비스
+│       │   └── seed.py              # 시드 데이터
+│       ├── services/                # 비즈니스 로직 서비스
 │       │   └── project_history_service.py
-│       ├── integrations/       # 외부 서비스 클라이언트
+│       ├── integrations/            # 외부 서비스 클라이언트
 │       │   ├── notion_client.py
 │       │   ├── notion_service.py
 │       │   └── slack_client.py
 │       └── utils/
-│           ├── settings.py     # 앱 설정 (환경 변수)
-│           ├── path.py         # 프로젝트 경로 상수
-│           ├── logging.py      # structlog 설정
-│           └── file_parser.py  # 문서 파싱 (Word/PDF)
+│           ├── settings.py          # 앱 설정 (환경 변수)
+│           ├── path.py              # 프로젝트 경로 상수
+│           ├── logging.py           # structlog 설정
+│           └── file_parser.py       # 문서 파싱 (Word/PDF)
 ├── configs/
-│   └── prompts/                # 에이전트 프롬프트 YAML 템플릿
+│   └── prompts/                     # 에이전트 프롬프트 YAML 템플릿
 ├── frontend/
 │   └── src/
 │       ├── app/                # Next.js App Router 페이지
@@ -127,21 +114,18 @@ oathkeeper/
 │       ├── lib/api/            # API 클라이언트
 │       └── providers/          # React 컨텍스트 (Query, User)
 ├── tests/
-│   ├── unit/                   # 유닛 테스트
-│   ├── integration/            # 통합 테스트
-│   ├── e2e/                    # E2E 테스트
-│   └── fixtures/               # 테스트 픽스처
+│  
 ├── docs/                       # 문서
 ├── nginx/                      # Nginx 리버스 프록시 설정
 ├── main.py                     # 엔트리포인트 (uvicorn)
 ├── Makefile
-├── Dockerfile                  # 백엔드 Docker
-├── docker-compose.yaml         # 개발 환경 (PostgreSQL)
-├── docker-compose.prod.yaml    # 프로덕션 환경 (전체 서비스)
+├── Dockerfile                 
+├── docker-compose.yaml         
+├── docker-compose.prod.yaml     
 └── pyproject.toml
 ```
 
----
+
 
 ## 빠른 시작
 
@@ -184,7 +168,7 @@ npm run dev
 
 API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경 설정 가이드](manual/env-setting(kr).md)를 참조하세요.
 
----
+
 
 ## 문서
 
@@ -196,7 +180,7 @@ API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경
 | 사용 매뉴얼 (한글) | [manual/manual(kr).md](manual/manual(kr).md) |
 | 영문 README | [README.md](../README.md) |
 
----
+
 
 ## 라이선스
 
