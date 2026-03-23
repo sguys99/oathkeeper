@@ -60,7 +60,7 @@ LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 | **연동** | Notion API |
 | **배포** | Docker Compose, Nginx |
 
----
+   
 
 ## 프로젝트 구조
 
@@ -125,7 +125,7 @@ oathkeeper/
 └── pyproject.toml
 ```
 
-
+  
 
 ## 빠른 시작
 
@@ -168,7 +168,7 @@ npm run dev
 
 API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경 설정 가이드](manual/env-setting(kr).md)를 참조하세요.
 
-
+   
 
 ## 문서
 
@@ -180,7 +180,7 @@ API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경
 | 사용 매뉴얼 (한글) | [manual/manual(kr).md](manual/manual(kr).md) |
 | 영문 README | [README.md](../README.md) |
 
-
+   
 
 ## 라이선스
 
