@@ -33,8 +33,15 @@ user_prompt: |
 
   ## 리스크 분석
   {% for r in risks %}
-  - [{{ r.level }}] {{ r.category }} — {{ r.item }}: {{ r.description }}
+  - [{{ r.level }}] {{ r.category }} — {{ r.item }}: {{ r.description }}{% if r.probability %} (확률: {{ r.probability }}, 영향: {{ r.impact }}){% endif %}
   {% endfor %}
+  {% if risk_interdependencies is defined and risk_interdependencies %}
+
+  ### 리스크 상호작용
+  {% for ri in risk_interdependencies %}
+  - {{ ri.risk_pair | join(" + ") }}: {{ ri.combined_effect }}
+  {% endfor %}
+  {% endif %}
 
   ## 유사 프로젝트
   {% for p in similar_projects %}
@@ -59,7 +66,13 @@ user_prompt: |
   (인력, 기간, 비용, 마진)
 
   ## 5. 리스크 분석
-  (카테고리별, 심각도 순)
+  (카테고리별, 심각도 순 — 발생 확률과 영향도 포함)
+
+  ### 5.1 교차 분석 인사이트
+  - 스코어링에서 낮은 점수(60점 이하)를 받은 기준과 관련된 리스크가 있다면, 해당 리스크의 심각성이 증폭됨을 설명하세요.
+  - 리소스 산출에서 마진이 15% 미만이거나 핵심 인력이 미배정된 경우, 재무/일정 리스크와 연결하세요.
+  - 유사 프로젝트의 lessons_learned에서 현재 Deal의 리스크와 관련된 패턴이 있다면 언급하세요.
+  - 리스크 상호작용(risk_interdependencies)이 있다면 핵심 내용을 포함하세요.
 
   ## 6. 유사 프로젝트 참고
   (Top 3 비교)

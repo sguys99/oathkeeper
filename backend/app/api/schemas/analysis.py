@@ -34,9 +34,18 @@ class ResourceEstimate(BaseModel):
 class RiskItem(BaseModel):
     category: str
     item: str
-    level: str  # HIGH, MEDIUM, LOW
+    probability: str | None = None  # HIGH, MEDIUM, LOW
+    impact: str | None = None  # HIGH, MEDIUM, LOW
+    level: str  # HIGH, MEDIUM, LOW (derived from probability × impact matrix)
+    evidence: str | None = None
     description: str
     mitigation: str | None = None
+
+
+class RiskInterdependency(BaseModel):
+    risk_pair: list[str]
+    combined_effect: str
+    amplification: str
 
 
 class SimilarProject(BaseModel):
@@ -57,6 +66,7 @@ class AnalysisResponse(OrmBase):
     scores: Any | None = None
     resource_estimate: Any | None = None
     risks: Any | None = None
+    risk_interdependencies: Any | None = None
     similar_projects: Any | None = None
     report_markdown: str | None = None
     notion_saved_at: datetime | None = None

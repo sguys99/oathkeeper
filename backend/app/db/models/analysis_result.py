@@ -38,6 +38,7 @@ class AnalysisResult(Base):
     scores: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     resource_estimate: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     risks: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
+    risk_interdependencies: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     similar_projects: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     report_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
     notion_saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

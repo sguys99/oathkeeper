@@ -18,6 +18,7 @@ async def create(
     scores: dict | None = None,
     resource_estimate: dict | None = None,
     risks: dict | None = None,
+    risk_interdependencies: dict | None = None,
     similar_projects: dict | None = None,
     report_markdown: str | None = None,
 ) -> AnalysisResult:
@@ -29,6 +30,7 @@ async def create(
         scores=scores,
         resource_estimate=resource_estimate,
         risks=risks,
+        risk_interdependencies=risk_interdependencies,
         similar_projects=similar_projects,
         report_markdown=report_markdown,
     )

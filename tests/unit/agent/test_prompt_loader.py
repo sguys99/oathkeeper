@@ -114,10 +114,9 @@ class TestPromptRendering:
         tpl = load_prompt("risk_analysis")
         rendered = tpl.render_user(
             structured_deal={"customer_name": "테스트사"},
-            company_context="보안 중시 기업",
         )
         assert "customer_name" in rendered
-        assert "보안 중시 기업" in rendered
+        assert "risk_interdependencies" in rendered
 
     def test_final_verdict_render(self):
         tpl = load_prompt("final_verdict")

@@ -79,7 +79,7 @@ export default function DealDetailPage({
           )}
 
           {analysis.risks && analysis.risks.length > 0 && (
-            <RiskList risks={analysis.risks} />
+            <RiskList risks={analysis.risks} interdependencies={analysis.risk_interdependencies} />
           )}
 
           {analysis.similar_projects &&

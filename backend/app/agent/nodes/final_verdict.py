@@ -55,6 +55,7 @@ def make_final_verdict_node(context_store: CompanyContextStore):
                 verdict=state.get("verdict", "pending"),
                 resource_estimate=state.get("resource_estimate", {}),
                 risks=state.get("risks", []),
+                risk_interdependencies=state.get("risk_interdependencies", []),
                 similar_projects=state.get("similar_projects", []),
             )
 

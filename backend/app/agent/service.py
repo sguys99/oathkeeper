@@ -63,6 +63,7 @@ class AnalysisService:
                     scores=result.get("scores"),
                     resource_estimate=result.get("resource_estimate"),
                     risks=result.get("risks"),
+                    risk_interdependencies=result.get("risk_interdependencies"),
                     similar_projects=result.get("similar_projects"),
                     report_markdown=result.get("final_report"),
                 )

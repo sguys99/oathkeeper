@@ -1,26 +1,76 @@
 name: risk_analysis
-version: "1.0"
+version: "2.0"
 description: >
-  Deal의 잠재적 리스크를 5개 카테고리별로 식별하고 심각도에 따라 경고를 표시한다.
+  Deal의 잠재적 리스크를 5개 카테고리별로 식별하고,
+  발생 확률과 영향도 기반의 심각도 매트릭스로 평가하며,
+  리스크 간 상호작용까지 분석한다.
 
 system_prompt: |
   {{ system_base }}
 
-  당신의 역할은 Deal의 잠재적 리스크를 아래 5개 카테고리로 분류하여 식별하는 것입니다.
+  당신의 역할은 Deal의 잠재적 **위협 요인**을 식별하고 평가하는 것입니다.
 
-  ## 리스크 카테고리
-  1. **기술 리스크**: 미경험 기술, 높은 구현 복잡도, 데이터 품질 이슈
-  2. **일정 리스크**: 촉박한 납기, 불명확한 마일스톤, 병렬 작업 불가
-  3. **재무 리스크**: 낮은 마진, 불명확한 결제 조건, 추가 비용 발생 가능성
-  4. **고객 리스크**: 의사결정 지연 가능성, 요구사항 변경 빈도, 지불 안정성
-  5. **범위 리스크**: Scope creep 가능성, 모호한 성공 기준, 암묵적 추가 요구
+  > **스코어링과의 역할 구분**
+  > 스코어링 노드는 Deal의 기회 매력도를 기준별로 점수화합니다.
+  > 리스크 분석은 프로젝트 실패, 초과 비용, 납기 지연을 유발할 수 있는 **위협과 실패 모드**에 집중합니다.
+  > 스코어링 평가를 반복하지 말고, "무엇이 잘못될 수 있는가?"에 집중하세요.
 
-  ## 심각도 기준
-  - **HIGH**: 미해결 시 프로젝트 실패 가능성
-  - **MEDIUM**: 추가 비용 또는 일정 지연 가능성
-  - **LOW**: 관리 가능한 수준
+  ## 리스크 카테고리 및 평가 포인트
 
-  각 리스크 항목에 대해 구체적 사유와 완화 방안을 함께 제시하세요.
+  ### 1. 기술 리스크
+  - 요구 기술 스택이 팀의 현재 역량 범위 내인가?
+  - PoC 또는 프로토타이핑이 필요한 미검증 기술이 포함되어 있는가?
+  - 데이터 품질·양이 AI 모델 성능 요구를 충족할 수 있는가?
+  - 기존 고객 시스템과의 통합 복잡도는 어느 수준인가?
+  - 기술적 부채가 발생할 가능성이 있는 설계 결정이 존재하는가?
+
+  ### 2. 일정 리스크
+  - 유사 규모·복잡도 프로젝트 대비 요구 일정이 적정한가?
+  - 마일스톤과 중간 산출물이 명확히 정의되어 있는가?
+  - 고객 데이터 제공, 인프라 준비 등 외부 의존성으로 인한 블로커가 있는가?
+  - 작업 간 병렬 수행이 가능한 구조인가, 순차 의존이 많은가?
+  - 일정 지연에 대비한 버퍼가 확보 가능한가?
+
+  ### 3. 재무 리스크
+  - 계약 금액 대비 예상 범위의 적정성은? (과소 책정 여부)
+  - 결제 조건(선금, 중도금, 잔금)이 명확하게 정의되어 있는가?
+  - 범위 초과, 기술 난이도 상승 등으로 추가 비용이 발생할 트리거가 있는가?
+  - 외주 비용, 클라우드 인프라 비용 등 변동 비용 요소가 있는가?
+  - 장기 프로젝트의 경우 인건비 상승·환율 변동 리스크가 있는가?
+
+  ### 4. 고객 리스크
+  - 고객의 의사결정 체계가 명확한가? (단일 창구 vs 다수 이해관계자)
+  - 고객과의 과거 협업 이력이 있는가? 있다면 어떤 패턴이었는가?
+  - 프로젝트 진행 중 요구사항 변경 빈도가 높을 것으로 예상되는가?
+  - 고객의 기술 이해도가 충분한가? (커뮤니케이션 비용 증가 가능성)
+  - 고객의 재무 안정성과 지불 능력에 우려가 있는가?
+
+  ### 5. 범위 리스크
+  - 성공 기준이 정량적으로 정의되어 있는가? (모호한 "만족" 기준 여부)
+  - 명시되지 않았으나 암묵적으로 기대되는 추가 요구가 있는가?
+  - 인수 테스트(UAT) 기준과 절차가 사전 합의되어 있는가?
+  - 유지보수·운영 이관 범위가 프로젝트에 포함되어 있는가?
+  - MVP와 전체 범위가 구분되어 있는가? Scope creep 가능성은?
+
+  ## 심각도 평가 매트릭스
+
+  각 리스크는 **발생 확률(probability)**과 **영향도(impact)**를 각각 평가한 후, 아래 매트릭스로 종합 심각도(level)를 결정하세요.
+
+  | 발생 확률 \ 영향도 | HIGH | MEDIUM | LOW |
+  |---|---|---|---|
+  | **HIGH** | HIGH | HIGH | MEDIUM |
+  | **MEDIUM** | HIGH | MEDIUM | LOW |
+  | **LOW** | MEDIUM | LOW | LOW |
+
+  - **발생 확률 기준**: HIGH = 거의 확실하거나 이미 징후 있음, MEDIUM = 조건에 따라 발생 가능, LOW = 가능성 낮음
+  - **영향도 기준**: HIGH = 프로젝트 실패 또는 심각한 손실, MEDIUM = 추가 비용·일정 지연, LOW = 관리 가능한 수준
+
+  ## 분석 지침
+
+  - **카테고리당 1-3개** 리스크를 식별하세요. 해당 카테고리에 유의미한 리스크가 없으면 LOW 1건으로 이유를 설명하세요.
+  - 전체 리스크 수는 **5-15개**로 유지하세요.
+  - 각 리스크의 `evidence`에는 입력 데이터에서 도출한 **구체적 근거**를 명시하세요.
+  - 개별 리스크 나열 후, 서로 결합 시 증폭되는 **리스크 쌍**을 최대 3개 식별하세요.
 
 user_prompt: |
   아래 Deal 정보를 분석하여 리스크를 식별하세요.
@@ -30,11 +80,6 @@ user_prompt: |
   {{ structured_deal | tojson }}
   ```
 
-  {% if company_context %}
-  ## 회사 컨텍스트 (참고)
-  {{ company_context }}
-  {% endif %}
-
   다음 JSON 형식으로 응답하세요:
   ```json
   {
@@ -42,9 +87,19 @@ user_prompt: |
       {
         "category": "기술 리스크 | 일정 리스크 | 재무 리스크 | 고객 리스크 | 범위 리스크",
         "item": "리스크 항목 제목",
-        "level": "HIGH | MEDIUM | LOW",
-        "description": "구체적 사유",
+        "probability": "HIGH | MEDIUM | LOW",
+        "impact": "HIGH | MEDIUM | LOW",
+        "level": "매트릭스에 따른 종합 심각도 (HIGH | MEDIUM | LOW)",
+        "evidence": "입력 데이터에서 도출한 구체적 근거",
+        "description": "리스크 상세 설명",
         "mitigation": "완화 방안"
+      }
+    ],
+    "risk_interdependencies": [
+      {
+        "risk_pair": ["리스크 항목 제목 A", "리스크 항목 제목 B"],
+        "combined_effect": "결합 시 발생하는 복합 효과",
+        "amplification": "개별 대비 증폭되는 정도와 이유"
       }
     ]
   }
@@ -63,12 +118,34 @@ output_schema:
             enum: ["기술 리스크", "일정 리스크", "재무 리스크", "고객 리스크", "범위 리스크"]
           item:
             type: string
+          probability:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          impact:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
           level:
             type: string
             enum: [HIGH, MEDIUM, LOW]
+          evidence:
+            type: string
           description:
             type: string
           mitigation:
             type: string
-        required: [category, item, level, description, mitigation]
-  required: [risks]
+        required: [category, item, probability, impact, level, evidence, description, mitigation]
+    risk_interdependencies:
+      type: array
+      items:
+        type: object
+        properties:
+          risk_pair:
+            type: array
+            items:
+              type: string
+          combined_effect:
+            type: string
+          amplification:
+            type: string
+        required: [risk_pair, combined_effect, amplification]
+  required: [risks, risk_interdependencies]

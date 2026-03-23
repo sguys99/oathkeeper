@@ -55,7 +55,6 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
             system_prompt, user_prompt = tpl.render(
                 system_base=system_base,
                 structured_deal=structured_deal,
-                company_context=company_context,
             )
 
             deal_id = uuid.UUID(state["deal_id"])
@@ -68,7 +67,10 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
             parsed = parse_json_response(raw)
             await update_log_parsed_output(log_id, parsed)
 
-            return {"risks": parsed.get("risks", [])}
+            return {
+                "risks": parsed.get("risks", []),
+                "risk_interdependencies": parsed.get("risk_interdependencies", []),
+            }
 
         except Exception:
             logger.exception("risk_analysis node failed")

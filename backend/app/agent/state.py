@@ -22,6 +22,7 @@ class AgentState(TypedDict, total=False):
     verdict: str  # go | conditional_go | no_go | pending
     resource_estimate: dict  # ResourceEstimate-shaped dict
     risks: list[dict]  # list of RiskItem-shaped dicts
+    risk_interdependencies: list[dict]  # risk pairs that amplify each other
     similar_projects: list[dict]  # list of SimilarProject-shaped dicts
 
     # ── Final output ───────────────────────────────────────────────────
