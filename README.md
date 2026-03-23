@@ -1,6 +1,7 @@
 # OathKeeper
 
-> B2B AI development deal Go/No-Go decision support agent — delivers decisions within 24 hours
+B2B AI development deal Go/No-Go decision support agent — delivers decisions within 24 hours
+
 
 ### English | [한국어](docs/README(kr).md)
 
@@ -40,16 +41,6 @@ LangGraph-based analysis pipeline (`backend/app/agent/graph.py`):
 
 ![Agent Flow](img/agent-flow.png)
 
-| Node | Role |
-|---|---|
-| Deal Structuring | Extracts structured fields from unstructured deal text |
-| Scoring | Scores deal across 7 criteria, produces Go/No-Go recommendation |
-| Resource Estimation | Calculates staffing, duration, and budget |
-| Risk Analysis | Identifies risks by category and severity |
-| Similar Project | Searches vector DB for Top-3 similar past projects |
-| Final Verdict | Aggregates all results into executive report |
-| Hold Verdict | Short-circuits when critical fields are missing |
-
 Each node is implemented as a factory function under `backend/app/agent/nodes/` and shares state via `AgentState` (TypedDict). The conditional edge uses LangGraph's `Send` API for fan-out.
 
 
@@ -65,12 +56,7 @@ Each node is implemented as a factory function under `backend/app/agent/nodes/` 
 | **Database** | PostgreSQL 16 (SQLAlchemy 2.0 + asyncpg) |
 | **Migrations** | Alembic |
 | **Frontend** | Next.js 16, React 19, TypeScript 5, TailwindCSS v4, shadcn/ui |
-| **Charts** | Recharts |
-| **State Mgmt** | TanStack React Query 5 |
 | **Integration** | Notion API |
-| **Notifications** | Slack Webhook |
-| **Logging** | structlog |
-| **Error Tracking** | Sentry |
 | **Deployment** | Docker Compose, Nginx |
 
 
