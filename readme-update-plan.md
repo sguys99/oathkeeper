@@ -49,8 +49,8 @@
 
 ### Step 2: `docs/README(kr).md` — 한글 메인 README 작성
 
-- [ ] Step 1의 한글 번역 버전 작성
-- [ ] 영문 버전 링크 포함
+- [x] Step 1의 한글 번역 버전 작성
+- [x] 영문 버전 링크 포함
 
 ### Step 3: `docs/manual/env-setting(en).md` — 영문 환경 설정 가이드
 
@@ -89,7 +89,7 @@
 | 순서 | 파일 | 설명 | 상태 |
 |:---:|---|---|:---:|
 | 1 | `README.md` | 영문 메인 README 재작성 | ⬜ |
-| 2 | `docs/README(kr).md` | 한글 메인 README | ⬜ |
+| 2 | `docs/README(kr).md` | 한글 메인 README | ✅ |
 | 3 | `docs/manual/env-setting(en).md` | 영문 환경 설정 | ⬜ |
 | 4 | `docs/manual/env-setting(kr).md` | 한글 환경 설정 | ⬜ |
 | 5 | `docs/manual/manual(en).md` | 영문 사용 매뉴얼 | ⬜ |
