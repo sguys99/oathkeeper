@@ -70,17 +70,17 @@
 
 스크린샷 중심의 화면별 사용 가이드.
 
-- [ ] **Overview** — 페이지 라우팅 테이블
-- [ ] **1. Request Analysis** (`/`) — `1.request-analysis.png` 활용
-- [ ] **2. Deal Dashboard** (`/deals`) — `2-1.deal-info-overview.png` 활용
-- [ ] **3. Deal Detail** (`/deals/:id`) — `2-2.deal-info-detail.png` 활용
-- [ ] **4. Agent Logs** (`/agent-logs`, `/deals/:id/logs`) — `3-1`, `3-2` 활용
-- [ ] **5. Agent Settings** (`/agent-settings`) — `4.agent-settings.png` 활용
-- [ ] **6. Admin Settings** (`/admin`) — `5.admin.png` 활용
+- [x] **Overview** — 페이지 라우팅 테이블
+- [x] **1. Request Analysis** (`/`) — `1.request-analysis.png` 활용
+- [x] **2. Deal Dashboard** (`/deals`) — `2-1.deal-info-overview.png` 활용
+- [x] **3. Deal Detail** (`/deals/:id`) — `2-2.deal-info-detail.png` 활용
+- [x] **4. Agent Logs** (`/agent-logs`, `/deals/:id/logs`) — `3-1`, `3-2` 활용
+- [x] **5. Agent Settings** (`/agent-settings`) — `4.agent-settings.png` 활용
+- [x] **6. Admin Settings** (`/admin`) — `5.admin.png` 활용
 
 ### Step 6: `docs/manual/manual(kr).md` — 한글 사용 매뉴얼
 
-- [ ] Step 5의 한글 번역 버전 작성 (동일 스크린샷 사용)
+- [x] Step 5의 한글 번역 버전 작성 (동일 스크린샷 사용)
 
 ---
 
@@ -92,8 +92,8 @@
 | 2 | `docs/README(kr).md` | 한글 메인 README | ✅ |
 | 3 | `docs/manual/env-setting(en).md` | 영문 환경 설정 | ✅ |
 | 4 | `docs/manual/env-setting(kr).md` | 한글 환경 설정 | ✅ |
-| 5 | `docs/manual/manual(en).md` | 영문 사용 매뉴얼 | ⬜ |
-| 6 | `docs/manual/manual(kr).md` | 한글 사용 매뉴얼 | ⬜ |
+| 5 | `docs/manual/manual(en).md` | 영문 사용 매뉴얼 | ✅ |
+| 6 | `docs/manual/manual(kr).md` | 한글 사용 매뉴얼 | ✅ |
 
 ## Verification
 
