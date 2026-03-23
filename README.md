@@ -28,7 +28,7 @@
 
 When 3 or more critical deal fields are missing, analysis short-circuits to Hold without scoring.
 
----
+
 
 ## System Architecture
 
@@ -52,7 +52,7 @@ LangGraph-based analysis pipeline (`backend/app/agent/graph.py`):
 
 Each node is implemented as a factory function under `backend/app/agent/nodes/` and shares state via `AgentState` (TypedDict). The conditional edge uses LangGraph's `Send` API for fan-out.
 
----
+
 
 ## Tech Stack
 
@@ -73,7 +73,7 @@ Each node is implemented as a factory function under `backend/app/agent/nodes/` 
 | **Error Tracking** | Sentry |
 | **Deployment** | Docker Compose, Nginx |
 
----
+
 
 ## Project Structure
 
@@ -81,67 +81,51 @@ Each node is implemented as a factory function under `backend/app/agent/nodes/` 
 oathkeeper/
 ├── backend/
 │   └── app/
-│       ├── api/                # FastAPI routers, Pydantic schemas
-│       │   ├── routers/        # deals, analysis, users, settings, notion, agent_logs, prompts, project_history
-│       │   └── schemas/        # Request/response schemas
-│       ├── agent/              # LangGraph agent
-│       │   ├── graph.py        # Main graph definition
-│       │   ├── state.py        # AgentState (shared state)
-│       │   ├── llm.py          # LLM client (LiteLLM)
-│       │   ├── prompt_loader.py # YAML prompt loader (Jinja2)
-│       │   └── nodes/          # Individual agent nodes
-│       ├── db/                 # Database layer
-│       │   ├── models/         # SQLAlchemy ORM models
-│       │   ├── repositories/   # CRUD repositories
-│       │   ├── migrations/     # Alembic migrations
-│       │   ├── vector_store.py # Pinecone vector store wrapper
+│       ├── api/                     # FastAPI routers, Pydantic schemas
+│       │   ├── routers/             
+│       │   └── schemas/             
+│       ├── agent/                   # LangGraph agent
+│       │   ├── graph.py             # Main graph definition
+│       │   ├── state.py             # AgentState (shared state)
+│       │   ├── llm.py               # LLM client (LiteLLM)
+│       │   ├── prompt_loader.py     # YAML prompt loader (Jinja2)
+│       │   └── nodes/               # Individual agent nodes
+│       ├── db/                      # Database layer
+│       │   ├── models/          
+│       │   ├── repositories/    
+│       │   ├── migrations/      
+│       │   ├── vector_store.py  
 │       │   ├── pinecone_client.py
-│       │   └── seed.py         # Seed data
-│       ├── services/           # Business logic services
+│       │   └── seed.py              # Seed data
+│       ├── services/                # Business logic services
 │       │   └── project_history_service.py
-│       ├── integrations/       # External service clients
+│       ├── integrations/            # External service clients
 │       │   ├── notion_client.py
 │       │   ├── notion_service.py
 │       │   └── slack_client.py
 │       └── utils/
-│           ├── settings.py     # App settings (env vars)
-│           ├── path.py         # Project path constants
-│           ├── logging.py      # structlog setup
-│           └── file_parser.py  # Document parsing (Word/PDF)
+│           ├── settings.py          # App settings (env vars)
+│           ├── path.py              # Project path constants
+│           ├── logging.py           # structlog setup
+│           └── file_parser.py       # Document parsing (Word/PDF)
 ├── configs/
-│   └── prompts/                # Agent prompt YAML templates
+│   └── prompts/                     # Agent prompt YAML templates
 ├── frontend/
 │   └── src/
-│       ├── app/                # Next.js App Router pages
-│       │   ├── _components/    # Home page (Deal analysis request)
-│       │   ├── deals/          # Deal dashboard
-│       │   │   └── [id]/       # Deal detail + logs
-│       │   ├── admin/          # Admin settings
-│       │   ├── agent-logs/     # Agent execution logs
-│       │   └── agent-settings/ # Agent settings & prompt management
-│       ├── components/
-│       │   ├── ui/             # shadcn/ui components
-│       │   ├── common/         # Shared components (charts, badges, etc.)
-│       │   └── layout/         # Layout (header)
-│       ├── hooks/              # Custom React hooks
-│       ├── lib/api/            # API client
-│       └── providers/          # React context (Query, User)
+│ 
 ├── tests/
-│   ├── unit/                   # Unit tests
-│   ├── integration/            # Integration tests
-│   ├── e2e/                    # E2E tests
-│   └── fixtures/               # Test fixtures
+│ 
 ├── docs/                       # Documentation
 ├── nginx/                      # Nginx reverse proxy config
 ├── main.py                     # Entrypoint (uvicorn)
 ├── Makefile
-├── Dockerfile                  # Backend Docker
-├── docker-compose.yaml         # Dev environment (PostgreSQL)
-├── docker-compose.prod.yaml    # Production environment (all services)
+├── Dockerfile           
+├── docker-compose.yaml         
+├── docker-compose.prod.yaml   
 └── pyproject.toml
 ```
 
----
+
 
 ## Quick Start
 
@@ -184,7 +168,7 @@ npm run dev
 
 For detailed environment setup including API keys and external service configuration, see the [Environment Setup Guide](docs/manual/env-setting(en).md).
 
----
+
 
 ## Documentation
 
@@ -196,7 +180,7 @@ For detailed environment setup including API keys and external service configura
 | User Manual (Korean) | [docs/manual/manual(kr).md](docs/manual/manual(kr).md) |
 | Korean README | [docs/README(kr).md](docs/README(kr).md) |
 
----
+
 
 ## License
 
