@@ -54,17 +54,17 @@
 
 ### Step 3: `docs/manual/env-setting(en).md` — 영문 환경 설정 가이드
 
-- [ ] **Prerequisites** — Python 3.12+, uv, Node.js 18+, Docker
-- [ ] **Installation** — 저장소 클론, `make init` / `make init-dev`, 프론트엔드 설치
-- [ ] **Notion Setup** — Integration 생성, DB 생성 및 ID 확인, 필수 프로퍼티 설명
-- [ ] **Environment Variables (`.env`)** — `.env.example` 기반 전체 변수 설명 테이블
-- [ ] **Database Setup** — Docker PostgreSQL, 마이그레이션, 시드 데이터
-- [ ] **Running the Application** — 백엔드 + 프론트엔드 실행
-- [ ] **Production Deployment** — Docker Compose 프로덕션 빌드/실행
+- [x] **Prerequisites** — Python 3.12+, uv, Node.js 18+, Docker
+- [x] **Notion Setup** — Integration 생성, DB 생성 및 ID 확인, 필수 프로퍼티 설명
+- [x] **Installation** — 저장소 클론, `make init` / `make init-dev`, 프론트엔드 설치
+- [x] **Environment Variables (`.env`)** — `.env.example` 기반 전체 변수 설명 테이블
+- [x] **Database Setup** — Docker PostgreSQL, 마이그레이션, 시드 데이터
+- [x] **Running the Application** — 백엔드 + 프론트엔드 실행
+- [x] **Production Deployment** — Docker Compose 프로덕션 빌드/실행
 
 ### Step 4: `docs/manual/env-setting(kr).md` — 한글 환경 설정 가이드
 
-- [ ] Step 3의 한글 번역 버전 작성
+- [x] Step 3의 한글 번역 버전 작성
 
 ### Step 5: `docs/manual/manual(en).md` — 영문 사용 매뉴얼
 
@@ -90,8 +90,8 @@
 |:---:|---|---|:---:|
 | 1 | `README.md` | 영문 메인 README 재작성 | ⬜ |
 | 2 | `docs/README(kr).md` | 한글 메인 README | ✅ |
-| 3 | `docs/manual/env-setting(en).md` | 영문 환경 설정 | ⬜ |
-| 4 | `docs/manual/env-setting(kr).md` | 한글 환경 설정 | ⬜ |
+| 3 | `docs/manual/env-setting(en).md` | 영문 환경 설정 | ✅ |
+| 4 | `docs/manual/env-setting(kr).md` | 한글 환경 설정 | ✅ |
 | 5 | `docs/manual/manual(en).md` | 영문 사용 매뉴얼 | ⬜ |
 | 6 | `docs/manual/manual(kr).md` | 한글 사용 매뉴얼 | ⬜ |
 
