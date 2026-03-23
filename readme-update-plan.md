@@ -35,17 +35,17 @@
 
 현재 한글 README를 영문으로 재작성. 핵심 정보만 유지하고, 상세 환경 설정/매뉴얼은 링크로 대체.
 
-- [ ] Title + 한줄 설명 + 한글 버전 링크 (`docs/README(kr).md`)
-- [ ] **Key Features** — 6개 기능 테이블 (Deal 파싱, 스코어링, 소요 산출, 리스크 분석, 유사사례, 리포트)
-- [ ] **Scoring Criteria** — 7개 항목 + 가중치 테이블
-- [ ] **Verdict Logic** — Go/Conditional Go/No-Go/Hold 조건 테이블
-- [ ] **System Architecture** — 아키텍처 다이어그램 (텍스트)
-- [ ] **LangGraph Agent Flow** — 파이프라인 다이어그램 + 노드 설명
-- [ ] **Tech Stack** — 기술 스택 테이블
-- [ ] **Project Structure** — 디렉토리 트리
-- [ ] **Quick Start** — 간략한 설치/실행 명령어 (상세는 env-setting 링크)
-- [ ] **Documentation** — 하위 문서 링크 테이블
-- [ ] **License**
+- [x] Title + 한줄 설명 + 한글 버전 링크 (`docs/README(kr).md`)
+- [x] **Key Features** — 6개 기능 테이블 (Deal 파싱, 스코어링, 소요 산출, 리스크 분석, 유사사례, 리포트)
+- [x] **Scoring Criteria** — 7개 항목 + 가중치 테이블
+- [x] **Verdict Logic** — Go/Conditional Go/No-Go/Hold 조건 테이블
+- [x] **System Architecture** — 아키텍처 다이어그램 (텍스트)
+- [x] **LangGraph Agent Flow** — 파이프라인 다이어그램 + 노드 설명
+- [x] **Tech Stack** — 기술 스택 테이블
+- [x] **Project Structure** — 디렉토리 트리
+- [x] **Quick Start** — 간략한 설치/실행 명령어 (상세는 env-setting 링크)
+- [x] **Documentation** — 하위 문서 링크 테이블
+- [x] **License**
 
 ### Step 2: `docs/README(kr).md` — 한글 메인 README 작성
 
