@@ -1,13 +1,27 @@
 name: similar_project
-version: "1.0"
+version: "2.0"
 description: >
-  Pinecone에서 검색된 유사 프로젝트 정보를 정리하여 비교 분석 결과를 생성한다.
+  Pinecone에서 검색된 유사 프로젝트의 관련성을 평가하고,
+  관련성이 높은 프로젝트만 선별하여 현재 Deal에 대한 실질적 인사이트를 도출한다.
 
 system_prompt: |
   {{ system_base }}
 
-  당신의 역할은 과거 유사 프로젝트 정보를 현재 Deal과 비교하여 참고할 수 있는 인사이트를 도출하는 것입니다.
-  유사도, 기술 스택, 소요 기간, 성과, 교훈 등을 정리하세요.
+  당신의 역할은 과거 유사 프로젝트 데이터를 분석하여 현재 Deal에 실질적으로 참고할 수 있는 인사이트를 도출하는 것입니다.
+
+  ## 핵심 원칙
+  1. **관련성 우선**: 벡터 유사도가 높더라도 프로젝트 성격·규모·기술이 현재 Deal과 실질적으로 관련 없으면 반드시 제외하세요.
+  2. **구체적 교훈**: 일반론이 아닌, 현재 Deal의 의사결정에 바로 활용할 수 있는 구체적 교훈을 도출하세요.
+  3. **리스크 연결**: 과거 프로젝트의 경험이 현재 Deal의 잠재 리스크에 어떤 시사점을 주는지 분석하세요.
+
+  ## 관련성 판단 기준
+  아래 기준을 종합하여 각 프로젝트의 실질 관련성(relevance_score)을 0.0~1.0으로 평가하세요:
+  - 산업군 또는 도메인의 유사성
+  - 기술 스택의 겹침 정도
+  - 프로젝트 규모(기간, 인력, 계약 금액)의 유사성
+  - 프로젝트 목적·성격의 유사성
+
+  **relevance_score < 0.4인 프로젝트는 excluded_projects로 분류하고 분석에서 제외하세요.**
 
 user_prompt: |
   아래 현재 Deal 정보와 과거 유사 프로젝트를 비교 분석하세요.
@@ -17,15 +31,25 @@ user_prompt: |
   {{ structured_deal | tojson }}
   ```
 
-  ## 유사 프로젝트 검색 결과 (Top {{ past_projects | length }})
+  ## 유사 프로젝트 검색 결과
   {% for p in past_projects %}
   ### {{ loop.index }}. {{ p.project_name }}
-  - 유사도: {{ p.similarity_score }}
+  - 벡터 유사도: {{ p.similarity_score }}
   - 산업군: {{ p.industry }}
   - 기술 스택: {{ p.tech_stack | join(', ') }}
   - 소요 기간: {{ p.duration_months }}개월
-  - 결과: {{ p.result }}
+  - 계획 인력: {{ p.planned_headcount }}명 / 실제 인력: {{ p.actual_headcount }}명
+  - 계약 금액: {{ p.contract_amount }}만원
+  - 프로젝트 요약: {{ p.summary }}
   {% endfor %}
+
+  ## 분석 지침
+  각 프로젝트에 대해 다음을 수행하세요:
+  1. **관련성 평가**: 현재 Deal과의 실질적 관련성을 판단하고 relevance_score를 부여하세요.
+  2. **관련성 낮은 프로젝트 제외**: relevance_score < 0.4이면 excluded_projects로 분류하고 제외 사유를 명시하세요.
+  3. **핵심 비교** (관련 프로젝트만): 규모, 기술 스택 겹침, 기간을 현재 Deal과 구체적으로 비교하세요.
+  4. **교훈 도출** (관련 프로젝트만): 현재 Deal의 의사결정에 바로 적용 가능한 구체적 교훈을 작성하세요.
+  5. **리스크 시사점** (관련 프로젝트만): 이 프로젝트 경험이 현재 Deal의 잠재 리스크에 주는 시사점을 분석하세요.
 
   다음 JSON 형식으로 응답하세요:
   ```json
@@ -34,11 +58,25 @@ user_prompt: |
       {
         "project_name": "프로젝트명",
         "similarity_score": 0.0,
+        "relevance_score": 0.0,
         "industry": "산업군",
         "tech_stack": ["기술1"],
-        "duration_months": 0.0,
-        "result": "성공/실패/진행중",
-        "lessons_learned": "이 프로젝트에서 참고할 교훈"
+        "duration_months": 0,
+        "contract_amount": 0,
+        "key_comparison": {
+          "scale_comparison": "현재 Deal 대비 규모 비교 (인력, 금액, 기간)",
+          "tech_overlap": ["겹치는 기술"],
+          "duration_comparison": "기간 비교 분석"
+        },
+        "lessons_learned": "현재 Deal에 적용 가능한 구체적 교훈",
+        "risk_implications": "현재 Deal 리스크에 대한 시사점"
+      }
+    ],
+    "excluded_projects": [
+      {
+        "project_name": "프로젝트명",
+        "similarity_score": 0.0,
+        "excluded_reason": "제외 사유"
       }
     ]
   }
@@ -56,6 +94,8 @@ output_schema:
             type: string
           similarity_score:
             type: number
+          relevance_score:
+            type: number
           industry:
             type: string
           tech_stack:
@@ -64,9 +104,34 @@ output_schema:
               type: string
           duration_months:
             type: number
-          result:
-            type: string
+          contract_amount:
+            type: number
+          key_comparison:
+            type: object
+            properties:
+              scale_comparison:
+                type: string
+              tech_overlap:
+                type: array
+                items:
+                  type: string
+              duration_comparison:
+                type: string
           lessons_learned:
             type: string
-        required: [project_name, similarity_score, industry, tech_stack, duration_months, result, lessons_learned]
-  required: [similar_projects]
+          risk_implications:
+            type: string
+        required: [project_name, similarity_score, relevance_score, lessons_learned]
+    excluded_projects:
+      type: array
+      items:
+        type: object
+        properties:
+          project_name:
+            type: string
+          similarity_score:
+            type: number
+          excluded_reason:
+            type: string
+        required: [project_name, excluded_reason]
+  required: [similar_projects, excluded_projects]

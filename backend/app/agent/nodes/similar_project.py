@@ -1,6 +1,5 @@
 """Similar project node — find and analyse comparable past projects."""
 
-import json
 import logging
 import uuid
 
@@ -77,7 +76,7 @@ def make_similar_project_node(
             system_prompt, user_prompt = tpl.render(
                 system_base=system_base,
                 structured_deal=structured_deal,
-                past_projects=json.dumps(past_projects, ensure_ascii=False),
+                past_projects=past_projects,
             )
 
             deal_id = uuid.UUID(state["deal_id"])
