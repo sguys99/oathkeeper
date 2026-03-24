@@ -1,16 +1,73 @@
 name: final_verdict
-version: "1.0"
+version: "2.0"
 description: >
   모든 에이전트 분석 결과를 종합하여 경영진용 마크다운 리포트를 생성한다.
+  회사 Deal 선정 기준 적합성 평가, 상세 작업 범위, 교차 분석을 포함하며,
+  결정론적 분석 절차를 통해 반복 실행 시 일관된 결과를 보장한다.
 
 system_prompt: |
   {{ system_base }}
 
   당신의 역할은 모든 분석 결과를 종합하여 경영진이 바로 읽을 수 있는 분석 리포트를 마크다운으로 작성하는 것입니다.
-  핵심 결론을 먼저 제시하고, 세부 분석 내용을 뒤에 배치하세요.
+
+  ## 분석 절차 (반드시 이 순서대로 수행)
+  아래 단계를 순서대로 따르세요. 각 단계의 결과를 리포트의 해당 섹션에 반영합니다.
+
+  **1단계 — Deal 선정 기준 적합성 판정**
+  시스템 프롬프트의 "Deal 선정 기준"에 명시된 각 항목을 현재 Deal의 데이터와 대조하여 적합(PASS) / 주의(WARNING) / 미달(FAIL) 여부를 판정하세요.
+  판정 기준:
+  - 최소 마진율: resource_estimate의 expected_margin이 기준 이상이면 PASS, 기준 미만~0% 이상이면 WARNING, 적자이면 FAIL
+  - 선호 산업군: 해당 산업군이면 PASS, 유관 산업이면 WARNING, 무관하면 FAIL
+  - 최소 계약 규모: expected_amount가 기준 이상이면 PASS, 80% 이상이면 WARNING, 미만이면 FAIL
+  - 프로젝트 기간: duration_months가 기준 범위 내이면 PASS, 1개월 초과 시 WARNING, 크게 벗어나면 FAIL
+  - 기술 스택 적합성: 회사 핵심 기술(Vision AI/ML, Computer Vision, MLOps)과의 일치 정도로 판정
+  - 레퍼런스 확보 가능성: 신규 산업/고객이면 PASS(높음), 기존 고객 재계약이면 WARNING(이미 확보), 레퍼런스 가치가 낮으면 FAIL
+
+  **2단계 — 스코어 해석**
+  각 평가 기준의 점수를 아래 밴드로 해석하세요. 해석은 데이터에 근거해야 하며, 제공된 rationale을 그대로 인용하거나 요약하세요:
+  - 80~100점: 우수 — 명확한 강점, 리스크 거의 없음
+  - 60~79점: 양호 — 대체로 긍정적, 일부 주의 필요
+  - 40~59점: 보통 — 긍정/부정 혼재 또는 정보 부족
+  - 20~39점: 미흡 — 부정적 요소 우세, 심각한 우려
+  - 0~19점: 부적합 — 명백한 결격 사유
+
+  **3단계 — 작업 범위 상세 분석**
+  resource_estimate의 work_breakdown을 기반으로 각 작업 영역에 대해:
+  - 기존 자산 활용(재활용) 항목과 신규 개발 항목을 명확히 구분
+  - 각 영역에서 사용되는 기술 스택을 structured_deal의 tech_requirements에서 매핑
+  - 재활용 비율과 실제 소요 공수를 명시
+  - 기술적 난이도를 structured_deal의 complexity_notes에서 반영
+  - 하드웨어/인프라 요구사항을 structured_deal의 constraints, security_requirements에서 도출
+
+  **4단계 — 리스크 종합 및 교차 분석**
+  - 리스크를 심각도(HIGH → MEDIUM → LOW) 순으로 정리
+  - 60점 이하 평가 기준과 관련된 HIGH/MEDIUM 리스크가 있으면 증폭 효과를 설명
+  - 마진이 Deal 선정 기준의 최소 마진율 미만이거나 핵심 인력 미배정이면 재무/일정 리스크와 연결
+  - 유사 프로젝트의 lessons_learned에서 현재 리스크와 관련된 패턴을 인용
+  - risk_interdependencies가 있으면 핵심 내용을 포함
+
+  **5단계 — 최종 판단 도출**
+  종합 점수와 판정(verdict)을 아래 기준으로 해석하세요:
+  - Go (≥70점): 수주 추진 권고. 리스크 관리 방안과 함께 진행 조건을 명시
+  - Conditional Go (40~69점): 조건부 추진. 반드시 해결해야 할 선행 조건(최대 3개)을 구체적으로 명시
+  - No-Go (<40점): 수주 불가 권고. 핵심 거부 사유(최대 3개)와 향후 재검토 조건을 명시
+
+  판단 도출 시 반드시 포함할 내용:
+  - 판정의 가장 큰 근거 3가지 (데이터 기반)
+  - Deal 선정 기준 적합성 판정에서 FAIL 또는 WARNING 항목이 있으면 명시
+  - 판정에 대한 반론(counterargument) 1가지와 이에 대한 대응
+
+  ## 일관성 규칙
+  - 제공된 데이터(점수, 금액, 기간 등)를 임의로 재해석하거나 다른 값으로 변환하지 마세요.
+  - 각 섹션에서 동일한 데이터 포인트를 인용할 때 수치가 일치해야 합니다.
+  - 주관적 표현("느낌상", "아마도") 대신 데이터 근거 표현("X점으로 Y 밴드에 해당", "마진율 Z%로 기준 미달")을 사용하세요.
+  - 리포트의 각 섹션은 아래 지정된 마크다운 구조를 정확히 따르세요.
 
 user_prompt: |
   아래 분석 결과를 바탕으로 종합 리포트를 작성하세요.
+  반드시 시스템 프롬프트의 "분석 절차"를 1단계부터 5단계까지 순서대로 수행한 결과를 리포트에 반영하세요.
+
+  ---
 
   ## Deal 개요
   ```json
@@ -19,21 +76,39 @@ user_prompt: |
 
   ## 스코어링 결과
   - 종합 점수: {{ total_score }}점
-  - 판단: {{ verdict }}
+  - 판정: {{ verdict }}
   {% for s in scores %}
   - {{ s.criterion }}: {{ s.score }}점 (가중치 {{ s.weight }}) — {{ s.rationale }}
   {% endfor %}
 
   ## 소요 산출
   - 예상 기간: {{ resource_estimate.duration_months }}개월 (버퍼 포함: {{ resource_estimate.duration_with_buffer }}개월)
+  {% if resource_estimate.risk_buffer_ratio is defined %}- 리스크 버퍼: {{ (resource_estimate.risk_buffer_ratio * 100) | round(0) | int }}%{% endif %}
   - 예상 비용: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원 + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  {% if resource_estimate.cost_breakdown.cost_calculation is defined %}- 비용 산출 근거: {{ resource_estimate.cost_breakdown.cost_calculation }}{% endif %}
   - 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
-  - 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명({{ t.duration_months }}개월){% if not loop.last %}, {% endif %}{% endfor %}
-  - 주요 작업: {% for w in resource_estimate.work_breakdown %}{{ w.area }}{% if w.is_reusable %} (재활용 {{ (w.reuse_ratio * 100) | int }}%){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+  {% if resource_estimate.profitability.deal_amount is defined %}- Deal 금액: {{ resource_estimate.profitability.deal_amount }}만원 / 예상 원가: {{ resource_estimate.profitability.estimated_cost }}만원{% endif %}
+
+  ### 작업 분해 (Work Breakdown)
+  {% for w in resource_estimate.work_breakdown %}
+  - **{{ w.area }}**: {% if w.is_reusable %}기존 자산 활용 (재활용 {{ (w.reuse_ratio * 100) | int }}%){% else %}신규 개발{% endif %} / {{ w.effort_person_months }}MM / {{ w.description }}
+  {% endfor %}
+
+  {% if resource_estimate.phases is defined and resource_estimate.phases %}
+  ### 프로젝트 페이즈
+  {% for ph in resource_estimate.phases %}
+  - {{ ph.name }}: {{ ph.duration_months }}개월 (필요 역할: {{ ph.roles_needed | join(', ') }})
+  {% endfor %}
+  {% endif %}
+
+  ### 팀 구성
+  {% for t in resource_estimate.team_composition %}
+  - {{ t.role }} {{ t.count }}명 x {{ t.duration_months }}개월{% if t.monthly_rate is defined %} (월 {{ t.monthly_rate }}만원){% endif %}{% if t.assigned_members is defined and t.assigned_members %} — {{ t.assigned_members | join(', ') }}{% endif %}
+  {% endfor %}
 
   ## 리스크 분석
   {% for r in risks %}
-  - [{{ r.level }}] {{ r.category }} — {{ r.item }}: {{ r.description }}{% if r.probability %} (확률: {{ r.probability }}, 영향: {{ r.impact }}){% endif %}
+  - [{{ r.level }}] {{ r.category }} — {{ r.item }}: {{ r.description }}{% if r.probability is defined %} (확률: {{ r.probability }}, 영향: {{ r.impact }}){% endif %}{% if r.mitigation is defined %} → 완화: {{ r.mitigation }}{% endif %}
   {% endfor %}
   {% if risk_interdependencies is defined and risk_interdependencies %}
 
@@ -45,40 +120,134 @@ user_prompt: |
 
   ## 유사 프로젝트
   {% for p in similar_projects %}
-  - {{ p.project_name }} (유사도 {{ p.similarity_score }}): {{ p.lessons_learned }}
+  - **{{ p.project_name }}** (유사도 {{ p.similarity_score }}): {{ p.lessons_learned }}{% if p.key_comparison is defined and p.key_comparison %} | 규모 비교: {{ p.key_comparison }}{% endif %}{% if p.risk_implications is defined and p.risk_implications %} | 리스크 시사점: {{ p.risk_implications }}{% endif %}
   {% endfor %}
 
-  아래 마크다운 구조로 리포트를 작성하세요:
+  ---
+
+  위 데이터를 바탕으로 아래 마크다운 구조의 리포트를 작성하세요.
+  각 섹션의 지침을 정확히 따르세요.
 
   ```
   # Deal 분석 리포트: {고객사명}
 
   ## 1. 핵심 결론
-  (판단 결과, 종합 점수, 한 줄 요약)
+  - **판정**: {Go / Conditional Go / No-Go} (종합 점수: {X}점)
+  - **한 줄 요약**: (이 Deal의 핵심 특징과 판정 근거를 1문장으로)
+  - **핵심 판단 근거** (3가지):
+    1. (데이터 기반 근거 — 점수, 마진, 리스크 등 구체적 수치 인용)
+    2. (데이터 기반 근거)
+    3. (데이터 기반 근거)
+  - **Deal 선정 기준 충족 여부**: PASS {N}개, WARNING {N}개, FAIL {N}개
+    - FAIL/WARNING 항목이 있으면 여기에 명시
+  - **반론 및 대응**: (이 판정에 대한 가장 유력한 반론 1가지와 이에 대한 대응)
 
   ## 2. Deal 개요
-  (고객사, 산업군, 프로젝트 요약)
+  | 항목 | 내용 |
+  |---|---|
+  | 고객사 | {고객사명} ({규모}) |
+  | 산업군 | {산업군} |
+  | 프로젝트 유형 | {유형} |
+  | 계약 금액 | {금액}만원 |
+  | 기간 | {기간}개월 |
+  | 핵심 목적 | {objective 요약} |
+  | 주요 범위 | {scope 요약} |
 
-  ## 3. 평가 상세
-  (기준별 점수 + 근거)
+  ## 3. Deal 선정 기준 적합성
+  | 기준 | 판정 | 근거 |
+  |---|---|---|
+  | 최소 마진율 | PASS/WARNING/FAIL | 예상 마진 {X}%, {판단 근거} |
+  | 선호 산업군 | PASS/WARNING/FAIL | {산업군}, {판단 근거} |
+  | 최소 계약 규모 | PASS/WARNING/FAIL | {금액}만원, {판단 근거} |
+  | 프로젝트 기간 | PASS/WARNING/FAIL | {기간}개월, {판단 근거} |
+  | 기술 스택 적합성 | PASS/WARNING/FAIL | {판단 근거} |
+  | 레퍼런스 확보 가능성 | PASS/WARNING/FAIL | {판단 근거} |
 
-  ## 4. 소요 산출
-  (인력, 기간, 비용, 마진)
+  ※ 회사의 단기 전략과의 부합 여부도 여기서 평가하세요:
+  - 제품 납품형(커스터마이징 최소화) 여부
+  - SI/풀 커스텀 해당 여부
+  - Vision 도메인 해당 여부
 
-  ## 5. 리스크 분석
-  (카테고리별, 심각도 순 — 발생 확률과 영향도 포함)
+  ## 4. 평가 상세
+  | 평가 기준 | 점수 | 밴드 | 가중 점수 |
+  |---|---|---|---|
+  | {기준명} | {점수}점 | {우수/양호/보통/미흡/부적합} | {가중점수} |
+  | ... | ... | ... | ... |
+  | **종합** | | | **{total_score}점** |
 
-  ### 5.1 교차 분석 인사이트
-  - 스코어링에서 낮은 점수(60점 이하)를 받은 기준과 관련된 리스크가 있다면, 해당 리스크의 심각성이 증폭됨을 설명하세요.
-  - 리소스 산출에서 마진이 15% 미만이거나 핵심 인력이 미배정된 경우, 재무/일정 리스크와 연결하세요.
-  - 유사 프로젝트의 lessons_learned에서 현재 Deal의 리스크와 관련된 패턴이 있다면 언급하세요.
-  - 리스크 상호작용(risk_interdependencies)이 있다면 핵심 내용을 포함하세요.
+  각 기준별 근거:
+  - **{기준명}** ({점수}점, {밴드}): {rationale 요약. 데이터 근거를 구체적으로 인용}
 
-  ## 6. 유사 프로젝트 참고
-  (Top 3 비교)
+  ## 5. 예상 작업 범위 및 소요 산출
 
-  ## 7. 권고사항
-  (Go/No-Go에 따른 구체적 행동 제안)
+  ### 5.1 작업 범위 상세
+  | 작업 영역 | 구분 | 재활용율 | 소요 공수 | 관련 기술 | 난이도 | 비고 |
+  |---|---|---|---|---|---|---|
+  | {area} | 재활용/신규 | {ratio}% | {effort}MM | {관련 기술 스택} | 상/중/하 | {description 요약} |
+
+  ### 5.2 하드웨어/인프라 요구사항
+  - 클라우드/온프레미스 환경
+  - GPU/서버 요구사항
+  - 보안/네트워크 요건
+  - 라이선스 필요 사항
+
+  ### 5.3 프로젝트 일정
+  | 페이즈 | 기간 | 필요 역할 |
+  |---|---|---|
+  | {phase} | {duration}개월 | {roles} |
+
+  - 총 예상 기간: {duration_months}개월 (버퍼 {buffer_ratio}% 포함 시 {duration_with_buffer}개월)
+
+  ### 5.4 팀 구성 및 비용
+  | 역할 | 인원 | 투입 기간 | 월 단가 | 소계 | 배정 인력 |
+  |---|---|---|---|---|---|
+  | {role} | {count}명 | {duration}개월 | {rate}만원 | {소계}만원 | {assigned} |
+
+  - 인건비: {labor_cost}만원
+  - 기타 비용: {overhead_cost}만원
+  - **총 예상 비용: {total_cost}만원**
+  - **예상 마진: {margin}% ({margin_assessment})**
+
+  ## 6. 리스크 분석
+
+  ### 6.1 주요 리스크 (심각도순)
+  | 심각도 | 카테고리 | 리스크 항목 | 확률 | 영향 | 설명 |
+  |---|---|---|---|---|---|
+  | {level} | {category} | {item} | {probability} | {impact} | {description} |
+
+  ### 6.2 교차 분석 인사이트
+  - **낮은 점수 + 리스크 증폭**: 60점 이하 평가 기준과 관련된 HIGH/MEDIUM 리스크가 있다면, 해당 리스크의 심각성이 증폭됨을 설명
+  - **재무 리스크 연결**: 마진이 Deal 선정 기준의 최소 마진율 미만이거나 핵심 인력 미배정이면 재무/일정 리스크와 연결
+  - **유사 프로젝트 패턴**: 유사 프로젝트의 lessons_learned에서 현재 리스크와 관련된 패턴 인용
+  - **리스크 상호작용**: risk_interdependencies가 있으면 핵심 내용 포함
+
+  ## 7. 유사 프로젝트 참고
+  | 프로젝트명 | 유사도 | 규모 비교 | 핵심 교훈 | 리스크 시사점 |
+  |---|---|---|---|---|
+  | {name} | {similarity} | {scale_comparison} | {lessons} | {risk_implications} |
+
+  ## 8. 권고사항
+
+  **{Go/Conditional Go/No-Go} 기반 권고:**
+
+  [Go인 경우]
+  - 즉시 수행할 사항 (계약, 팀 구성, 킥오프 등)
+  - 리스크 관리 방안
+  - 주의 사항
+
+  [Conditional Go인 경우]
+  - **선행 조건** (반드시 해결 후 진행):
+    1. {조건 — 구체적이고 검증 가능한 형태로}
+    2. {조건}
+    3. {조건}
+  - 조건 충족 시 진행 방안
+  - 조건 미충족 시 대안
+
+  [No-Go인 경우]
+  - 핵심 거부 사유
+  - 향후 재검토 가능 조건
+  - 대안 제안 (있다면)
   ```
 
   마크다운 문자열만 응답하세요. JSON으로 감싸지 마세요.
+  리포트의 모든 수치는 위에 제공된 데이터에서 직접 인용하세요. 임의로 새로운 수치를 생성하지 마세요.
