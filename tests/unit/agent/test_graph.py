@@ -4,7 +4,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.app.agent.graph import _route_after_structuring, hold_verdict_node
+from backend.app.agent.graph import (
+    _route_after_structuring,
+    _route_to_phase2,
+    hold_verdict_node,
+    phase1_sync,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -27,9 +32,9 @@ class TestRouteAfterStructuring:
             },
         }
         sends = _route_after_structuring(state)
-        assert len(sends) == 4
+        assert len(sends) == 2
         node_names = {s.node for s in sends}
-        assert node_names == {"scoring", "resource_estimation", "risk_analysis", "similar_project"}
+        assert node_names == {"resource_estimation", "similar_project"}
 
     def test_hold_when_structured_deal_empty(self):
         state = {"structured_deal": {}}
@@ -51,7 +56,30 @@ class TestRouteAfterStructuring:
             },
         }
         sends = _route_after_structuring(state)
-        assert len(sends) == 4
+        assert len(sends) == 2
+
+
+class TestPhase1Sync:
+    def test_returns_empty_dict(self):
+        state = {
+            "structured_deal": {"customer_name": "Acme"},
+            "resource_estimate": {"some": "data"},
+            "similar_projects": [{"project_name": "X"}],
+        }
+        result = phase1_sync(state)
+        assert result == {}
+
+
+class TestRouteToPhase2:
+    def test_fans_out_to_scoring_and_risk_analysis(self):
+        state = {
+            "structured_deal": {"customer_name": "Acme"},
+            "resource_estimate": {"profitability": {"expected_margin": -2.15}},
+        }
+        sends = _route_to_phase2(state)
+        assert len(sends) == 2
+        node_names = {s.node for s in sends}
+        assert node_names == {"scoring", "risk_analysis"}
 
 
 class TestHoldVerdictNode:

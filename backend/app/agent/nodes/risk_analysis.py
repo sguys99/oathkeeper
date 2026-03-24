@@ -25,6 +25,7 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
     async def risk_analysis_node(state: AgentState) -> dict:
         try:
             structured_deal = state.get("structured_deal", {})
+            resource_estimate = state.get("resource_estimate", {})
 
             # Fetch company settings from DB (own session for concurrency safety)
             async with AsyncSessionLocal() as db:
@@ -55,6 +56,7 @@ def make_risk_analysis_node(context_store: CompanyContextStore):
             system_prompt, user_prompt = tpl.render(
                 system_base=system_base,
                 structured_deal=structured_deal,
+                resource_estimate=resource_estimate,
             )
 
             deal_id = uuid.UUID(state["deal_id"])

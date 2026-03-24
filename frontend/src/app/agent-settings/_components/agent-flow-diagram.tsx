@@ -319,10 +319,10 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
       // deal_structuring → condition
       add("deal_structuring", "bottom", "condition", "top");
 
-      // condition → fork → hold_verdict & parallel_group
+      // condition → fork → hold_verdict & phase1_group
       const condBottom = getPos("condition", "bottom");
       const holdTop = getPos("hold_verdict", "top");
-      const parallelTop = getPos("parallel_group", "top");
+      const phase1Top = getPos("phase1_group", "top");
 
       if (condBottom && holdTop) {
         // Bezier curve from condition bottom to hold_verdict top-center
@@ -334,20 +334,23 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
       // hold_verdict → end_hold
       add("hold_verdict", "bottom", "end_hold", "top");
 
-      if (condBottom && parallelTop) {
-        // Bezier curve from condition bottom to parallel_group top-center
-        const midY = (condBottom.y + parallelTop.y) / 2;
-        const path = `M ${condBottom.x},${condBottom.y} C ${condBottom.x},${midY} ${parallelTop.x},${midY} ${parallelTop.x},${parallelTop.y}`;
-        conns.push({ from: condBottom, to: parallelTop, path });
+      if (condBottom && phase1Top) {
+        // Bezier curve from condition bottom to phase1_group top-center
+        const midY = (condBottom.y + phase1Top.y) / 2;
+        const path = `M ${condBottom.x},${condBottom.y} C ${condBottom.x},${midY} ${phase1Top.x},${midY} ${phase1Top.x},${phase1Top.y}`;
+        conns.push({ from: condBottom, to: phase1Top, path });
       }
 
-      // parallel_group → final_verdict (smooth S-curve for horizontal offset)
-      const pgBottom = getPos("parallel_group", "bottom");
+      // phase1_group → phase2_group
+      add("phase1_group", "bottom", "phase2_group", "top");
+
+      // phase2_group → final_verdict (smooth S-curve for horizontal offset)
+      const p2Bottom = getPos("phase2_group", "bottom");
       const fvTop = getPos("final_verdict", "top");
-      if (pgBottom && fvTop) {
-        const midY = (pgBottom.y + fvTop.y) / 2;
-        const path = `M ${pgBottom.x},${pgBottom.y} C ${pgBottom.x},${midY} ${fvTop.x},${fvTop.y - 20} ${fvTop.x},${fvTop.y}`;
-        conns.push({ from: pgBottom, to: fvTop, path });
+      if (p2Bottom && fvTop) {
+        const midY = (p2Bottom.y + fvTop.y) / 2;
+        const path = `M ${p2Bottom.x},${p2Bottom.y} C ${p2Bottom.x},${midY} ${fvTop.x},${fvTop.y - 20} ${fvTop.x},${fvTop.y}`;
+        conns.push({ from: p2Bottom, to: fvTop, path });
       }
 
       // final_verdict → end_main
@@ -419,23 +422,37 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
               <span>계속</span>
             </div>
 
-            {/* Parallel group */}
+            {/* Phase 1 parallel group */}
             <div
-              ref={setNodeRef("parallel_group")}
+              ref={setNodeRef("phase1_group")}
               className="relative w-[220px] rounded-lg border border-dashed border-border p-2.5 pt-5"
             >
               <span className="absolute -top-2.5 left-3 rounded bg-muted/80 px-1.5 text-[10px] font-medium text-muted-foreground">
-                병렬 실행
+                Phase 1 병렬
               </span>
               <div className="flex flex-col gap-2">
-                {(
-                  [
-                    "scoring",
-                    "resource_estimation",
-                    "risk_analysis",
-                    "similar_project",
-                  ] as const
-                ).map((id) => (
+                {(["resource_estimation", "similar_project"] as const).map(
+                  (id) => (
+                    <FlowNode
+                      key={id}
+                      config={NODES[id]}
+                      highlighted={highlightedNodes.has(id)}
+                    />
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* Phase 2 parallel group */}
+            <div
+              ref={setNodeRef("phase2_group")}
+              className="relative w-[220px] rounded-lg border border-dashed border-border p-2.5 pt-5"
+            >
+              <span className="absolute -top-2.5 left-3 rounded bg-muted/80 px-1.5 text-[10px] font-medium text-muted-foreground">
+                Phase 2 병렬
+              </span>
+              <div className="flex flex-col gap-2">
+                {(["scoring", "risk_analysis"] as const).map((id) => (
                   <FlowNode
                     key={id}
                     config={NODES[id]}

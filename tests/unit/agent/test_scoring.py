@@ -149,7 +149,23 @@ class TestScoringNode:
 
         node = make_scoring_node(context_store)
         result = await node(
-            {"structured_deal": {"project_summary": "test"}, "deal_id": str(uuid.uuid4())},
+            {
+                "structured_deal": {"project_summary": "test"},
+                "deal_id": str(uuid.uuid4()),
+                "resource_estimate": {
+                    "profitability": {
+                        "deal_amount": 10000,
+                        "estimated_cost": 31000,
+                        "expected_margin": -2.15,
+                        "margin_assessment": "적자",
+                    },
+                    "team_composition": [
+                        {"role": "PM", "count": 1, "duration_months": 3},
+                    ],
+                    "duration_months": 3,
+                    "duration_with_buffer": 3.6,
+                },
+            },
         )
 
         assert len(result["scores"]) == 7

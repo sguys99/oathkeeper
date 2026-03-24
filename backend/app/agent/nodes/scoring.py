@@ -57,6 +57,7 @@ def make_scoring_node(context_store: CompanyContextStore):
     async def scoring_node(state: AgentState) -> dict:
         try:
             structured_deal = state.get("structured_deal", {})
+            resource_estimate = state.get("resource_estimate", {})
 
             # Fetch scoring criteria from DB (own session for concurrency safety)
             async with AsyncSessionLocal() as db:
@@ -89,6 +90,7 @@ def make_scoring_node(context_store: CompanyContextStore):
                 system_base=system_base,
                 structured_deal=structured_deal,
                 scoring_criteria=scoring_criteria,
+                resource_estimate=resource_estimate,
             )
 
             deal_id = uuid.UUID(state["deal_id"])

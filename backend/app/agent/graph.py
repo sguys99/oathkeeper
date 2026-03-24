@@ -6,10 +6,17 @@ Graph topology::
           ↓
     [should_continue_or_hold]
           ├── hold → hold_verdict_node → END
-          └── continue → scoring, resource_estimation,
-                         risk_analysis, similar_project  (parallel)
-                                ↓  (all complete)
-                         final_verdict → END
+          └── continue:
+                Phase 1 [parallel]: resource_estimation, similar_project
+                         ↓
+                   phase1_sync  (no-op sync point)
+                         ↓
+                Phase 2 [parallel]: scoring, risk_analysis
+                         ↓  (all complete)
+                   final_verdict → END
+
+Phase 2 nodes receive Phase 1 results (resource_estimate, similar_projects)
+so that scoring can incorporate actual cost/margin data for accurate evaluation.
 """
 
 import logging
@@ -47,6 +54,11 @@ _CRITICAL_FIELDS = {
 # ── Static nodes ────────────────────────────────────────────────────────
 
 
+def phase1_sync(state: AgentState) -> dict:
+    """No-op synchronization node — Phase 1 results are now in state."""
+    return {}
+
+
 def hold_verdict_node(state: AgentState) -> dict:
     """Short-circuit when too many critical fields are missing."""
     raw_missing = state.get("structured_deal", {}).get("missing_fields", [])
@@ -71,7 +83,7 @@ def hold_verdict_node(state: AgentState) -> dict:
 
 
 def _route_after_structuring(state: AgentState) -> list[Send]:
-    """Conditional edge: hold if too many missing fields, else fan-out."""
+    """Conditional edge: hold if too many missing fields, else fan-out to Phase 1."""
     structured = state.get("structured_deal", {})
     missing = structured.get("missing_fields", [])
     # Filter to critical fields only — LLM may include non-critical fields
@@ -80,11 +92,18 @@ def _route_after_structuring(state: AgentState) -> list[Send]:
     if not structured or len(missing) >= MISSING_FIELDS_THRESHOLD:
         return [Send("hold_verdict", state)]
 
+    # Phase 1: resource_estimation and similar_project run first
+    return [
+        Send("resource_estimation", state),
+        Send("similar_project", state),
+    ]
+
+
+def _route_to_phase2(state: AgentState) -> list[Send]:
+    """Fan-out to Phase 2 nodes (scoring, risk_analysis) with Phase 1 results in state."""
     return [
         Send("scoring", state),
-        Send("resource_estimation", state),
         Send("risk_analysis", state),
-        Send("similar_project", state),
     ]
 
 
@@ -106,24 +125,30 @@ def build_graph():
 
     # ── Register nodes ──────────────────────────────────────────────
     graph.add_node("deal_structuring", make_deal_structuring_node(context_store))
-    graph.add_node("scoring", make_scoring_node(context_store))
     graph.add_node("resource_estimation", make_resource_estimation_node(project_store, context_store))
-    graph.add_node("risk_analysis", make_risk_analysis_node(context_store))
     graph.add_node("similar_project", make_similar_project_node(project_store, context_store))
+    graph.add_node("phase1_sync", phase1_sync)
+    graph.add_node("scoring", make_scoring_node(context_store))
+    graph.add_node("risk_analysis", make_risk_analysis_node(context_store))
     graph.add_node("final_verdict", make_final_verdict_node(context_store))
     graph.add_node("hold_verdict", hold_verdict_node)
 
     # ── Edges ───────────────────────────────────────────────────────
     graph.set_entry_point("deal_structuring")
 
-    # Conditional fan-out via Send
+    # Phase 1: conditional fan-out to resource_estimation + similar_project
     graph.add_conditional_edges("deal_structuring", _route_after_structuring)
 
-    # Fan-in: all 4 parallel nodes converge to final_verdict
+    # Phase 1 → sync point
+    graph.add_edge("resource_estimation", "phase1_sync")
+    graph.add_edge("similar_project", "phase1_sync")
+
+    # Phase 2: fan-out to scoring + risk_analysis (with Phase 1 results in state)
+    graph.add_conditional_edges("phase1_sync", _route_to_phase2)
+
+    # Phase 2 → final_verdict
     graph.add_edge("scoring", "final_verdict")
-    graph.add_edge("resource_estimation", "final_verdict")
     graph.add_edge("risk_analysis", "final_verdict")
-    graph.add_edge("similar_project", "final_verdict")
 
     # Terminal edges
     graph.add_edge("final_verdict", END)

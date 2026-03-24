@@ -80,6 +80,17 @@ user_prompt: |
   {{ structured_deal | tojson }}
   ```
 
+  {% if resource_estimate and resource_estimate.cost_breakdown is defined %}
+  ## 리소스 산출 결과 (참고 데이터)
+  아래 데이터는 별도의 리소스 산출 분석에서 도출된 실제 비용/일정 추정치입니다.
+  재무 리스크 및 일정 리스크 평가 시 반드시 참고하세요.
+
+  - 예상 원가: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원 + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  {% if resource_estimate.profitability is defined %}- 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}{% endif %}
+  {% if resource_estimate.duration_months is defined %}- 예상 기간: {{ resource_estimate.duration_months }}개월{% if resource_estimate.duration_with_buffer is defined %} (버퍼 포함 {{ resource_estimate.duration_with_buffer }}개월){% endif %}{% endif %}
+  {% if resource_estimate.team_composition is defined %}- 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명({{ t.duration_months }}개월){% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+  {% endif %}
+
   다음 JSON 형식으로 응답하세요:
   ```json
   {

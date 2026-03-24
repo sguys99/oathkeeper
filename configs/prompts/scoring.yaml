@@ -37,6 +37,19 @@ user_prompt: |
   {{ structured_deal | tojson }}
   ```
 
+  {% if resource_estimate and resource_estimate.profitability is defined %}
+  ## 리소스 산출 결과 (참고 데이터)
+  아래 데이터는 별도의 리소스 산출 분석에서 도출된 실제 비용/인력/일정 추정치입니다.
+  수익성, 리소스 가용성, 납기 리스크 평가 시 반드시 참고하세요.
+
+  - Deal 금액: {{ resource_estimate.profitability.deal_amount }}만원
+  - 예상 원가: {{ resource_estimate.profitability.estimated_cost }}만원
+  - 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
+  {% if resource_estimate.team_composition is defined %}- 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명({{ t.duration_months }}개월){% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+  {% if resource_estimate.duration_months is defined %}- 예상 기간: {{ resource_estimate.duration_months }}개월{% if resource_estimate.duration_with_buffer is defined %} (버퍼 포함 {{ resource_estimate.duration_with_buffer }}개월){% endif %}{% endif %}
+  {% if resource_estimate.phases is defined %}- 프로젝트 페이즈: {% for ph in resource_estimate.phases %}{{ ph.name }}({{ ph.duration_months }}개월){% if not loop.last %} → {% endif %}{% endfor %}{% endif %}
+  {% endif %}
+
   ## 평가 기준 및 가중치
   {% for c in scoring_criteria %}
   ### {{ loop.index }}. {{ c.name }} (가중치: {{ c.weight }})
@@ -44,11 +57,11 @@ user_prompt: |
   {% if c.name == "기술 적합성" %}
   평가 포인트: 기존 기술 스택과의 일치도, 신규 기술 학습 비용, 기술적 난이도, PoC 필요 여부
   {% elif c.name == "수익성" %}
-  평가 포인트: 예상 매출 대비 비용 비율, 마진율(목표 20% 이상), 결제 조건의 현금흐름 영향, 숨은 비용 가능성
+  평가 포인트: 리소스 산출 결과의 예상 마진(expected_margin)을 마진 평가의 주요 근거로 사용할 것. 산출 마진이 음수이면 40점 이하를 부여하고, 적자 규모에 비례하여 감점. 마진율 목표 20% 이상 기준. 결제 조건의 현금흐름 영향, 숨은 비용 가능성도 고려.
   {% elif c.name == "리소스 가용성" %}
-  평가 포인트: 필요 인력 대비 가용 인력, 핵심 역할 확보 가능성, 다른 프로젝트와의 일정 충돌, 외주 필요성
+  평가 포인트: 리소스 산출의 team_composition과 배정 인력(assigned_members)을 참고하여 실제 가용성 평가. 필요 인력 대비 가용 인력, 핵심 역할 확보 가능성, 다른 프로젝트와의 일정 충돌, 외주 필요성.
   {% elif c.name == "납기 리스크" %}
-  평가 포인트: 요구 기간 대비 예상 소요 기간, 버퍼 확보 여부, 마일스톤 현실성, 병목 구간 존재 여부
+  평가 포인트: 리소스 산출의 예상 기간(duration_months), 프로젝트 페이즈(phases), 리스크 버퍼를 참고하여 일정 현실성 평가. 요구 기간 대비 산출 소요 기간 비교, 버퍼 확보 여부, 마일스톤 현실성, 병목 구간 존재 여부.
   {% elif c.name == "요구사항 명확성" %}
   평가 포인트: 요구사항 구체성 수준, 범위 변경 가능성, 성공 기준 정의 여부, 기술 요구사항과 비즈니스 요구 일치도
   {% elif c.name == "전략적 가치" %}
