@@ -1,39 +1,32 @@
 name: scoring_criteria
-version: "1.0"
-description: "Go/No-Go 평가에 사용되는 7개 기본 평가 기준 및 가중치"
-
+version: '1.0'
+description: Go/No-Go 평가에 사용되는 7개 기본 평가 기준 및 가중치
 items:
-  - name: "기술 적합성"
-    weight: 0.200
-    description: "현재 기술 스택으로 구현 가능한가? 학습 곡선은?"
-    display_order: 1
-
-  - name: "수익성"
-    weight: 0.200
-    description: "예상 매출 대비 비용이 적절한가? 마진 목표를 충족하는가?"
-    display_order: 2
-
-  - name: "리소스 가용성"
-    weight: 0.150
-    description: "가용 인력/장비가 있는가? 다른 프로젝트와 충돌하지 않는가?"
-    display_order: 3
-
-  - name: "납기 리스크"
-    weight: 0.150
-    description: "고객 요구 납기가 현실적인가? 충분한 버퍼가 있는가?"
-    display_order: 4
-
-  - name: "요구사항 명확성"
-    weight: 0.100
-    description: "요구사항이 구체적인가? 스코프 크리프 위험은?"
-    display_order: 5
-
-  - name: "전략적 가치"
-    weight: 0.100
-    description: "레퍼런스 케이스, 신규 시장 진출, 기술 축적 등 장기적 가치"
-    display_order: 6
-
-  - name: "고객 리스크"
-    weight: 0.100
-    description: "고객 지불 능력, 의사결정 구조, 과거 협업 이력"
-    display_order: 7
+- name: 기술 적합성
+  weight: 0.2
+  description: 현재 기술 스택으로 구현 가능한가? 학습 곡선은?
+  display_order: 1
+- name: 수익성
+  weight: 0.2
+  description: 예상 매출 대비 비용이 적절한가? 마진 목표를 충족하는가?
+  display_order: 2
+- name: 리소스 가용성
+  weight: 0.15
+  description: 가용 인력/장비가 있는가? 다른 프로젝트와 충돌하지 않는가?
+  display_order: 3
+- name: 납기 리스크
+  weight: 0.1
+  description: 고객 요구 납기가 현실적인가? 충분한 버퍼가 있는가?
+  display_order: 4
+- name: 요구사항 명확성
+  weight: 0.1
+  description: 요구사항이 구체적인가? 스코프 크리프 위험은?
+  display_order: 5
+- name: 전략적 가치
+  weight: 0.15
+  description: 레퍼런스 케이스, 신규 시장 진출, 기술 축적 등 장기적 가치
+  display_order: 6
+- name: 고객 리스크
+  weight: 0.1
+  description: 고객 지불 능력, 의사결정 구조, 과거 협업 이력
+  display_order: 7
