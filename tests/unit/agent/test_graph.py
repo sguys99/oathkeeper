@@ -58,7 +58,7 @@ class TestHoldVerdictNode:
     def test_returns_hold_state(self):
         state = {
             "structured_deal": {
-                "missing_fields": ["customer_name", "budget", "duration_months"],
+                "missing_fields": ["customer_name", "expected_amount", "duration_months"],
             },
         }
         result = hold_verdict_node(state)
@@ -111,11 +111,15 @@ class TestBuildGraph:
         mock_context_store.return_value = MagicMock()
         mock_project_store.return_value = MagicMock()
 
-        # deal_structuring returns many missing fields
+        # deal_structuring returns many missing critical fields
         async def fake_deal_structuring(state):
             return {
                 "structured_deal": {
-                    "missing_fields": ["a", "b", "c", "d"],
+                    "missing_fields": [
+                        "customer_name",
+                        "expected_amount",
+                        "duration_months",
+                    ],
                 },
                 "status": "deal_structured",
             }

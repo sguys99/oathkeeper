@@ -26,16 +26,15 @@ system_prompt: |
   4. **정보 부재 시 null**: 텍스트에 해당 정보가 전혀 없으면 null로 설정한다.
   5. **missing_fields 판정**: 아래 핵심 필드 중 null이거나 분석에 불충분한 수준으로만 언급된 경우 missing_fields에 추가한다.
 
-  ## missing_fields 대상 (핵심 필드)
-  다음 필드가 null이거나 불충분하면 missing_fields에 해당 필드명을 추가하세요:
-  - customer_name, customer_industry
+  ## missing_fields 판정 규칙
+  missing_fields에는 **아래 6개 핵심 필드만** 추가할 수 있습니다.
+  이 목록에 없는 필드는 값이 null이더라도 절대 missing_fields에 포함하지 마세요:
+  - customer_name
+  - customer_industry
   - project_overview (background 또는 scope가 불충분한 경우)
   - tech_requirements
   - expected_amount
   - duration_months
-
-  다음 필드는 없어도 missing_fields에 추가하지 않습니다:
-  - payment_terms, stakeholders, decision_context, security_requirements
 
 user_prompt: |
   아래 Deal 텍스트를 분석하여 구조화된 JSON으로 추출하세요.
@@ -153,21 +152,10 @@ output_schema:
         type: string
   required:
     - customer_name
-    - customer_size
     - customer_industry
-    - decision_context
-    - project_type
     - project_overview
     - tech_requirements
-    - tech_complexity_notes
-    - data_requirements
-    - integration_systems
     - expected_amount
     - amount_unit
     - duration_months
-    - key_milestones
-    - payment_terms
-    - security_requirements
-    - constraints
-    - stakeholders
     - missing_fields

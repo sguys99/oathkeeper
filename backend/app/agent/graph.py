@@ -32,12 +32,25 @@ from backend.app.db.vector_store import CompanyContextStore, ProjectHistoryStore
 logger = logging.getLogger(__name__)
 
 
+# ── Constants ──────────────────────────────────────────────────────────
+
+_CRITICAL_FIELDS = {
+    "customer_name",
+    "customer_industry",
+    "project_overview",
+    "tech_requirements",
+    "expected_amount",
+    "duration_months",
+}
+
+
 # ── Static nodes ────────────────────────────────────────────────────────
 
 
 def hold_verdict_node(state: AgentState) -> dict:
     """Short-circuit when too many critical fields are missing."""
-    missing = state.get("structured_deal", {}).get("missing_fields", [])
+    raw_missing = state.get("structured_deal", {}).get("missing_fields", [])
+    missing = [f for f in raw_missing if f in _CRITICAL_FIELDS]
     return {
         "verdict": "pending",
         "total_score": 0.0,
@@ -61,6 +74,8 @@ def _route_after_structuring(state: AgentState) -> list[Send]:
     """Conditional edge: hold if too many missing fields, else fan-out."""
     structured = state.get("structured_deal", {})
     missing = structured.get("missing_fields", [])
+    # Filter to critical fields only — LLM may include non-critical fields
+    missing = [f for f in missing if f in _CRITICAL_FIELDS]
 
     if not structured or len(missing) >= MISSING_FIELDS_THRESHOLD:
         return [Send("hold_verdict", state)]
