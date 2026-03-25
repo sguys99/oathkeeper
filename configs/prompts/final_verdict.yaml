@@ -120,9 +120,13 @@ user_prompt: |
   {% endif %}
 
   ## 유사 프로젝트
+  {% if similar_projects %}
   {% for p in similar_projects %}
   - **{{ p.project_name }}** (유사도 {{ p.similarity_score }}): {{ p.lessons_learned }}{% if p.key_comparison is defined and p.key_comparison %} | 규모 비교: {{ p.key_comparison }}{% endif %}{% if p.risk_implications is defined and p.risk_implications %} | 리스크 시사점: {{ p.risk_implications }}{% endif %}
   {% endfor %}
+  {% else %}
+  유사 프로젝트 데이터가 없습니다. Section 7은 "해당 없음"으로 작성하세요.
+  {% endif %}
 
   ---
 
@@ -220,13 +224,18 @@ user_prompt: |
   ### 6.2 교차 분석 인사이트
   - **낮은 점수 + 리스크 증폭**: 60점 이하 평가 기준과 관련된 HIGH/MEDIUM 리스크가 있다면, 해당 리스크의 심각성이 증폭됨을 설명
   - **재무 리스크 연결**: 마진이 Deal 선정 기준의 최소 마진율 미만이거나 핵심 인력 미배정이면 재무/일정 리스크와 연결
-  - **유사 프로젝트 패턴**: 유사 프로젝트의 lessons_learned에서 현재 리스크와 관련된 패턴 인용
+  - **유사 프로젝트 패턴**: 유사 프로젝트 데이터가 제공된 경우에만 lessons_learned에서 현재 리스크와 관련된 패턴을 인용. 데이터가 없으면 이 항목을 생략
   - **리스크 상호작용**: risk_interdependencies가 있으면 핵심 내용 포함
 
+  {% if similar_projects %}
   ## 7. 유사 프로젝트 참고
   | 프로젝트명 | 유사도 | 규모 비교 | 핵심 교훈 | 리스크 시사점 |
   |---|---|---|---|---|
   | {name} | {similarity} | {scale_comparison} | {lessons} | {risk_implications} |
+  {% else %}
+  ## 7. 유사 프로젝트 참고
+  해당 없음 (유사 프로젝트 데이터 없음)
+  {% endif %}
 
   ## 8. 권고사항
 

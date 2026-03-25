@@ -7,6 +7,7 @@ from backend.app.agent.base import (
     build_company_context,
     fetch_company_settings,
     format_company_context,
+    log_node_skip,
     logged_call_llm,
     parse_json_response,
     update_log_parsed_output,
@@ -27,6 +28,7 @@ def make_similar_project_node(
 
     async def similar_project_node(state: AgentState) -> dict:
         try:
+            deal_id = uuid.UUID(state["deal_id"])
             structured_deal = state.get("structured_deal", {})
 
             # Build a search query from structured deal fields
@@ -47,6 +49,11 @@ def make_similar_project_node(
             ]
             query_text = " ".join(p for p in parts if p).strip()
             if not query_text:
+                await log_node_skip(
+                    deal_id=deal_id,
+                    node_name="similar_project",
+                    reason="검색 쿼리를 생성할 수 없음 (빈 필드)",
+                )
                 return {"similar_projects": []}
 
             # Search Pinecone for similar projects
@@ -58,6 +65,11 @@ def make_similar_project_node(
 
             # If no results, skip LLM call
             if not past_projects:
+                await log_node_skip(
+                    deal_id=deal_id,
+                    node_name="similar_project",
+                    reason="벡터 DB에서 유사 프로젝트를 찾지 못함",
+                )
                 return {"similar_projects": []}
 
             # Build system base prompt with company context
@@ -82,7 +94,6 @@ def make_similar_project_node(
                 past_projects=past_projects,
             )
 
-            deal_id = uuid.UUID(state["deal_id"])
             raw, log_id = await logged_call_llm(
                 system_prompt,
                 user_prompt,
@@ -94,8 +105,20 @@ def make_similar_project_node(
 
             return {"similar_projects": parsed.get("similar_projects", past_projects)}
 
-        except Exception:
+        except Exception as exc:
             logger.exception("similar_project node failed")
+            deal_id_for_log = None
+            try:
+                deal_id_for_log = uuid.UUID(state["deal_id"])
+            except Exception:
+                pass
+            if deal_id_for_log:
+                await log_node_skip(
+                    deal_id=deal_id_for_log,
+                    node_name="similar_project",
+                    reason="노드 실행 실패",
+                    error=str(exc),
+                )
             return {
                 "similar_projects": [],
                 "errors": ["similar_project: node execution failed"],

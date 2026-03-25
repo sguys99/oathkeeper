@@ -95,6 +95,35 @@ async def update_log_parsed_output(log_id: uuid.UUID, parsed_output: dict | None
         logger.exception("Failed to update parsed_output for log_id=%s", log_id)
 
 
+async def log_node_skip(
+    *,
+    deal_id: uuid.UUID,
+    node_name: str,
+    reason: str,
+    error: str | None = None,
+) -> None:
+    """Create an AgentLog entry for a node that completed without an LLM call."""
+    from backend.app.db.repositories import agent_log_repo
+    from backend.app.db.session import AsyncSessionLocal
+
+    now = datetime.now(UTC)
+    try:
+        async with AsyncSessionLocal() as session:
+            await agent_log_repo.create(
+                session,
+                deal_id=deal_id,
+                node_name=node_name,
+                parsed_output={"skipped": True, "reason": reason},
+                error=error,
+                duration_ms=0,
+                started_at=now,
+                completed_at=now,
+            )
+            await session.commit()
+    except Exception:
+        logger.exception("Failed to persist skip log for node=%s", node_name)
+
+
 def parse_json_response(content: str) -> dict:
     """Extract a JSON object from an LLM response string.
 
