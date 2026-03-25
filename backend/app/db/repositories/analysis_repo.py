@@ -39,6 +39,15 @@ async def create(
     return analysis
 
 
+async def delete_by_deal_id(session: AsyncSession, deal_id: uuid.UUID) -> None:
+    """Delete existing analysis result for a deal (if any) to allow re-analysis."""
+    result = await session.execute(select(AnalysisResult).where(AnalysisResult.deal_id == deal_id))
+    existing = result.scalar_one_or_none()
+    if existing is not None:
+        await session.delete(existing)
+        await session.flush()
+
+
 async def get_by_deal_id(session: AsyncSession, deal_id: uuid.UUID) -> AnalysisResult | None:
     result = await session.execute(select(AnalysisResult).where(AnalysisResult.deal_id == deal_id))
     return result.scalar_one_or_none()

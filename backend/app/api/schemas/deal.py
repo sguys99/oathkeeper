@@ -30,6 +30,7 @@ class DealResponse(OrmBase):
     structured_data: dict | None = None
     status: DealStatus
     current_step: str | None = None
+    error_message: str | None = None
     created_by: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime

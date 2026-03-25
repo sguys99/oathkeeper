@@ -77,7 +77,10 @@ async def test_get_deal_not_found(async_client: AsyncClient):
 
 
 async def test_trigger_analysis_stub(async_client: AsyncClient):
-    create_resp = await async_client.post("/api/deals/", json={"title": "Analyze Me"})
+    create_resp = await async_client.post(
+        "/api/deals/",
+        json={"title": "Analyze Me", "raw_input": "Test deal content for analysis"},
+    )
     deal_id = create_resp.json()["id"]
     resp = await async_client.post(f"/api/deals/{deal_id}/analyze")
     assert resp.status_code == 202
@@ -92,8 +95,18 @@ async def test_trigger_analysis_not_found(async_client: AsyncClient):
     assert resp.status_code == 404
 
 
+async def test_trigger_analysis_empty_input(async_client: AsyncClient):
+    create_resp = await async_client.post("/api/deals/", json={"title": "Empty"})
+    deal_id = create_resp.json()["id"]
+    resp = await async_client.post(f"/api/deals/{deal_id}/analyze")
+    assert resp.status_code == 422
+
+
 async def test_trigger_analysis_already_in_progress(async_client: AsyncClient):
-    create_resp = await async_client.post("/api/deals/", json={"title": "Busy"})
+    create_resp = await async_client.post(
+        "/api/deals/",
+        json={"title": "Busy", "raw_input": "Deal content"},
+    )
     deal_id = create_resp.json()["id"]
     # First trigger
     resp1 = await async_client.post(f"/api/deals/{deal_id}/analyze")

@@ -57,6 +57,11 @@ export function AnalysisProgress({
             평가 기준 분석, 리스크 분석, 유사 프로젝트 검색이 진행됩니다
           </p>
         )}
+        {status === "failed" && deal?.error_message && (
+          <p className="text-sm text-muted-foreground text-center max-w-md">
+            {deal.error_message}
+          </p>
+        )}
         {status === "failed" && (
           <Button variant="outline" onClick={onRetry}>
             다시 시도

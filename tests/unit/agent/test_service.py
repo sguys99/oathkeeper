@@ -71,6 +71,7 @@ class TestAnalysisService:
         mock_build_graph.return_value = mock_graph
 
         # Setup mock analysis repo
+        mock_analysis_repo.delete_by_deal_id = AsyncMock()
         mock_analysis_repo.create = AsyncMock()
 
         service = AnalysisService()
@@ -108,6 +109,8 @@ class TestAnalysisService:
         mock_deal.raw_input = "test"
         mock_deal_repo.get_by_id = AsyncMock(return_value=mock_deal)
         mock_deal_repo.update_status = AsyncMock()
+
+        mock_analysis_repo.delete_by_deal_id = AsyncMock()
 
         # Graph raises an error
         mock_build_graph.side_effect = RuntimeError("Graph build failed")

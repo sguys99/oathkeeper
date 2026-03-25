@@ -9,7 +9,12 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.agent.service import AnalysisService
-from backend.app.api.exceptions import AnalysisInProgress, AnalysisNotFound, DealNotFound
+from backend.app.api.exceptions import (
+    AnalysisInProgress,
+    AnalysisNotFound,
+    DealNotFound,
+    OathKeeperError,
+)
 from backend.app.api.schemas.analysis import AnalysisResponse, AnalysisTriggerResponse
 from backend.app.db.repositories import analysis_repo, deal_repo
 from backend.app.db.session import get_db
@@ -32,9 +37,15 @@ async def trigger_analysis(
         raise DealNotFound(deal_id)
     if deal.status == "analyzing":
         raise AnalysisInProgress(deal_id)
+    if not (deal.raw_input or "").strip():
+        raise OathKeeperError(
+            "분석할 Deal 정보가 없습니다. Notion 내용 또는 추가 정보를 입력해주세요.",
+            status_code=422,
+        )
 
     await deal_repo.update_status(db, deal_id, "analyzing")
     deal.current_step = "Deal 구조화 준비 중..."
+    deal.error_message = None
     await db.commit()
 
     service = AnalysisService()

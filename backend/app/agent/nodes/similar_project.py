@@ -37,9 +37,12 @@ def make_similar_project_node(
                 )
             else:
                 overview_text = str(overview) if overview else ""
+            tech_reqs = structured_deal.get("tech_requirements") or []
+            if isinstance(tech_reqs, str):
+                tech_reqs = [tech_reqs]
             parts = [
                 overview_text,
-                " ".join(structured_deal.get("tech_requirements", [])),
+                " ".join(tech_reqs),
                 structured_deal.get("customer_industry", ""),
             ]
             query_text = " ".join(p for p in parts if p).strip()

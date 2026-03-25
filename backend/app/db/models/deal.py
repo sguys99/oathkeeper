@@ -31,6 +31,7 @@ class Deal(Base, TimestampMixin):
     structured_data: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")
     current_step: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     creator: Mapped["User | None"] = relationship(  # noqa: F821
