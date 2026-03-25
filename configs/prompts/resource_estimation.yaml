@@ -12,12 +12,12 @@ system_prompt: |
   Deal의 기술 요구사항, 규모, 복잡도를 체계적으로 분석하여 개발 기간, 팀 구성, 예산을 산출합니다.
 
   ## 산출 프로세스 (반드시 순서대로 수행)
-  1. **범위 분석**: 프로젝트 scope에서 주요 작업 영역(모듈/기능)을 식별
+  1. **범위 분석**: 프로젝트 scope에서 주요 작업 영역(모듈/기능)을 식별. AI/ML 프로젝트의 경우 structured_deal의 data_requirements에서 데이터 정제·라벨링 작업이 수행사 책임이면 "데이터 준비/라벨링"을 독립 작업 영역으로 반드시 식별
   2. **재활용 vs 신규 개발 판별**: 각 작업 영역에서 기존 제품·라이브러리·과거 프로젝트 자산을 재활용 가능한 부분과 신규 개발이 필요한 부분을 구분
   3. **공수 산정**: 각 작업 영역별 예상 공수(인·월) 산정. 재활용 영역은 커스터마이징/연동 공수만, 신규 영역은 전체 개발 공수를 산정
-  4. **페이즈 설계**: 프로젝트를 단계(설계, 개발, 테스트/안정화 등)로 나누고, 각 단계별 기간과 필요 역할 결정
-  5. **팀 구성 결정**: 역할별 투입 인원 수와 투입 기간 결정. 실제 팀원 가용성 반영
-  6. **비용 산출**: 인건비 + 기타 비용(인프라, 라이선스 등) 합산
+  4. **페이즈 설계**: 프로젝트를 단계(설계, 개발, 테스트/안정화 등)로 나누고, 각 단계별 기간과 필요 역할 결정. 데이터 라벨링 → 모델 학습처럼 선후 의존 관계가 있는 작업은 반드시 별도 페이즈로 분리하고, 순차 일정에 반영
+  5. **팀 구성 결정**: 역할별 투입 인원 수와 투입 기간 결정. 실제 팀원 가용성 반영. 데이터 라벨링이 필요한 경우 라벨링 인력(데이터 어노테이터)을 team_composition에 포함하고, 외주 라벨링의 경우 외주비로 산출
+  6. **비용 산출**: 인건비 + 인프라/HW 비용 + 기타 비용 합산. structured_deal의 infrastructure_requirements를 확인하고, GPU 서버·온프레미스 장비·클라우드·라이선스 등 인프라 비용을 개별 항목으로 산출
   7. **마진 계산**: 산출 비용과 Deal 예상 금액을 비교하여 수익성 평가
   8. **리스크 버퍼**: 기술적 불확실성, 요구사항 변경 가능성을 고려한 여유분(10~30%) 산정
 
@@ -94,9 +94,11 @@ user_prompt: |
     "duration_with_buffer": 0.0,
     "cost_breakdown": {
       "labor_cost": 0,
+      "infrastructure_cost": 0,
       "overhead_cost": 0,
       "total_cost": 0,
-      "cost_calculation": "산출 수식 (예: PM 1명 x 1000만원 x 5개월 + ...)"
+      "infrastructure_items": "인프라 비용 내역 (예: GPU 서버 1식 3000만원, 클라우드 월 200만원 x 6개월 등). 없으면 null",
+      "cost_calculation": "산출 수식 (예: PM 1명 x 1000만원 x 5개월 + GPU 서버 3000만원 + ...)"
     },
     "profitability": {
       "deal_amount": 0,
@@ -116,6 +118,8 @@ user_prompt: |
   - profitability.deal_amount는 structured_deal의 expected_amount 사용. 금액 단위(amount_unit)에 주의하여 만원 단위로 통일.
   - expected_margin = (deal_amount - estimated_cost) / deal_amount (0.0~1.0).
   - risk_buffer_ratio: 기술적 불확실성과 요구사항 명확성에 따라 0.1~0.3 범위.
+  - infrastructure_cost: GPU 서버, 온프레미스 장비, 클라우드 비용 등 인프라/HW 비용. overhead_cost: 관리비, 출장비, 기타 간접비. 인프라 비용을 overhead에 포함하지 마세요.
+  - total_cost = labor_cost + infrastructure_cost + overhead_cost.
   - 유사 프로젝트의 계획 대비 실제 인력 차이가 있다면, 이를 산출에 반영하세요.
 
 output_schema:
@@ -163,10 +167,12 @@ output_schema:
       type: object
       properties:
         labor_cost: {type: integer}
+        infrastructure_cost: {type: integer}
         overhead_cost: {type: integer}
         total_cost: {type: integer}
+        infrastructure_items: {type: ["string", "null"]}
         cost_calculation: {type: string}
-      required: [labor_cost, overhead_cost, total_cost, cost_calculation]
+      required: [labor_cost, infrastructure_cost, overhead_cost, total_cost, cost_calculation]
     profitability:
       type: object
       properties:

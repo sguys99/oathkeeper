@@ -58,12 +58,13 @@ user_prompt: |
       "objective": "프로젝트의 핵심 목적 및 기대 효과 (string | null)",
       "scope": "구현 범위 및 주요 기능/작업 항목을 구체적으로 나열. 가능한 한 상세하게 기술 (string | null)",
       "deliverables": ["기대 산출물 목록 — 시스템, 문서, 모델 등 (list[string])"],
-      "success_criteria": "프로젝트 성공 기준 또는 수락 조건 (string | null)"
+      "success_criteria": "프로젝트 성공 기준 또는 수락 조건. 정량적 목표(정확도, 처리 속도, SLA 등)가 있으면 수치와 측정 방법을 반드시 포함 (string | null)"
     },
 
     "tech_requirements": ["필요 기술 스택 목록 — 언어, 프레임워크, 클라우드, AI/ML 등 (list[string])"],
     "tech_complexity_notes": "기술적 난이도, PoC 필요 여부, 신기술 도입 리스크 등 특이사항 (string | null)",
-    "data_requirements": "AI/ML 프로젝트의 경우 데이터 소스, 데이터 품질, 데이터 접근 방식 등 (string | null)",
+    "data_requirements": "AI/ML 프로젝트의 경우: 데이터 소스 및 제공 주체, 데이터 정제·라벨링 책임 소재(고객/수행사), 라벨링 규모·난이도, 학습 데이터셋 구축 범위, 데이터 품질 요건 등 (string | null)",
+    "infrastructure_requirements": "HW/인프라 요구사항 — GPU 서버, 온프레미스 장비, 클라우드 환경, 네트워크 장비 등 납품 또는 구축이 필요한 인프라 항목 (string | null)",
     "integration_systems": ["기존 시스템 연동 대상 목록 (list[string])"],
 
     "expected_amount": 0,
@@ -124,6 +125,8 @@ output_schema:
     tech_complexity_notes:
       type: ["string", "null"]
     data_requirements:
+      type: ["string", "null"]
+    infrastructure_requirements:
       type: ["string", "null"]
     integration_systems:
       type: array

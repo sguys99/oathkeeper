@@ -84,7 +84,8 @@ user_prompt: |
   ## 소요 산출
   - 예상 기간: {{ resource_estimate.duration_months }}개월 (버퍼 포함: {{ resource_estimate.duration_with_buffer }}개월)
   {% if resource_estimate.risk_buffer_ratio is defined %}- 리스크 버퍼: {{ (resource_estimate.risk_buffer_ratio * 100) | round(0) | int }}%{% endif %}
-  - 예상 비용: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원 + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  - 예상 비용: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원{% if resource_estimate.cost_breakdown.infrastructure_cost is defined and resource_estimate.cost_breakdown.infrastructure_cost %} + 인프라 {{ resource_estimate.cost_breakdown.infrastructure_cost }}만원{% endif %} + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  {% if resource_estimate.cost_breakdown.infrastructure_items is defined and resource_estimate.cost_breakdown.infrastructure_items %}- 인프라 비용 내역: {{ resource_estimate.cost_breakdown.infrastructure_items }}{% endif %}
   {% if resource_estimate.cost_breakdown.cost_calculation is defined %}- 비용 산출 근거: {{ resource_estimate.cost_breakdown.cost_calculation }}{% endif %}
   - 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
   {% if resource_estimate.profitability.deal_amount is defined %}- Deal 금액: {{ resource_estimate.profitability.deal_amount }}만원 / 예상 원가: {{ resource_estimate.profitability.estimated_cost }}만원{% endif %}
@@ -204,6 +205,7 @@ user_prompt: |
   | {role} | {count}명 | {duration}개월 | {rate}만원 | {소계}만원 | {assigned} |
 
   - 인건비: {labor_cost}만원
+  - 인프라 비용: {infrastructure_cost}만원 ({infrastructure_items})
   - 기타 비용: {overhead_cost}만원
   - **총 예상 비용: {total_cost}만원**
   - **예상 마진: {margin}% ({margin_assessment})**
