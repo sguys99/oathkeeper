@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from backend.app.api.schemas.base import OrmBase
 from backend.app.api.schemas.user import UserResponse
@@ -35,6 +35,21 @@ class DealResponse(OrmBase):
     created_at: datetime
     updated_at: datetime
     creator: UserResponse | None = None
+    verdict: str | None = None
+    total_score: float | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_analysis_fields(cls, data: object) -> object:
+        """Pull verdict and total_score from the related AnalysisResult."""
+        try:
+            ar = data.analysis_result  # type: ignore[union-attr]
+            if ar is not None:
+                data.verdict = ar.verdict  # type: ignore[union-attr]
+                data.total_score = ar.total_score  # type: ignore[union-attr]
+        except Exception:
+            pass
+        return data
 
 
 class DealListResponse(BaseModel):

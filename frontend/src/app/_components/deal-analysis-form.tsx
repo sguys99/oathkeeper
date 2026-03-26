@@ -12,6 +12,7 @@ import { AnalysisProgress } from "./analysis-progress";
 import { useNotionDeals } from "@/hooks/use-notion";
 import { useCreateDeal, useImportedNotionPageIds, useUploadDocument } from "@/hooks/use-deals";
 import { useTriggerAnalysis } from "@/hooks/use-analysis";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { ApiError } from "@/lib/api/client";
 import type { NotionDeal } from "@/lib/api/types";
 import { Loader2 } from "lucide-react";
@@ -24,6 +25,7 @@ export function DealAnalysisForm() {
   const [analyzingDealId, setAnalyzingDealId] = useState<string | null>(null);
 
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
   const { data: notionData, isLoading: notionLoading } = useNotionDeals();
   const { data: importedIds } = useImportedNotionPageIds();
   const createDeal = useCreateDeal();
@@ -47,6 +49,7 @@ export function DealAnalysisForm() {
         title: selectedDeal.deal_info,
         raw_input: additionalInfo || null,
         notion_page_id: selectedDeal.page_id,
+        created_by: currentUser?.id ?? null,
       });
 
       // 2. Upload file if provided

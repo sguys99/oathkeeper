@@ -21,7 +21,6 @@ import { Pagination } from "./pagination";
 import { formatDate } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Verdict } from "@/lib/api/types";
 
 const LIMIT = 20;
 
@@ -105,17 +104,12 @@ export function DealTable() {
                 >
                   <TableCell className="font-medium">{deal.title}</TableCell>
                   <TableCell>
-                    <VerdictBadge
-                      verdict={
-                        deal.status === "completed"
-                          ? ((deal.structured_data as Record<string, unknown>)
-                              ?.verdict as Verdict) ?? null
-                          : null
-                      }
-                    />
+                    <VerdictBadge verdict={deal.verdict} />
                   </TableCell>
                   <TableCell>
-                    {deal.status === "completed" ? "-" : "-"}
+                    {deal.total_score != null
+                      ? deal.total_score.toFixed(1)
+                      : "-"}
                   </TableCell>
                   <TableCell>{formatDate(deal.created_at)}</TableCell>
                   <TableCell>
