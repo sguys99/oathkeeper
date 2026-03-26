@@ -1,6 +1,6 @@
 # OathKeeper
 
-> B2B AI 개발 딜 Go/No-Go 의사결정 지원 에이전트 — 24시간 내 판정 제공
+B2B AI 개발 딜 Go/No-Go 의사결정 지원 에이전트
 
 ### [English](../README.md) | 한국어
 
@@ -16,17 +16,6 @@
 | **리스크 분석** | 기술, 일정, 재무, 고객, 범위 등 카테고리별 리스크 식별 및 분류 |
 | **유사 사례 검색** | 벡터 DB에서 코사인 유사도 기반 Top-3 유사 과거 프로젝트 검색 |
 | **분석 리포트** | 경영진 요약 리포트 생성 및 Notion 저장 |
-
-### 판정 로직
-
-| 판정 | 조건 |
-|---|---|
-| Go | 총점 >= 70 |
-| Conditional Go | 총점 40–69 |
-| No-Go | 총점 < 40 |
-| Hold | 핵심 필드 3개 이상 누락 |
-
-핵심 딜 필드가 3개 이상 누락되면 스코어링 없이 Hold로 단축 판정됩니다.
 
 
 
@@ -60,7 +49,7 @@ LangGraph 기반 분석 파이프라인 (`backend/app/agent/graph.py`):
 | **연동** | Notion API |
 | **배포** | Docker Compose, Nginx |
 
-   
+
 
 ## 프로젝트 구조
 
@@ -69,8 +58,8 @@ oathkeeper/
 ├── backend/
 │   └── app/
 │       ├── api/                     # FastAPI 라우터, Pydantic 스키마
-│       │   ├── routers/         
-│       │   └── schemas/        
+│       │   ├── routers/
+│       │   └── schemas/
 │       ├── agent/                   # LangGraph 에이전트
 │       │   ├── graph.py             # 메인 그래프 정의
 │       │   ├── state.py             # AgentState (공유 상태)
@@ -78,10 +67,10 @@ oathkeeper/
 │       │   ├── prompt_loader.py     # YAML 프롬프트 로더 (Jinja2)
 │       │   └── nodes/               # 개별 에이전트 노드
 │       ├── db/                      # 데이터베이스 레이어
-│       │   ├── models/          
-│       │   ├── repositories/   
-│       │   ├── migrations/      
-│       │   ├── vector_store.py  
+│       │   ├── models/
+│       │   ├── repositories/
+│       │   ├── migrations/
+│       │   ├── vector_store.py
 │       │   ├── pinecone_client.py
 │       │   └── seed.py              # 시드 데이터
 │       ├── services/                # 비즈니스 로직 서비스
@@ -114,18 +103,18 @@ oathkeeper/
 │       ├── lib/api/            # API 클라이언트
 │       └── providers/          # React 컨텍스트 (Query, User)
 ├── tests/
-│  
+│
 ├── docs/                       # 문서
 ├── nginx/                      # Nginx 리버스 프록시 설정
 ├── main.py                     # 엔트리포인트 (uvicorn)
 ├── Makefile
-├── Dockerfile                 
-├── docker-compose.yaml         
-├── docker-compose.prod.yaml     
+├── Dockerfile
+├── docker-compose.yaml
+├── docker-compose.prod.yaml
 └── pyproject.toml
 ```
 
-  
+
 
 ## 빠른 시작
 
@@ -168,7 +157,7 @@ npm run dev
 
 API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경 설정 가이드](manual/env-setting(kr).md)를 참조하세요.
 
-   
+
 
 ## 문서
 
@@ -180,7 +169,7 @@ API 키 및 외부 서비스 설정을 포함한 상세 환경 설정은 [환경
 | 사용 매뉴얼 (한글) | [manual/manual(kr).md](manual/manual(kr).md) |
 | 영문 README | [README.md](../README.md) |
 
-   
+
 
 ## 라이선스
 

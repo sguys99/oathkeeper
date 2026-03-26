@@ -1,6 +1,6 @@
 # OathKeeper
 
-B2B AI development deal Go/No-Go decision support agent — delivers decisions within 24 hours
+B2B AI development deal Go/No-Go decision support agent
 
 
 ### English | [한국어](docs/README(kr).md)
@@ -17,18 +17,6 @@ B2B AI development deal Go/No-Go decision support agent — delivers decisions w
 | **Risk Analysis** | Identifies and categorizes technical, schedule, financial, customer, and scope risks |
 | **Similar Case Search** | Retrieves Top-3 similar past projects from vector DB (cosine similarity) |
 | **Analysis Report** | Generates executive summary report and saves to Notion |
-
-### Verdict Logic
-
-| Verdict | Condition |
-|---|---|
-| Go | Total score >= 70 |
-| Conditional Go | Total score 40–69 |
-| No-Go | Total score < 40 |
-| Hold | >= 3 critical fields missing |
-
-When 3 or more critical deal fields are missing, analysis short-circuits to Hold without scoring.
-
 
 
 ## System Architecture
@@ -68,8 +56,8 @@ oathkeeper/
 ├── backend/
 │   └── app/
 │       ├── api/                     # FastAPI routers, Pydantic schemas
-│       │   ├── routers/             
-│       │   └── schemas/             
+│       │   ├── routers/
+│       │   └── schemas/
 │       ├── agent/                   # LangGraph agent
 │       │   ├── graph.py             # Main graph definition
 │       │   ├── state.py             # AgentState (shared state)
@@ -77,10 +65,10 @@ oathkeeper/
 │       │   ├── prompt_loader.py     # YAML prompt loader (Jinja2)
 │       │   └── nodes/               # Individual agent nodes
 │       ├── db/                      # Database layer
-│       │   ├── models/          
-│       │   ├── repositories/    
-│       │   ├── migrations/      
-│       │   ├── vector_store.py  
+│       │   ├── models/
+│       │   ├── repositories/
+│       │   ├── migrations/
+│       │   ├── vector_store.py
 │       │   ├── pinecone_client.py
 │       │   └── seed.py              # Seed data
 │       ├── services/                # Business logic services
@@ -98,16 +86,16 @@ oathkeeper/
 │   └── prompts/                     # Agent prompt YAML templates
 ├── frontend/
 │   └── src/
-│ 
+│
 ├── tests/
-│ 
+│
 ├── docs/                       # Documentation
 ├── nginx/                      # Nginx reverse proxy config
 ├── main.py                     # Entrypoint (uvicorn)
 ├── Makefile
-├── Dockerfile           
-├── docker-compose.yaml         
-├── docker-compose.prod.yaml   
+├── Dockerfile
+├── docker-compose.yaml
+├── docker-compose.prod.yaml
 └── pyproject.toml
 ```
 
