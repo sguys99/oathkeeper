@@ -8,7 +8,7 @@ import {
   CalendarRange,
   ShieldAlert,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyManWon } from "@/lib/utils";
 import type { ResourceEstimate } from "@/lib/api/types";
 import { Badge } from "@/components/ui/badge";
 
@@ -75,12 +75,15 @@ export function ResourceCard({
               <div>
                 <p className="text-xs text-muted-foreground">총 비용</p>
                 <p className="text-sm font-medium">
-                  {formatCurrency(totalCost)}
+                  {formatCurrencyManWon(totalCost)}
                 </p>
                 {resource.cost_breakdown && (
                   <p className="text-xs text-muted-foreground">
-                    인건비 {formatCurrency(resource.cost_breakdown.labor_cost)}{" "}
-                    + 기타 {formatCurrency(resource.cost_breakdown.overhead_cost)}
+                    인건비 {formatCurrencyManWon(resource.cost_breakdown.labor_cost)}
+                    {resource.cost_breakdown.infrastructure_cost > 0 && (
+                      <> + 인프라 {formatCurrencyManWon(resource.cost_breakdown.infrastructure_cost)}</>
+                    )}
+                    {" "}+ 기타 {formatCurrencyManWon(resource.cost_breakdown.overhead_cost)}
                   </p>
                 )}
               </div>

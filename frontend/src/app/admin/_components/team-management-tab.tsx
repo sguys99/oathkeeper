@@ -35,7 +35,7 @@ import {
 } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyManWon } from "@/lib/utils";
 import type { TeamMemberCreate, TeamMemberResponse, TeamRole } from "@/lib/api/types";
 
 const ROLES: TeamRole[] = ["PM", "FE", "BE", "MLE", "DevOps"];
@@ -212,7 +212,7 @@ export function TeamManagementTab() {
                 <TableCell>
                   <Badge variant="secondary">{m.role}</Badge>
                 </TableCell>
-                <TableCell>{formatCurrency(m.monthly_rate)}</TableCell>
+                <TableCell>{formatCurrencyManWon(m.monthly_rate)}</TableCell>
                 <TableCell>
                   {m.is_available ? (
                     <Badge className="bg-green-100 text-green-700 hover:bg-green-100">

@@ -21,7 +21,7 @@ make init-dev      # Initialize dev environment (Python 3.12.12) + pre-commit ho
 
 # Development
 make run           # Start FastAPI server (uvicorn via main.py)
-make format        # ruff check . --fix && ruff format .
+make format        # ruff check . --fix && ruff format . (requires venv activated)
 make docker-up     # Start PostgreSQL container
 make docker-down   # Stop PostgreSQL container
 make migrate       # Run Alembic migrations (alembic upgrade head)

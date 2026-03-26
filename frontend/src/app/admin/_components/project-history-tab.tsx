@@ -20,7 +20,7 @@ import {
 } from "@/hooks/use-project-history";
 import { toast } from "sonner";
 import { Loader2, Database, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyManWon } from "@/lib/utils";
 
 function EmbedStatusBadge({
   isEmbedded,
@@ -182,7 +182,7 @@ export function ProjectHistoryTab() {
                       </TableCell>
                       <TableCell>
                         {p.contract_amount != null
-                          ? formatCurrency(p.contract_amount)
+                          ? formatCurrencyManWon(p.contract_amount)
                           : "-"}
                       </TableCell>
                       <TableCell>

@@ -25,3 +25,11 @@ export function formatCurrency(amount: number): string {
   }
   return `${amount.toLocaleString()}원`;
 }
+
+export function formatCurrencyManWon(amountInManWon: number): string {
+  if (amountInManWon == null) return "-";
+  if (amountInManWon >= 10_000) {
+    return `${(amountInManWon / 10_000).toFixed(1)}억원`;
+  }
+  return `${Math.round(amountInManWon).toLocaleString()}만원`;
+}

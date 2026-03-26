@@ -77,6 +77,7 @@ export interface PhaseItem {
 
 export interface CostBreakdown {
   labor_cost: number;
+  infrastructure_cost: number;
   overhead_cost: number;
   total_cost: number;
   cost_calculation: string;
