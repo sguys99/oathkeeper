@@ -115,7 +115,7 @@ user_prompt: |
   - reuse_ratio: 0.0(완전 신규)~1.0(완전 재활용). effort_person_months는 재활용 비율 반영 후 실제 소요 공수.
   - team_composition의 duration_months는 해당 역할의 실제 투입 기간 (전체 프로젝트 기간과 다를 수 있음).
   - monthly_rate는 실제 팀원 정보가 있으면 해당 단가를, 없으면 회사 비용 기준을 사용.
-  - profitability.deal_amount는 structured_deal의 expected_amount 사용. 금액 단위(amount_unit)에 주의하여 만원 단위로 통일.
+  - profitability.deal_amount는 structured_deal의 expected_amount 값을 그대로 사용. (이미 만원 단위로 정규화되어 있음)
   - expected_margin = (deal_amount - estimated_cost) / deal_amount (0.0~1.0).
   - risk_buffer_ratio: 기술적 불확실성과 요구사항 명확성에 따라 0.1~0.3 범위.
   - infrastructure_cost: GPU 서버, 온프레미스 장비, 클라우드 비용 등 인프라/HW 비용. overhead_cost: 관리비, 출장비, 기타 간접비. 인프라 비용을 overhead에 포함하지 마세요.
