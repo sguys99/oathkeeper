@@ -1,5 +1,18 @@
 {
   "permissions": {
-    "allow": ["Bash"]
-  }
+    "allow": [
+      "WebSearch",
+      "Bash",
+      "WebFetch",
+      "mcp__playwright",
+      "mcp__context7"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7",
+    "playwright",
+    "sequential-thinking",
+    "shadcn"
+  ]
 }

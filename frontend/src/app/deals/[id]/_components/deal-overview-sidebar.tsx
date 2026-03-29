@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyManWon } from "@/lib/utils";
 
 export function DealOverviewSidebar({
   structuredData,
@@ -16,7 +16,7 @@ export function DealOverviewSidebar({
     {
       label: "계약 금액",
       key: "expected_amount",
-      format: (v) => formatCurrency(v as number),
+      format: (v) => formatCurrencyManWon(v as number),
     },
     {
       label: "수행 기간",

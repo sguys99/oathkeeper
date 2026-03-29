@@ -253,7 +253,7 @@ def _properties_to_text(props: dict[str, Any]) -> str:
 
     amount = _extract_number(props.get("expected_amount", {}))
     if amount is not None:
-        parts.append(f"예상 금액: {amount:,}")
+        parts.append(f"예상 금액: {amount:,}원")
 
     duration_months = _extract_number(props.get("duration_months", {}))
     if duration_months is not None:
