@@ -45,6 +45,7 @@ export function useCreateDeal() {
     mutationFn: (data: DealCreate) => createDeal(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["imported-notion-page-ids"] });
     },
   });
 }
@@ -62,6 +63,7 @@ export function useDeleteDeal() {
     mutationFn: (dealId: string) => deleteDeal(dealId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deals"] });
+      queryClient.invalidateQueries({ queryKey: ["imported-notion-page-ids"] });
     },
   });
 }
