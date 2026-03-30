@@ -23,7 +23,7 @@ def _truncate(text: str, max_chars: int = MAX_METADATA_CHARS) -> str:
 class CompanyContextStore:
     """Store and retrieve company context documents via Pinecone.
 
-    Index: company-context (1536-dim, cosine similarity)
+    Index: company-context (dimension per settings.embedding_dimensions, cosine similarity)
     Metadata: type, content, updated_at
     """
 
@@ -92,7 +92,7 @@ class CompanyContextStore:
 class ProjectHistoryStore:
     """Store and search similar past projects via Pinecone.
 
-    Index: project-history (1536-dim, cosine similarity)
+    Index: project-history (dimension per settings.embedding_dimensions, cosine similarity)
     Metadata: project_name, industry, tech_stack, duration_months,
               planned_headcount, actual_headcount, contract_amount, summary,
               embedded_at, notion_last_edited

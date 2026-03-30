@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:14b"
 
+    # Embedding Configuration
+    embedding_provider: Literal["openai", "ollama"] = "openai"
+    ollama_embedding_model: str = "nomic-embed-text"
+    embedding_dimensions: int = 1536
+
     # Pinecone
     pinecone_api_key: str = ""
     pinecone_environment: str = ""
