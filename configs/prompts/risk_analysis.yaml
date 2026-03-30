@@ -119,6 +119,63 @@ user_prompt: |
   }
   ```
 
+system_prompt_compact: |
+  {{ system_base }}
+
+  Deal의 잠재적 위협 요인을 식별하고 평가하라. 스코어링(기회 매력도)과 달리, "무엇이 잘못될 수 있는가?"에 집중하라.
+
+  ## 리스크 카테고리
+  1. **기술 리스크**: 팀 역량 범위, 미검증 기술, 데이터 품질, 통합 복잡도, 성능 목표 달성 가능성
+  2. **일정 리스크**: 일정 적정성, 외부 의존성 블로커, 순차 의존 작업 지연 파급, 버퍼 확보
+  3. **재무 리스크**: 예산 적정성, 결제 조건 명확성, 추가 비용 트리거, 인프라 비용 누락 가능성
+  4. **고객 리스크**: 의사결정 체계, 요구사항 변경 빈도, 기술 이해도, 지불 능력
+  5. **범위 리스크**: 성공 기준 현실성, 암묵적 요구, UAT 합의 여부, scope creep 가능성
+
+  ## 심각도
+  확률(HIGH/MEDIUM/LOW)과 영향도(HIGH/MEDIUM/LOW)를 평가 후 매트릭스로 level 결정:
+  확률HIGH+영향HIGH/MEDIUM=HIGH, 확률MEDIUM+영향HIGH=HIGH, 확률HIGH+영향LOW=MEDIUM, 나머지 조합은 MEDIUM 또는 LOW.
+  카테고리당 1-3개, 전체 5-15개. 리스크 쌍 상호작용 최대 3개 식별.
+
+user_prompt_compact: |
+  아래 Deal 정보를 분석하여 리스크를 식별하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  {% if resource_estimate and resource_estimate.cost_breakdown is defined %}
+  ## 리소스 산출 결과 (참고)
+  - 예상 원가: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원{% if resource_estimate.cost_breakdown.infrastructure_cost is defined and resource_estimate.cost_breakdown.infrastructure_cost %} + 인프라 {{ resource_estimate.cost_breakdown.infrastructure_cost }}만원{% endif %} + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  {% if resource_estimate.profitability is defined %}- 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}%{% endif %}
+  {% if resource_estimate.duration_months is defined %}- 예상 기간: {{ resource_estimate.duration_months }}개월{% if resource_estimate.duration_with_buffer is defined %} (버퍼 포함 {{ resource_estimate.duration_with_buffer }}개월){% endif %}{% endif %}
+  {% endif %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "risks": [
+      {
+        "category": "기술 리스크 | 일정 리스크 | 재무 리스크 | 고객 리스크 | 범위 리스크",
+        "item": "리스크 제목",
+        "probability": "HIGH | MEDIUM | LOW",
+        "impact": "HIGH | MEDIUM | LOW",
+        "level": "HIGH | MEDIUM | LOW",
+        "evidence": "구체적 근거",
+        "description": "상세 설명",
+        "mitigation": "완화 방안"
+      }
+    ],
+    "risk_interdependencies": [
+      {
+        "risk_pair": ["리스크 A", "리스크 B"],
+        "combined_effect": "복합 효과",
+        "amplification": "증폭 정도와 이유"
+      }
+    ]
+  }
+  ```
+
 output_schema:
   type: object
   properties:

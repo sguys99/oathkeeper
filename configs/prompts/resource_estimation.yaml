@@ -122,6 +122,78 @@ user_prompt: |
   - total_cost = labor_cost + infrastructure_cost + overhead_cost.
   - 유사 프로젝트의 계획 대비 실제 인력 차이가 있다면, 이를 산출에 반영하세요.
 
+system_prompt_compact: |
+  {{ system_base }}
+
+  B2B AI 개발 프로젝트의 리소스 산출 전문 PM으로서, Deal의 기술 요구사항과 복잡도를 분석하여 기간, 팀 구성, 예산을 산출하라.
+
+  산출 프로세스:
+  1. 범위 분석 및 재활용/신규 구분 — 데이터 라벨링이 수행사 책임이면 독립 작업 영역으로 분리
+  2. 영역별 공수(인·월) 산정 — 유사 프로젝트 실적 우선 참고
+  3. 페이즈 설계 및 팀 구성 — 순차 의존 작업은 별도 페이즈로 분리, 실제 팀원 가용성 반영
+  4. 비용(인건비+인프라+기타) 산출, 마진 계산, 리스크 버퍼(10~30%) 산정
+
+user_prompt_compact: |
+  아래 Deal 정보를 바탕으로 소요 인력·기간·예산을 산출하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  ## 팀원 현황
+  {% if team_members %}
+  {% for m in team_members %}
+  - {{ m.name }} ({{ m.role }}): 월 {{ m.monthly_rate | int }}만원{% if m.is_available %}, 투입 가능{% else %}, {{ m.current_project }} 투입 중{% if m.available_from %} ({{ m.available_from }}부터 가용){% endif %}{% endif %}
+  {% endfor %}
+  {% else %}
+  (팀원 정보 없음. 일반 기준으로 산출.)
+  {% endif %}
+
+  {% if company_rates %}
+  ## 회사 비용 기준
+  {{ company_rates }}
+  {% endif %}
+
+  {% if past_projects %}
+  ## 유사 프로젝트 실적
+  {% for p in past_projects %}
+  - {{ p.project_name }} (유사도 {{ p.similarity_score }}): {{ p.tech_stack | join(', ') if p.tech_stack else '정보 없음' }}, {{ p.duration_months }}개월, 계획 {{ p.planned_headcount }}명→실제 {{ p.actual_headcount }}명, {{ p.contract_amount | int }}만원
+  {% endfor %}
+  {% endif %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "work_breakdown": [
+      {"area": "string", "is_reusable": false, "reuse_ratio": 0.0, "effort_person_months": 0.0, "description": "산정 근거"}
+    ],
+    "phases": [
+      {"name": "string", "duration_months": 0.0, "roles_needed": ["PM", "BE"]}
+    ],
+    "team_composition": [
+      {"role": "PM", "count": 1, "monthly_rate": 0, "duration_months": 0.0, "assigned_members": ["팀원명 또는 '외부 충원 필요'"]}
+    ],
+    "duration_months": 0.0,
+    "risk_buffer_ratio": 0.0,
+    "duration_with_buffer": 0.0,
+    "cost_breakdown": {
+      "labor_cost": 0, "infrastructure_cost": 0, "overhead_cost": 0, "total_cost": 0,
+      "infrastructure_items": "string | null",
+      "cost_calculation": "산출 수식"
+    },
+    "profitability": {
+      "deal_amount": 0, "estimated_cost": 0, "expected_margin": 0.0, "margin_assessment": "string"
+    },
+    "rationale": "전체 산출 핵심 근거 요약"
+  }
+  ```
+
+  핵심 규칙:
+  - reuse_ratio: 0.0(완전 신규)~1.0(완전 재활용). profitability.deal_amount는 structured_deal의 expected_amount 사용.
+  - expected_margin = (deal_amount - estimated_cost) / deal_amount.
+  - total_cost = labor_cost + infrastructure_cost + overhead_cost. 인프라 비용을 overhead에 포함하지 마라.
+
 output_schema:
   type: object
   properties:

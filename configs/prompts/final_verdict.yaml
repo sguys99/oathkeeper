@@ -263,3 +263,106 @@ user_prompt: |
 
   마크다운 문자열만 응답하세요. JSON으로 감싸지 마세요.
   리포트의 모든 수치는 위에 제공된 데이터에서 직접 인용하세요. 임의로 새로운 수치를 생성하지 마세요.
+
+system_prompt_compact: |
+  {{ system_base }}
+
+  모든 분석 결과를 종합하여 경영진용 마크다운 리포트를 작성하라.
+
+  ## 분석 절차
+  1. **Deal 선정 기준 적합성**: 각 항목을 PASS/WARNING/FAIL로 판정 (마진율, 산업군, 계약규모, 기간, 기술스택, 레퍼런스)
+  2. **스코어 해석**: 80~100 우수, 60~79 양호, 40~59 보통, 20~39 미흡, 0~19 부적합
+  3. **작업 범위 분석**: work_breakdown 기반 재활용/신규 구분, 기술 매핑, 난이도 평가
+  4. **리스크 종합**: 심각도순 정리, 60점 이하 기준과 리스크 교차 분석
+  5. **최종 판단**: Go(≥70) 수주 추진, Conditional Go(40~69) 조건부 추진(선행조건 최대 3개), No-Go(<40) 수주 불가(사유 최대 3개). 핵심 근거 3가지, 반론 1가지 포함.
+
+  제공된 데이터 수치를 그대로 인용하라. 금액 10,000만원 이상은 억원 단위로 변환 표기.
+
+user_prompt_compact: |
+  아래 분석 결과를 바탕으로 종합 리포트를 작성하세요.
+
+  ---
+
+  ## Deal 개요
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  ## 스코어링 결과
+  - 종합 점수: {{ total_score }}점 / 판정: {{ verdict }}
+  {% for s in scores %}
+  - {{ s.criterion }}: {{ s.score }}점 (가중치 {{ s.weight }}) — {{ s.rationale }}
+  {% endfor %}
+
+  ## 소요 산출
+  - 기간: {{ resource_estimate.duration_months }}개월 (버퍼 포함 {{ resource_estimate.duration_with_buffer }}개월)
+  - 비용: {{ resource_estimate.cost_breakdown.total_cost }}만원 (인건비 {{ resource_estimate.cost_breakdown.labor_cost }}만원{% if resource_estimate.cost_breakdown.infrastructure_cost is defined and resource_estimate.cost_breakdown.infrastructure_cost %} + 인프라 {{ resource_estimate.cost_breakdown.infrastructure_cost }}만원{% endif %} + 기타 {{ resource_estimate.cost_breakdown.overhead_cost }}만원)
+  - 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
+  {% if resource_estimate.profitability.deal_amount is defined %}- Deal 금액: {{ resource_estimate.profitability.deal_amount }}만원 / 원가: {{ resource_estimate.profitability.estimated_cost }}만원{% endif %}
+
+  ### 작업 분해
+  {% for w in resource_estimate.work_breakdown %}
+  - {{ w.area }}: {% if w.is_reusable %}재활용 {{ (w.reuse_ratio * 100) | int }}%{% else %}신규{% endif %} / {{ w.effort_person_months }}MM / {{ w.description }}
+  {% endfor %}
+
+  ### 팀 구성
+  {% for t in resource_estimate.team_composition %}
+  - {{ t.role }} {{ t.count }}명 x {{ t.duration_months }}개월{% if t.monthly_rate is defined %} (월 {{ t.monthly_rate }}만원){% endif %}{% if t.assigned_members is defined and t.assigned_members %} — {{ t.assigned_members | join(', ') }}{% endif %}
+  {% endfor %}
+
+  ## 리스크
+  {% for r in risks %}
+  - [{{ r.level }}] {{ r.category }} — {{ r.item }}: {{ r.description }}{% if r.mitigation is defined %} → {{ r.mitigation }}{% endif %}
+  {% endfor %}
+  {% if risk_interdependencies is defined and risk_interdependencies %}
+  리스크 상호작용:
+  {% for ri in risk_interdependencies %}
+  - {{ ri.risk_pair | join(" + ") }}: {{ ri.combined_effect }}
+  {% endfor %}
+  {% endif %}
+
+  {% if similar_projects %}
+  ## 유사 프로젝트
+  {% for p in similar_projects %}
+  - {{ p.project_name }} (유사도 {{ p.similarity_score }}): {{ p.lessons_learned }}
+  {% endfor %}
+  {% endif %}
+
+  ---
+
+  아래 마크다운 구조로 리포트를 작성하세요:
+
+  ```
+  # Deal 분석 리포트: {고객사명}
+
+  ## 1. 핵심 결론
+  - **판정**: {Go/Conditional Go/No-Go} (종합 점수: {X}점)
+  - **한 줄 요약**: (1문장)
+  - **핵심 판단 근거** (3가지)
+  - **Deal 선정 기준**: PASS {N}개, WARNING {N}개, FAIL {N}개
+  - **반론 및 대응**: (반론 1가지 + 대응)
+
+  ## 2. Deal 개요
+  (고객사, 산업군, 유형, 금액, 기간, 목적, 범위를 표로)
+
+  ## 3. Deal 선정 기준 적합성
+  (6개 기준별 PASS/WARNING/FAIL 판정 표)
+
+  ## 4. 평가 상세
+  (기준별 점수, 밴드, 가중점수 표 + 근거)
+
+  ## 5. 작업 범위 및 소요 산출
+  (작업 분해, 인프라, 일정, 팀 구성 및 비용)
+
+  ## 6. 리스크 분석
+  (심각도순 리스크 표 + 교차 분석)
+
+  ## 7. 유사 프로젝트 참고
+  (있으면 표, 없으면 "해당 없음")
+
+  ## 8. 권고사항
+  (판정별 구체적 권고)
+  ```
+
+  마크다운 문자열만 응답하세요. JSON으로 감싸지 마세요.
+  리포트의 모든 수치는 위 데이터에서 직접 인용하세요.

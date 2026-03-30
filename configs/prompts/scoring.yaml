@@ -91,6 +91,54 @@ user_prompt: |
   - weight는 위에 제시된 가중치를 그대로 사용하세요.
   - rationale은 해당 Deal 고유의 구체적 사실에 기반해야 하며, 일반적 서술을 피하세요.
 
+system_prompt_compact: |
+  {{ system_base }}
+
+  구조화된 Deal 정보를 평가 기준별로 0~100점으로 평가하라.
+  각 기준별 점수와 근거를 제시하라.
+
+  점수 밴드: 80~100 우수 / 60~79 양호 / 40~59 보통 / 20~39 미흡 / 0~19 부적합.
+  정보 부족 시 40~50점을 부여하고 근거에 명시하라.
+
+user_prompt_compact: |
+  아래 구조화된 Deal 정보를 평가하세요.
+
+  ## 구조화된 Deal 정보
+  ```json
+  {{ structured_deal | tojson }}
+  ```
+
+  {% if resource_estimate and resource_estimate.profitability is defined %}
+  ## 리소스 산출 결과 (참고)
+  - Deal 금액: {{ resource_estimate.profitability.deal_amount }}만원
+  - 예상 원가: {{ resource_estimate.profitability.estimated_cost }}만원
+  - 예상 마진: {{ (resource_estimate.profitability.expected_margin * 100) | round(1) }}% — {{ resource_estimate.profitability.margin_assessment }}
+  {% if resource_estimate.team_composition is defined %}- 팀 구성: {% for t in resource_estimate.team_composition %}{{ t.role }} {{ t.count }}명({{ t.duration_months }}개월){% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+  {% if resource_estimate.duration_months is defined %}- 예상 기간: {{ resource_estimate.duration_months }}개월{% if resource_estimate.duration_with_buffer is defined %} (버퍼 포함 {{ resource_estimate.duration_with_buffer }}개월){% endif %}{% endif %}
+  {% endif %}
+
+  ## 평가 기준 및 가중치
+  {% for c in scoring_criteria %}
+  ### {{ loop.index }}. {{ c.name }} (가중치: {{ c.weight }})
+  {{ c.description }}
+  {% endfor %}
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "scores": [
+      {
+        "criterion": "기준명",
+        "score": 0,
+        "weight": 0.0,
+        "rationale": "2~3문장 핵심 근거"
+      }
+    ]
+  }
+  ```
+
+  모든 평가 기준에 대해 빠짐없이 scores를 작성하세요. score는 0~100 정수, weight는 위 가중치를 그대로 사용하세요.
+
 output_schema:
   type: object
   properties:

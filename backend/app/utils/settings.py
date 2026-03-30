@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # LLM Configuration
     llm_provider: Literal["openai", "claude", "ollama"] = "openai"
+    prompt_profile: Literal["full", "compact"] = "full"
 
     # OpenAI
     openai_api_key: str = ""

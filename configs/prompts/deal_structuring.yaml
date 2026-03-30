@@ -87,6 +87,53 @@ user_prompt: |
   - expected_amount와 duration_months는 [딜 기본 정보]에 숫자로 제공될 수 있습니다. 본문에 다른 값이 있으면 [딜 기본 정보]의 값을 우선하세요.
   - missing_fields에는 핵심 필드의 필드명(예: "expected_amount", "tech_requirements")을 기재하세요.
 
+system_prompt_compact: |
+  {{ system_base }}
+
+  Deal 텍스트에서 구조화된 분석용 데이터를 추출하라.
+  이 데이터는 스코어링, 리소스 산출, 리스크 분석에 직접 사용된다.
+  원문 정보를 최대한 보존하고, 정보가 없으면 null로 설정하라.
+  missing_fields에는 customer_name, customer_industry, project_overview, tech_requirements, expected_amount, duration_months 중 null이거나 불충분한 항목만 추가하라.
+
+user_prompt_compact: |
+  아래 Deal 텍스트를 분석하여 구조화된 JSON으로 추출하세요.
+
+  ---
+  {{ deal_input }}
+  ---
+
+  다음 JSON 형식으로 응답하세요:
+  ```json
+  {
+    "customer_name": "string | null",
+    "customer_size": "대기업/중견기업/중소기업/스타트업 | null",
+    "customer_industry": "string | null",
+    "decision_context": "string | null",
+    "project_type": "신규개발 | 고도화 | 컨설팅 | PoC | 유지보수 | 기타 | null",
+    "project_overview": {
+      "background": "string | null",
+      "objective": "string | null",
+      "scope": "string | null",
+      "deliverables": ["string"],
+      "success_criteria": "string | null"
+    },
+    "tech_requirements": ["string"],
+    "tech_complexity_notes": "string | null",
+    "data_requirements": "string | null",
+    "infrastructure_requirements": "string | null",
+    "integration_systems": ["string"],
+    "expected_amount": 0,
+    "amount_unit": "만원 | 억원 | 원",
+    "duration_months": 0,
+    "key_milestones": "string | null",
+    "payment_terms": "string | null",
+    "security_requirements": "string | null",
+    "constraints": "string | null",
+    "stakeholders": "string | null",
+    "missing_fields": ["string"]
+  }
+  ```
+
 output_schema:
   type: object
   properties:

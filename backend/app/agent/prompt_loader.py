@@ -25,12 +25,22 @@ class PromptNotFoundError(Exception):
 class PromptTemplate:
     """A loaded prompt template with metadata and renderable fields."""
 
-    def __init__(self, data: dict[str, Any], name: str) -> None:
+    def __init__(self, data: dict[str, Any], name: str, profile: str = "full") -> None:
         self._data = data
         self.name = name
         self.version: str = data.get("version", "1.0")
-        self._system_prompt: str = data.get("system_prompt", "")
-        self._user_prompt: str = data.get("user_prompt", "")
+
+        if profile != "full":
+            suffix = f"_{profile}"
+            self._system_prompt: str = data.get(f"system_prompt{suffix}") or data.get(
+                "system_prompt",
+                "",
+            )
+            self._user_prompt: str = data.get(f"user_prompt{suffix}") or data.get("user_prompt", "")
+        else:
+            self._system_prompt: str = data.get("system_prompt", "")
+            self._user_prompt: str = data.get("user_prompt", "")
+
         self.output_schema: dict[str, Any] | None = data.get("output_schema")
 
     def render_system(self, **variables: Any) -> str:
@@ -54,13 +64,16 @@ def _render(template_str: str, variables: dict[str, Any]) -> str:
     return template.render(**variables)
 
 
-def load_prompt(name: str) -> PromptTemplate:
+def load_prompt(name: str, profile: str | None = None) -> PromptTemplate:
     """Load a prompt YAML file from ``configs/prompts/{name}.yaml``.
 
     Parameters
     ----------
     name:
         Stem name of the YAML file (e.g. ``"scoring"``).
+    profile:
+        Prompt profile to use (``"full"`` or ``"compact"``).
+        When *None*, reads from ``Settings.prompt_profile``.
 
     Returns
     -------
@@ -72,6 +85,11 @@ def load_prompt(name: str) -> PromptTemplate:
     PromptNotFoundError
         If the file does not exist.
     """
+    if profile is None:
+        from backend.app.utils.settings import get_settings
+
+        profile = get_settings().prompt_profile
+
     path = PROMPTS_DIR / f"{name}.yaml"
     if not path.exists():
         raise PromptNotFoundError(f"Prompt file not found: {path}")
@@ -79,18 +97,19 @@ def load_prompt(name: str) -> PromptTemplate:
     with open(path, encoding="utf-8") as f:
         data: dict[str, Any] = yaml.safe_load(f)
 
-    return PromptTemplate(data=data, name=name)
+    return PromptTemplate(data=data, name=name, profile=profile)
 
 
-def load_system_prompt() -> PromptTemplate:
+def load_system_prompt(profile: str | None = None) -> PromptTemplate:
     """Shortcut to load the shared system prompt template."""
-    return load_prompt("system")
+    return load_prompt("system", profile=profile)
 
 
 def render_prompt(
     name: str,
+    profile: str | None = None,
     **variables: Any,
 ) -> tuple[str, str]:
     """Load + render in one call. Returns ``(system_prompt, user_prompt)``."""
-    tpl = load_prompt(name)
+    tpl = load_prompt(name, profile=profile)
     return tpl.render(**variables)
