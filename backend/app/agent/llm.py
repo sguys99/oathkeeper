@@ -4,6 +4,7 @@ from functools import lru_cache
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
+from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
 from backend.app.utils.settings import get_settings
@@ -16,8 +17,9 @@ def get_llm(
 ) -> BaseChatModel:
     """Return a LangChain ChatModel for the configured provider.
 
-    - ``openai`` → ``ChatOpenAI`` (model name e.g. ``gpt-4o``)
-    - ``claude`` → ``ChatAnthropic`` (model name e.g. ``claude-sonnet-4-5-20250929``)
+    - ``openai``  → ``ChatOpenAI``
+    - ``claude``  → ``ChatAnthropic``
+    - ``ollama``  → ``ChatOllama``  (local SLM via Ollama)
     """
     settings = get_settings()
 
@@ -27,6 +29,14 @@ def get_llm(
             api_key=settings.openai_api_key,
             temperature=temperature,
             max_tokens=max_tokens,
+        )
+
+    if settings.llm_provider == "ollama":
+        return ChatOllama(
+            model=settings.ollama_model,
+            base_url=settings.ollama_base_url,
+            temperature=temperature,
+            num_predict=max_tokens,
         )
 
     return ChatAnthropic(
@@ -50,6 +60,14 @@ def get_llm_uncached(
             api_key=settings.openai_api_key,
             temperature=temperature,
             max_tokens=max_tokens,
+        )
+
+    if settings.llm_provider == "ollama":
+        return ChatOllama(
+            model=settings.ollama_model,
+            base_url=settings.ollama_base_url,
+            temperature=temperature,
+            num_predict=max_tokens,
         )
 
     return ChatAnthropic(

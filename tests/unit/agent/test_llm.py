@@ -46,6 +46,19 @@ class TestGetLlm:
         assert llm.max_tokens == 4096
 
     @patch("backend.app.agent.llm.get_settings")
+    def test_ollama_provider(self, mock_settings):
+        mock_settings.return_value.llm_provider = "ollama"
+        mock_settings.return_value.ollama_model = "qwen3:14b"
+        mock_settings.return_value.ollama_base_url = "http://localhost:11434"
+
+        llm = get_llm_uncached(temperature=0.0, max_tokens=2048)
+
+        assert llm.model == "qwen3:14b"
+        assert llm.base_url == "http://localhost:11434"
+        assert llm.temperature == 0.0
+        assert llm.num_predict == 2048
+
+    @patch("backend.app.agent.llm.get_settings")
     def test_default_parameters(self, mock_settings):
         mock_settings.return_value.llm_provider = "openai"
         mock_settings.return_value.openai_model = "gpt-4o"

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://oathkeeper:oathkeeper@localhost:5432/oathkeeper"
 
     # LLM Configuration
-    llm_provider: Literal["openai", "claude"] = "openai"
+    llm_provider: Literal["openai", "claude", "ollama"] = "openai"
 
     # OpenAI
     openai_api_key: str = ""
@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     # Anthropic Claude
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-5-20250929"
+
+    # Ollama (local SLM)
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:14b"
 
     # Pinecone
     pinecone_api_key: str = ""
