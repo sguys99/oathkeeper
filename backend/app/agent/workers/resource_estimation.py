@@ -47,7 +47,7 @@ profitability 등을 포함한 상세 리소스 견적
 """
 
 
-def make_resource_estimation_worker_node():
+def make_resource_estimation_worker_node(parent_log_id: uuid.UUID | None = None):
     """Factory — returns an async resource-estimation node."""
 
     async def resource_estimation_node(state: AgentState) -> dict:
@@ -85,6 +85,7 @@ def make_resource_estimation_worker_node():
                 user_prompt,
                 deal_id=deal_id,
                 worker_name="resource_estimation",
+                parent_log_id=parent_log_id,
             )
 
             parsed = parse_json_response(raw_result)

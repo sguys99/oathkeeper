@@ -43,7 +43,7 @@ JSON: {"scores": [{"criterion": str, "score": float, "weight": float,
 """
 
 
-def make_scoring_worker_node():
+def make_scoring_worker_node(parent_log_id: uuid.UUID | None = None):
     """Factory — returns an async scoring node with post-processing."""
 
     async def scoring_node(state: AgentState) -> dict:
@@ -81,6 +81,7 @@ def make_scoring_worker_node():
                 user_prompt,
                 deal_id=deal_id,
                 worker_name="scoring",
+                parent_log_id=parent_log_id,
             )
 
             parsed = parse_json_response(raw_result)

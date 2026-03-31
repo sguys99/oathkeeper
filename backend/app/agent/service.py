@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage
 
 from backend.app.agent.graph import build_graph
 from backend.app.agent.orchestrator.agent import ORCHESTRATOR_MAX_ITERATIONS
+from backend.app.agent.orchestrator.callback import OrchestratorLogCallback
 from backend.app.agent.orchestrator.context import (
     cleanup_analysis_context,
     init_analysis_context,
@@ -67,11 +68,15 @@ class AnalysisService:
                     await db.commit()
 
                 # Initialize per-deal analysis context
-                init_analysis_context(
+                ctx = init_analysis_context(
                     deal_id=deal_id_str,
                     deal_input=deal.raw_input or "",
                     on_progress=on_progress,
                 )
+
+                # Create orchestrator callback for hierarchical logging
+                orch_callback = OrchestratorLogCallback(deal_id=deal_id)
+                ctx.orchestrator_callback = orch_callback
 
                 # Build and invoke orchestrator graph
                 logger.info("Building orchestrator for deal %s", deal_id)
@@ -86,7 +91,10 @@ class AnalysisService:
                 logger.info("Starting orchestrator execution for deal %s", deal_id)
                 await graph.ainvoke(
                     {"messages": [HumanMessage(content=user_message)]},
-                    config={"recursion_limit": 2 * ORCHESTRATOR_MAX_ITERATIONS + 1},
+                    config={
+                        "recursion_limit": 2 * ORCHESTRATOR_MAX_ITERATIONS + 1,
+                        "callbacks": [orch_callback],
+                    },
                 )
 
                 # Extract accumulated results from context

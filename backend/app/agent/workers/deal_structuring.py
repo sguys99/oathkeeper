@@ -35,7 +35,7 @@ _REACT_INSTRUCTIONS = """
 """
 
 
-def make_deal_structuring_worker_node():
+def make_deal_structuring_worker_node(parent_log_id: uuid.UUID | None = None):
     """Factory — returns an async node function for AgentState."""
 
     async def deal_structuring_node(state: AgentState) -> dict:
@@ -71,6 +71,7 @@ def make_deal_structuring_worker_node():
                 user_prompt,
                 deal_id=deal_id,
                 worker_name="deal_structuring",
+                parent_log_id=parent_log_id,
             )
 
             # Parse and apply business logic

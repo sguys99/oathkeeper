@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from backend.app.agent.orchestrator.callback import OrchestratorLogCallback
+
 
 _registry: dict[str, AnalysisContext] = {}
 
@@ -33,6 +35,9 @@ class AnalysisContext:
 
     # Progress callback: async fn(step_label: str) -> None
     on_progress: Callable[[str], Awaitable[None]] | None = None
+
+    # Orchestrator callback for hierarchical logging
+    orchestrator_callback: OrchestratorLogCallback | None = None
 
     def to_result_dict(self) -> dict:
         """Export accumulated results as a dict matching service.py expectations."""

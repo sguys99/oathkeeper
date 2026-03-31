@@ -178,17 +178,17 @@ class WorkerState(TypedDict, total=False):
 
 ### 5.1 AgentLog 모델 필드 추가 (`backend/app/db/models/agent_log.py`)
 
-- [ ] `parent_log_id` (UUID, nullable, self FK) — Orchestrator→Worker→Step 계층 구조
-- [ ] `step_type` (String/Enum) — `orchestrator_decision`, `worker_start`, `reasoning`, `tool_call`, `observation`, `worker_result`
-- [ ] `step_index` (Integer, nullable) — Worker 내 ReAct 루프 순서
-- [ ] `tool_name` (String, nullable) — Tool call step에서 사용된 도구명
-- [ ] `worker_name` (String, nullable) — Worker 식별자
+- [x] `parent_log_id` (UUID, nullable, self FK) — Orchestrator→Worker→Step 계층 구조
+- [x] `step_type` (String/Enum) — `orchestrator_decision`, `worker_start`, `reasoning`, `tool_call`, `observation`, `worker_result`
+- [x] `step_index` (Integer, nullable) — Worker 내 ReAct 루프 순서
+- [x] `tool_name` (String, nullable) — Tool call step에서 사용된 도구명
+- [x] `worker_name` (String, nullable) — Worker 식별자
 
 ### 5.2 스키마 및 API 수정
 
-- [ ] `AgentLogResponse` 스키마에 신규 필드 추가 (`backend/app/api/schemas/`)
-- [ ] `agent_logs` 라우터에서 계층적 응답 지원 (선택적 tree 구조 반환)
-- [ ] Alembic 마이그레이션 파일 생성
+- [x] `AgentLogResponse` 스키마에 신규 필드 추가 (`backend/app/api/schemas/`)
+- [x] `agent_logs` 라우터에서 계층적 응답 지원 (선택적 tree 구조 반환)
+- [x] Alembic 마이그레이션 파일 생성
 
 ---
 

@@ -1,7 +1,10 @@
 """Meta-tools — orchestrator-level tools that invoke analysis workers."""
 
+from __future__ import annotations
+
 import json
 import logging
+import uuid
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
@@ -10,6 +13,14 @@ from backend.app.agent.base import CRITICAL_FIELDS, MISSING_FIELDS_THRESHOLD
 from backend.app.agent.orchestrator.context import get_analysis_context
 
 logger = logging.getLogger(__name__)
+
+
+def _get_parent_log_id(deal_id: str) -> uuid.UUID | None:
+    """Extract parent_log_id from the orchestrator callback, if available."""
+    ctx = get_analysis_context(deal_id)
+    cb = ctx.orchestrator_callback
+    return cb.last_tool_call_log_id if cb else None
+
 
 STEP_LABELS: dict[str, str] = {
     "deal_structuring": "Deal 구조화 중...",
@@ -60,7 +71,9 @@ async def run_deal_structuring(deal_id: str) -> str:
     ctx = get_analysis_context(deal_id)
     await _report_progress(deal_id, "deal_structuring")
 
-    node_fn = make_deal_structuring_worker_node()
+    node_fn = make_deal_structuring_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.structured_deal = result.get("structured_deal", {})
@@ -99,7 +112,9 @@ async def run_scoring_analysis(deal_id: str) -> str:
     ctx = get_analysis_context(deal_id)
     await _report_progress(deal_id, "scoring")
 
-    node_fn = make_scoring_worker_node()
+    node_fn = make_scoring_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.scores = result.get("scores", [])
@@ -125,7 +140,9 @@ async def run_resource_estimation(deal_id: str) -> str:
     ctx = get_analysis_context(deal_id)
     await _report_progress(deal_id, "resource_estimation")
 
-    node_fn = make_resource_estimation_worker_node()
+    node_fn = make_resource_estimation_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.resource_estimate = result.get("resource_estimate", {})
@@ -152,7 +169,9 @@ async def run_risk_analysis(deal_id: str) -> str:
     ctx = get_analysis_context(deal_id)
     await _report_progress(deal_id, "risk_analysis")
 
-    node_fn = make_risk_analysis_worker_node()
+    node_fn = make_risk_analysis_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.risks = result.get("risks", [])
@@ -179,7 +198,9 @@ async def run_similar_project_search(deal_id: str) -> str:
     ctx = get_analysis_context(deal_id)
     await _report_progress(deal_id, "similar_project")
 
-    node_fn = make_similar_project_worker_node()
+    node_fn = make_similar_project_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.similar_projects = result.get("similar_projects", [])
@@ -211,7 +232,9 @@ async def run_final_verdict(deal_id: str, hold: bool = False) -> str:
 
     from backend.app.agent.workers.final_verdict import make_final_verdict_worker_node
 
-    node_fn = make_final_verdict_worker_node()
+    node_fn = make_final_verdict_worker_node(
+        parent_log_id=_get_parent_log_id(deal_id),
+    )
     result = await node_fn(ctx.to_agent_state())
 
     ctx.final_report = result.get("final_report", "")

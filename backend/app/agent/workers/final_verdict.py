@@ -29,7 +29,7 @@ _REACT_INSTRUCTIONS = """
 """
 
 
-def make_final_verdict_worker_node():
+def make_final_verdict_worker_node(parent_log_id: uuid.UUID | None = None):
     """Factory — returns an async final-verdict node (markdown output)."""
 
     async def final_verdict_node(state: AgentState) -> dict:
@@ -72,6 +72,7 @@ def make_final_verdict_worker_node():
                 user_prompt,
                 deal_id=deal_id,
                 worker_name="final_verdict",
+                parent_log_id=parent_log_id,
             )
 
             return {"final_report": markdown, "status": "completed"}

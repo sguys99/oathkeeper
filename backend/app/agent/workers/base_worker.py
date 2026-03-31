@@ -12,6 +12,8 @@ from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import create_react_agent
 
+from backend.app.agent.log_types import StepType
+
 if TYPE_CHECKING:
     from langgraph.graph.state import CompiledStateGraph
 
@@ -93,13 +95,40 @@ async def invoke_worker(
     *,
     deal_id: uuid.UUID,
     worker_name: str,
+    parent_log_id: uuid.UUID | None = None,
     max_iterations: int = DEFAULT_MAX_ITERATIONS,
 ) -> str:
     """Invoke a ReAct worker with logging and safety limits.
 
     Returns the final text content from the worker.
     """
-    callback = WorkerLogCallback(deal_id=deal_id, worker_name=worker_name)
+    from backend.app.db.repositories import agent_log_repo
+    from backend.app.db.session import AsyncSessionLocal
+
+    # Create worker_start log
+    worker_log_id: uuid.UUID | None = None
+    started_at = datetime.now(UTC)
+    try:
+        async with AsyncSessionLocal() as session:
+            log = await agent_log_repo.create(
+                session,
+                deal_id=deal_id,
+                node_name=worker_name,
+                step_type=StepType.WORKER_START,
+                worker_name=worker_name,
+                parent_log_id=parent_log_id,
+                started_at=started_at,
+            )
+            worker_log_id = log.id
+            await session.commit()
+    except Exception:
+        logger.exception("Failed to create worker_start log for %s", worker_name)
+
+    callback = WorkerLogCallback(
+        deal_id=deal_id,
+        worker_name=worker_name,
+        parent_log_id=worker_log_id,
+    )
 
     result = await worker.ainvoke(
         {"messages": [HumanMessage(content=user_prompt)]},
@@ -109,7 +138,25 @@ async def invoke_worker(
         },
     )
 
-    return extract_worker_result(result)
+    final_text = extract_worker_result(result)
+
+    # Update worker_start log with completion info
+    if worker_log_id:
+        try:
+            completed_at = datetime.now(UTC)
+            async with AsyncSessionLocal() as session:
+                await agent_log_repo.update_log(
+                    session,
+                    worker_log_id,
+                    raw_output=final_text[:5000],
+                    duration_ms=int((completed_at - started_at).total_seconds() * 1000),
+                    completed_at=completed_at,
+                )
+                await session.commit()
+        except Exception:
+            logger.exception("Failed to update worker_start log for %s", worker_name)
+
+    return final_text
 
 
 # ── Logging Callback ──────────────────────────────────────────────────
@@ -126,10 +173,12 @@ class WorkerLogCallback(AsyncCallbackHandler):
         self,
         deal_id: uuid.UUID,
         worker_name: str,
+        parent_log_id: uuid.UUID | None = None,
     ) -> None:
         super().__init__()
         self.deal_id = deal_id
         self.worker_name = worker_name
+        self.parent_log_id = parent_log_id
         self._step_index = 0
         self._current_start: datetime | None = None
         self._tool_start: datetime | None = None
@@ -149,7 +198,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
         raw_output = generation.text if generation else ""
 
         await self._persist_log(
-            step_type="reasoning",
+            step_type=StepType.REASONING,
             raw_output=raw_output,
             duration_ms=duration_ms,
             started_at=started_at,
@@ -169,7 +218,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         await self._persist_log(
-            step_type="tool_call",
+            step_type=StepType.TOOL_CALL,
             tool_name=self._current_tool_name,
             raw_output=str(output)[:5000],
             duration_ms=duration_ms,
@@ -185,7 +234,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         await self._persist_log(
-            step_type="tool_call",
+            step_type=StepType.TOOL_CALL,
             tool_name=self._current_tool_name,
             error=str(error),
             duration_ms=duration_ms,
@@ -219,6 +268,11 @@ class WorkerLogCallback(AsyncCallbackHandler):
                     duration_ms=duration_ms,
                     started_at=started_at or datetime.now(UTC),
                     completed_at=completed_at,
+                    parent_log_id=self.parent_log_id,
+                    step_type=step_type,
+                    step_index=self._step_index,
+                    tool_name=tool_name,
+                    worker_name=self.worker_name,
                 )
                 await session.commit()
         except Exception:

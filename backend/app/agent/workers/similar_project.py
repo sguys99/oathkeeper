@@ -57,7 +57,7 @@ def _build_search_query(structured_deal: dict) -> str:
     return " ".join(p for p in parts if p).strip()
 
 
-def make_similar_project_worker_node():
+def make_similar_project_worker_node(parent_log_id: uuid.UUID | None = None):
     """Factory — returns an async similar-project node with skip logic."""
 
     async def similar_project_node(state: AgentState) -> dict:
@@ -103,6 +103,7 @@ def make_similar_project_worker_node():
                 user_prompt,
                 deal_id=deal_id,
                 worker_name="similar_project",
+                parent_log_id=parent_log_id,
             )
 
             parsed = parse_json_response(raw_result)
