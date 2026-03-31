@@ -3,21 +3,18 @@
 import logging
 import uuid
 
+from langchain_core.messages import HumanMessage
+
 from backend.app.agent.graph import build_graph
+from backend.app.agent.orchestrator.agent import ORCHESTRATOR_MAX_ITERATIONS
+from backend.app.agent.orchestrator.context import (
+    cleanup_analysis_context,
+    init_analysis_context,
+)
 from backend.app.db.repositories import analysis_repo, deal_repo
 from backend.app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
-
-STEP_LABELS: dict[str, str] = {
-    "deal_structuring": "Deal 구조화 중...",
-    "scoring": "평가 기준 분석 중...",
-    "resource_estimation": "리소스 추정 중...",
-    "risk_analysis": "리스크 분석 중...",
-    "similar_project": "유사 프로젝트 검색 중...",
-    "final_verdict": "최종 판정 중...",
-    "hold_verdict": "보류 판정 중...",
-}
 
 
 def _classify_error(exc: Exception) -> str:
@@ -45,7 +42,7 @@ class AnalysisService:
     """Run the full deal-analysis pipeline and persist results."""
 
     async def run_analysis(self, deal_id: uuid.UUID) -> None:
-        """Execute the LangGraph pipeline for *deal_id* and save results.
+        """Execute the orchestrator pipeline for *deal_id* and save results.
 
         Creates its own DB session because this method runs inside
         ``BackgroundTasks`` (outside the request lifecycle).
@@ -62,23 +59,40 @@ class AnalysisService:
                 await analysis_repo.delete_by_deal_id(db, deal_id)
                 await db.flush()
 
-                # Build and run the graph
-                logger.info("Building graph for deal %s", deal_id)
-                graph = build_graph()
-                logger.info("Graph built, starting execution for deal %s", deal_id)
+                deal_id_str = str(deal_id)
 
-                result: dict = {}
-                async for event in graph.astream(
-                    {"deal_input": deal.raw_input or "", "deal_id": str(deal_id)},
-                ):
-                    for node_name, node_output in event.items():
-                        if node_output is not None:
-                            result.update(node_output)
-                        label = STEP_LABELS.get(node_name)
-                        if label:
-                            logger.info("Deal %s: completed step '%s'", deal_id, node_name)
-                            deal.current_step = label
-                            await db.commit()
+                # Progress callback — updates deal.current_step in DB
+                async def on_progress(step_label: str) -> None:
+                    deal.current_step = step_label
+                    await db.commit()
+
+                # Initialize per-deal analysis context
+                init_analysis_context(
+                    deal_id=deal_id_str,
+                    deal_input=deal.raw_input or "",
+                    on_progress=on_progress,
+                )
+
+                # Build and invoke orchestrator graph
+                logger.info("Building orchestrator for deal %s", deal_id)
+                graph = build_graph(deal_id=deal_id_str)
+
+                user_message = (
+                    f"Analyze the following deal for a Go/No-Go decision.\n\n"
+                    f"Deal ID: {deal_id_str}\n\n"
+                    f"Deal Input:\n{deal.raw_input or ''}"
+                )
+
+                logger.info("Starting orchestrator execution for deal %s", deal_id)
+                await graph.ainvoke(
+                    {"messages": [HumanMessage(content=user_message)]},
+                    config={"recursion_limit": 2 * ORCHESTRATOR_MAX_ITERATIONS + 1},
+                )
+
+                # Extract accumulated results from context
+                result = cleanup_analysis_context(deal_id_str)
+                if result is None:
+                    raise RuntimeError("AnalysisContext was not found after orchestrator completion")
 
                 # Persist analysis result
                 await analysis_repo.create(
@@ -105,6 +119,8 @@ class AnalysisService:
 
             except Exception as exc:
                 logger.exception("Analysis failed for deal %s", deal_id)
+                # Ensure context is cleaned up even on failure
+                cleanup_analysis_context(str(deal_id))
                 await db.rollback()
                 error_msg = _classify_error(exc)
                 # Mark deal as failed using a fresh session

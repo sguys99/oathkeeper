@@ -8,6 +8,7 @@ from backend.app.agent.base import (
     fetch_company_settings,
     format_company_context,
     logged_call_llm,
+    normalize_amount_to_manwon,
     parse_json_response,
     update_log_parsed_output,
 )
@@ -18,25 +19,8 @@ from backend.app.db.vector_store import CompanyContextStore
 
 logger = logging.getLogger(__name__)
 
-_UNIT_TO_MANWON: dict[str, float] = {
-    "원": 1 / 10_000,
-    "만원": 1,
-    "억원": 10_000,
-}
-
-
-def _normalize_amount_to_manwon(structured: dict) -> dict:
-    """Convert expected_amount to 만원 units and pin amount_unit = '만원'.
-
-    Eliminates downstream LLM unit-conversion errors by normalizing at the
-    code level immediately after deal structuring.
-    """
-    amount = structured.get("expected_amount")
-    unit = structured.get("amount_unit", "만원")
-    if amount is None:
-        return structured
-    factor = _UNIT_TO_MANWON.get(unit, 1)
-    return {**structured, "expected_amount": round(amount * factor), "amount_unit": "만원"}
+# Alias for backward compatibility — canonical implementation is in base.py
+_normalize_amount_to_manwon = normalize_amount_to_manwon
 
 
 def make_deal_structuring_node(

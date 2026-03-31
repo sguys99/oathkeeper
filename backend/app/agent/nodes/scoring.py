@@ -5,11 +5,13 @@ import uuid
 
 from backend.app.agent.base import (
     build_company_context,
+    determine_verdict,
     fetch_company_settings,
     format_company_context,
     format_scoring_criteria,
     logged_call_llm,
     parse_json_response,
+    recalculate_scores,
     update_log_parsed_output,
 )
 from backend.app.agent.prompt_loader import load_prompt
@@ -21,34 +23,9 @@ from backend.app.db.vector_store import CompanyContextStore
 logger = logging.getLogger(__name__)
 
 
-def _determine_verdict(total_score: float) -> str:
-    """Server-side verdict based on score thresholds (don't trust LLM arithmetic)."""
-    if total_score >= 70:
-        return "go"
-    if total_score >= 40:
-        return "conditional_go"
-    return "no_go"
-
-
-def _recalculate_scores(scores: list[dict]) -> tuple[list[dict], float]:
-    """Recompute weighted_score and total from LLM-provided raw scores."""
-    recalculated = []
-    total = 0.0
-    for s in scores:
-        score = float(s.get("score", 0))
-        weight = float(s.get("weight", 0))
-        weighted = round(score * weight, 2)
-        total += weighted
-        recalculated.append(
-            {
-                "criterion": s.get("criterion", ""),
-                "score": score,
-                "weight": weight,
-                "weighted_score": weighted,
-                "rationale": s.get("rationale", ""),
-            },
-        )
-    return recalculated, round(total, 2)
+# Aliases for backward compatibility — canonical implementations are in base.py
+_determine_verdict = determine_verdict
+_recalculate_scores = recalculate_scores
 
 
 def make_scoring_node(context_store: CompanyContextStore):

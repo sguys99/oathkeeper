@@ -55,7 +55,7 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 
 ### 2.1 공통 Worker 빌더
 
-- [ ] `base_worker.py` — `make_react_worker(name, tools, system_prompt, max_iterations)` 팩토리 함수 구현
+- [x] `base_worker.py` — `make_react_worker(name, tools, system_prompt, max_iterations)` 팩토리 함수 구현
   - LangGraph `create_react_agent()` 또는 커스텀 reason→act→observe 루프
   - `WorkerState` (messages + context + result) 사용
   - max_iterations 안전장치 (기본 5~8회)
@@ -72,22 +72,22 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 | similar_project | search_similar_projects, get_past_deal_analysis, search_company_context | 과거 성공/실패 요인 추출 |
 | final_verdict | calculate_weighted_score, calculate_roi | 최종 점수 검증 + 전략적 권고 |
 
-- [ ] `deal_structuring.py` — deal structuring worker 구현
-- [ ] `scoring.py` — scoring worker 구현
-- [ ] `resource_estimation.py` — resource estimation worker 구현
-- [ ] `risk_analysis.py` — risk analysis worker 구현
-- [ ] `similar_project.py` — similar project worker 구현
-- [ ] `final_verdict.py` — final verdict worker 구현
+- [x] `deal_structuring.py` — deal structuring worker 구현
+- [x] `scoring.py` — scoring worker 구현
+- [x] `resource_estimation.py` — resource estimation worker 구현
+- [x] `risk_analysis.py` — risk analysis worker 구현
+- [x] `similar_project.py` — similar project worker 구현
+- [x] `final_verdict.py` — final verdict worker 구현
 
 ### 2.3 기존 노드 마이그레이션
 
-- [ ] `nodes/*.py`의 프롬프트 렌더링, JSON 파싱, 에러 핸들링 로직을 `workers/*.py`로 이전
-- [ ] `configs/prompts/*.yaml`을 Worker 시스템 프롬프트의 도메인 컨텍스트로 재활용
+- [x] `nodes/*.py`의 프롬프트 렌더링, JSON 파싱, 에러 핸들링 로직을 `workers/*.py`로 이전
+- [x] `configs/prompts/*.yaml`을 Worker 시스템 프롬프트의 도메인 컨텍스트로 재활용
 
 ### 2.4 Worker 단위 테스트
 
-- [ ] 각 Worker가 mock Tool로 ReAct 루프를 정상 수행하는지 검증
-- [ ] max_iterations 안전장치 동작 검증
+- [x] 각 Worker가 mock Tool로 ReAct 루프를 정상 수행하는지 검증
+- [x] max_iterations 안전장치 동작 검증
 
 ---
 
@@ -95,20 +95,20 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 
 ### 3.1 Orchestrator Agent (`agent.py`)
 
-- [ ] LangGraph `create_react_agent()` 기반 최상위 에이전트 구현
-- [ ] `OrchestratorState` 사용 (messages 기반 ReAct 이력 관리)
-- [ ] max_iterations = 10~15
-- [ ] 시스템 프롬프트 설계: OathKeeper 평가 프레임워크, 판정 기준, 분석 전략 가이드라인
+- [x] LangGraph `create_react_agent()` 기반 최상위 에이전트 구현
+- [x] `OrchestratorState` 사용 (messages 기반 ReAct 이력 관리)
+- [x] max_iterations = 10~15
+- [x] 시스템 프롬프트 설계: OathKeeper 평가 프레임워크, 판정 기준, 분석 전략 가이드라인
 
 ### 3.2 Meta-Tools (`tools.py`)
 
-- [ ] `run_deal_structuring` — deal_structuring_worker 실행
-- [ ] `run_scoring_analysis` — scoring_worker 실행
-- [ ] `run_risk_analysis` — risk_worker 실행
-- [ ] `run_resource_estimation` — resource_worker 실행
-- [ ] `run_similar_project_search` — similar_project_worker 실행
-- [ ] `run_final_verdict` — final_verdict_worker 실행
-- [ ] `search_company_context` — 빠른 컨텍스트 조회 (직접 호출)
+- [x] `run_deal_structuring` — deal_structuring_worker 실행
+- [x] `run_scoring_analysis` — scoring_worker 실행
+- [x] `run_risk_analysis` — risk_worker 실행
+- [x] `run_resource_estimation` — resource_worker 실행
+- [x] `run_similar_project_search` — similar_project_worker 실행
+- [x] `run_final_verdict` — final_verdict_worker 실행
+- [x] `search_company_context` — 빠른 컨텍스트 조회 (직접 호출)
 
 ### 3.3 동작 흐름
 
@@ -125,7 +125,7 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 
 ### 3.4 Orchestrator 테스트
 
-- [ ] Orchestrator → Worker → Tool 전체 파이프라인 통합 테스트
+- [ ] Orchestrator → Worker → Tool 전체 파이프라인 통합 테스트 (유닛 테스트 완료, 통합 테스트 미완)
 - [ ] 실제 LLM API를 사용한 Tool calling 정상 동작 확인
 
 ---
@@ -134,7 +134,7 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 
 ### 4.1 State 변경 (`state.py`)
 
-- [ ] `OrchestratorState` 정의 추가
+- [x] `OrchestratorState` 정의 추가 (`AnalysisContext` dataclass로 대체 구현)
 
 ```python
 class OrchestratorState(TypedDict, total=False):
@@ -156,7 +156,7 @@ class OrchestratorState(TypedDict, total=False):
     iteration_count: int
 ```
 
-- [ ] `WorkerState` 정의 추가
+- [x] `WorkerState` 정의 추가 (Phase 2에서 `workers/base_worker.py`에 구현 완료)
 
 ```python
 class WorkerState(TypedDict, total=False):
@@ -167,10 +167,10 @@ class WorkerState(TypedDict, total=False):
 
 ### 4.2 기존 파일 수정
 
-- [ ] `llm.py` — bind_tools 지원 메서드 추가
-- [ ] `base.py` — ReAct step별 로깅 유틸리티 추가
-- [ ] `graph.py` — 오케스트레이터 그래프 빌드로 재구성
-- [ ] `service.py` — 오케스트레이터 실행 흐름 적용, 확장 로깅/스트리밍
+- [x] `llm.py` — bind_tools 지원 (`create_react_agent`가 내부 처리, 별도 수정 불필요)
+- [x] `base.py` — ReAct step별 로깅 유틸리티 추가 (Phase 2 `WorkerLogCallback`으로 구현)
+- [x] `graph.py` — 오케스트레이터 그래프 빌드로 재구성
+- [x] `service.py` — 오케스트레이터 실행 흐름 적용, 확장 로깅/스트리밍
 
 ---
 
