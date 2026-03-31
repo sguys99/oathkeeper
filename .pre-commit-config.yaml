@@ -28,5 +28,6 @@ exclude: |
     uv\.lock|
     data/|
     \.venv/|
-    notebooks/
+    notebooks/|
+    \.claude/
   )
