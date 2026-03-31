@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useDeal } from "@/hooks/use-deals";
-import { useAgentLogs } from "@/hooks/use-agent-logs";
+import { useAgentLogTree } from "@/hooks/use-agent-logs";
 import { LogTimeline } from "./_components/log-timeline";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ export default function DealLogsPage({
 }) {
   const { id } = use(params);
   const { data: deal, isLoading: dealLoading } = useDeal(id);
-  const { data: logs, isLoading: logsLoading } = useAgentLogs(id);
+  const { data: tree, isLoading: logsLoading } = useAgentLogTree(id);
 
   if (dealLoading || logsLoading) {
     return (
@@ -57,8 +57,8 @@ export default function DealLogsPage({
         </div>
       </div>
 
-      {logs && logs.length > 0 ? (
-        <LogTimeline logs={logs} />
+      {tree && tree.logs.length > 0 ? (
+        <LogTimeline tree={tree} />
       ) : (
         <div className="rounded-md border p-8 text-center text-muted-foreground">
           이 Deal에 대한 에이전트 로그가 없습니다

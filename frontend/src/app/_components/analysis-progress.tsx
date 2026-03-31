@@ -54,7 +54,9 @@ export function AnalysisProgress({
         </p>
         {isActive && (
           <p className="text-sm text-muted-foreground">
-            평가 기준 분석, 리스크 분석, 유사 프로젝트 검색이 진행됩니다
+            {deal?.current_step
+              ? deal.current_step
+              : "평가 기준 분석, 리스크 분석, 유사 프로젝트 검색이 진행됩니다"}
           </p>
         )}
         {status === "failed" && deal?.error_message && (

@@ -335,6 +335,14 @@ export interface CostItemUpdate {
 }
 
 // Agent Logs
+export type StepType =
+  | "orchestrator_decision"
+  | "worker_start"
+  | "reasoning"
+  | "tool_call"
+  | "observation"
+  | "worker_result";
+
 export interface AgentLogResponse {
   id: string;
   deal_id: string;
@@ -348,6 +356,22 @@ export interface AgentLogResponse {
   started_at: string;
   completed_at: string | null;
   created_at: string;
+  parent_log_id: string | null;
+  step_type: StepType | null;
+  step_index: number | null;
+  tool_name: string | null;
+  worker_name: string | null;
+}
+
+export interface AgentLogTreeNode extends AgentLogResponse {
+  children: AgentLogTreeNode[];
+}
+
+export interface AgentLogTreeResponse {
+  deal_id: string;
+  logs: AgentLogTreeNode[];
+  total_count: number;
+  total_duration_ms: number | null;
 }
 
 // Prompts

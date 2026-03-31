@@ -196,28 +196,28 @@ class WorkerState(TypedDict, total=False):
 
 ### 6.1 타입 업데이트 (`frontend/src/lib/api/types.ts`)
 
-- [ ] `AgentLogResponse`에 신규 필드 추가: `parent_log_id`, `step_type`, `step_index`, `tool_name`, `worker_name`, `children`
+- [x] `AgentLogResponse`에 신규 필드 추가: `parent_log_id`, `step_type`, `step_index`, `tool_name`, `worker_name`, `children`
 
 ### 6.2 LogTimeline 재설계 (`frontend/src/app/deals/[id]/logs/_components/log-timeline.tsx`)
 
-- [ ] 하드코딩된 3-phase 레이아웃 제거 (`PARALLEL_NODES`, `NODE_LABELS` 등)
-- [ ] 동적 트리 기반 렌더러로 교체:
+- [x] 하드코딩된 3-phase 레이아웃 제거 (`PARALLEL_NODES`, `NODE_LABELS` 등)
+- [x] 동적 트리 기반 렌더러로 교체:
   - 1단계: Orchestrator 판단 (어떤 Worker를 왜 호출했는지)
   - 2단계: Worker 실행 (각각의 duration, status)
   - 3단계: Worker 내 ReAct step (reasoning → tool_call → observation 사이클)
 
 ### 6.3 LogNodeCard 확장 (`frontend/src/app/deals/[id]/logs/_components/log-node-card.tsx`)
 
-- [ ] `step_type` 기반 카드 변형 구현:
+- [x] `step_type` 기반 카드 변형 구현:
   - Orchestrator 판단 카드 (분석 전략, Worker 선택 이유)
   - Worker 카드 (접기/펼치기, 하위 ReAct step 포함)
   - Tool call 카드 (도구명, 입력 파라미터, 출력/관찰 결과)
   - Reasoning 카드 (LLM 사고 과정 표시)
-- [ ] 동적 라벨링 시스템 (하드코딩된 7개 → Worker/Tool 이름 기반)
+- [x] 동적 라벨링 시스템 (하드코딩된 7개 → Worker/Tool 이름 기반)
 
 ### 6.4 AnalysisProgress 개선 (선택사항)
 
-- [ ] `current_step`에 Worker 진행 상황 표시 (예: "Scoring Worker: 3/5 - 계산 도구 호출 중")
+- [x] `current_step`에 Worker 진행 상황 표시 (예: "Scoring Worker: 3/5 - 계산 도구 호출 중")
 
 ---
 
