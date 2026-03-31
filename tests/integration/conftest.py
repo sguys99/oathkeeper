@@ -59,7 +59,11 @@ def patch_analysis_session(db_engine):
         class_=AsyncSession,
         expire_on_commit=False,
     )
-    with patch("backend.app.agent.service.AsyncSessionLocal", test_factory):
+    with (
+        patch("backend.app.agent.service.AsyncSessionLocal", test_factory),
+        patch("backend.app.api.routers.analysis.AsyncSessionLocal", test_factory),
+        patch("backend.app.db.session.AsyncSessionLocal", test_factory),
+    ):
         yield
 
 

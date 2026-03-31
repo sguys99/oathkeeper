@@ -36,7 +36,7 @@ export function AnalysisProgress({
   }, [status, dealId, router]);
 
   return (
-    <Card>
+    <Card data-testid="analysis-progress" data-status={status}>
       <CardContent className="flex flex-col items-center gap-4 py-12">
         {isActive && (
           <Loader2 className="h-12 w-12 animate-spin text-primary" />

@@ -26,7 +26,14 @@ class LogView(StrEnum):
 def _build_tree_node(log) -> AgentLogTreeNode:
     """Recursively build a tree node from an ORM object with children."""
     node = AgentLogTreeNode.model_validate(log)
-    node.children = [_build_tree_node(c) for c in (log.children or [])]
+    children = sorted(
+        log.children or [],
+        key=lambda child: (
+            child.started_at,
+            child.step_index if child.step_index is not None else -1,
+        ),
+    )
+    node.children = [_build_tree_node(child) for child in children]
     return node
 
 

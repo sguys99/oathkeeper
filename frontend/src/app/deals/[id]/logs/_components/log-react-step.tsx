@@ -43,7 +43,11 @@ export function LogReActStep({ step }: LogReActStepProps) {
       : config.label;
 
   return (
-    <div className="rounded-md border bg-card">
+    <div
+      className="rounded-md border bg-card"
+      data-testid="react-step"
+      data-step-type={step.step_type ?? "legacy"}
+    >
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between p-3 text-sm hover:bg-muted/50"

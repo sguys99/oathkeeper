@@ -29,10 +29,15 @@ export function LogWorkerCard({ node }: LogWorkerCardProps) {
   const stepCount = reactSteps.length;
 
   return (
-    <Card className={hasError ? "border-destructive/50" : ""}>
+    <Card
+      className={hasError ? "border-destructive/50" : ""}
+      data-testid="worker-card"
+      data-worker-name={node.worker_name ?? node.node_name}
+    >
       <CardHeader
         className="cursor-pointer pb-3 hover:bg-muted/50"
         onClick={() => setOpen(!open)}
+        data-testid="worker-card-header"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

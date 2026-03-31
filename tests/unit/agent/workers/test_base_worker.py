@@ -178,7 +178,7 @@ class TestWorkerLogCallback:
         deal_id = uuid.uuid4()
         callback = WorkerLogCallback(deal_id=deal_id, worker_name="scoring")
 
-        await callback.on_tool_start({"name": "calculate_weighted_score"}, "{}")
+        await callback.on_tool_start({"name": "calculate_weighted_score"}, '{"score": 72.5}')
 
         with (
             patch(
@@ -195,10 +195,16 @@ class TestWorkerLogCallback:
 
             await callback.on_tool_end('{"total": 72.5}')
 
-            mock_create.assert_called_once()
-            call_kwargs = mock_create.call_args.kwargs
-            assert call_kwargs["node_name"] == "scoring:tool_call"
-            assert '{"total": 72.5}' in call_kwargs["raw_output"]
+            assert mock_create.await_count == 2
+
+            tool_call_kwargs = mock_create.await_args_list[0].kwargs
+            assert tool_call_kwargs["node_name"] == "scoring:tool_call"
+            assert tool_call_kwargs["user_prompt"] == '{"score": 72.5}'
+            assert tool_call_kwargs["raw_output"] is None
+
+            observation_kwargs = mock_create.await_args_list[1].kwargs
+            assert observation_kwargs["node_name"] == "scoring:observation"
+            assert '{"total": 72.5}' in observation_kwargs["raw_output"]
 
     @pytest.mark.asyncio
     async def test_on_tool_error_logs_error(self):
@@ -230,6 +236,28 @@ class TestWorkerLogCallback:
     def test_step_index_increments(self):
         callback = WorkerLogCallback(deal_id=uuid.uuid4(), worker_name="test")
         assert callback._step_index == 0
+
+    @pytest.mark.asyncio
+    async def test_observation_step_advances_index(self):
+        deal_id = uuid.uuid4()
+        callback = WorkerLogCallback(deal_id=deal_id, worker_name="scoring")
+
+        await callback.on_tool_start({"name": "calculate_weighted_score"}, "{}")
+
+        with (
+            patch("backend.app.db.session.AsyncSessionLocal") as mock_sl,
+            patch(
+                "backend.app.db.repositories.agent_log_repo.create",
+                new_callable=AsyncMock,
+            ),
+        ):
+            mock_session = AsyncMock()
+            mock_sl.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_sl.return_value.__aexit__ = AsyncMock(return_value=False)
+
+            await callback.on_tool_end('{"total": 72.5}')
+
+        assert callback._step_index == 2
 
     @pytest.mark.asyncio
     async def test_persist_log_handles_db_error_gracefully(self):

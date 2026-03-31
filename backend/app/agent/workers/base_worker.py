@@ -183,6 +183,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
         self._current_start: datetime | None = None
         self._tool_start: datetime | None = None
         self._current_tool_name: str = "unknown"
+        self._tool_input: str | None = None
 
     async def on_llm_start(self, serialized, prompts, **kwargs):
         """Record that a reasoning step started."""
@@ -210,15 +211,25 @@ class WorkerLogCallback(AsyncCallbackHandler):
         """Record tool invocation start."""
         self._tool_start = datetime.now(UTC)
         self._current_tool_name = serialized.get("name", "unknown")
+        self._tool_input = input_str
 
     async def on_tool_end(self, output, **kwargs):
-        """Log the tool call and its result."""
+        """Log the tool call and follow-up observation as separate steps."""
         completed_at = datetime.now(UTC)
         started_at = self._tool_start or completed_at
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         await self._persist_log(
             step_type=StepType.TOOL_CALL,
+            tool_name=self._current_tool_name,
+            user_prompt=self._tool_input,
+            duration_ms=duration_ms,
+            started_at=started_at,
+            completed_at=completed_at,
+        )
+        self._step_index += 1
+        await self._persist_log(
+            step_type=StepType.OBSERVATION,
             tool_name=self._current_tool_name,
             raw_output=str(output)[:5000],
             duration_ms=duration_ms,
@@ -236,6 +247,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
         await self._persist_log(
             step_type=StepType.TOOL_CALL,
             tool_name=self._current_tool_name,
+            user_prompt=self._tool_input,
             error=str(error),
             duration_ms=duration_ms,
             started_at=started_at,
@@ -246,6 +258,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
     async def _persist_log(
         self,
         step_type: str,
+        user_prompt: str | None = None,
         raw_output: str | None = None,
         error: str | None = None,
         tool_name: str | None = None,
@@ -263,6 +276,7 @@ class WorkerLogCallback(AsyncCallbackHandler):
                     session,
                     deal_id=self.deal_id,
                     node_name=f"{self.worker_name}:{step_type}",
+                    user_prompt=user_prompt,
                     raw_output=raw_output,
                     error=error,
                     duration_ms=duration_ms,

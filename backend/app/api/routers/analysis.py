@@ -1,8 +1,10 @@
 """Analysis trigger, results, and status endpoints."""
 
+import asyncio
 import json
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import UTC
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.responses import StreamingResponse
@@ -15,11 +17,16 @@ from backend.app.api.exceptions import (
     DealNotFound,
     OathKeeperError,
 )
-from backend.app.api.schemas.analysis import AnalysisResponse, AnalysisTriggerResponse
+from backend.app.api.schemas.analysis import (
+    AnalysisResponse,
+    AnalysisStatusEvent,
+    AnalysisTriggerResponse,
+)
 from backend.app.db.repositories import analysis_repo, deal_repo
-from backend.app.db.session import get_db
+from backend.app.db.session import AsyncSessionLocal, get_db
 
 router = APIRouter(prefix="/api/deals", tags=["analysis"])
+STATUS_STREAM_POLL_INTERVAL_SECONDS = 0.25
 
 
 @router.post(
@@ -82,9 +89,38 @@ async def get_analysis_status(
     if deal is None:
         raise DealNotFound(deal_id)
 
+    async def build_event_payload() -> str | None:
+        async with AsyncSessionLocal() as session:
+            refreshed = await deal_repo.get_by_id(session, deal_id)
+            if refreshed is None:
+                return None
+
+            event = AnalysisStatusEvent(
+                deal_id=deal_id,
+                status=refreshed.status,
+                current_step=refreshed.current_step,
+                updated_at=refreshed.updated_at
+                if refreshed.updated_at.tzinfo is not None
+                else refreshed.updated_at.replace(tzinfo=UTC),
+            )
+            return event.model_dump_json()
+
     async def event_stream() -> AsyncGenerator[str, None]:
-        data = json.dumps({"deal_id": str(deal_id), "status": deal.status})
-        yield f"data: {data}\n\n"
+        last_payload: str | None = None
+
+        while True:
+            payload = await build_event_payload()
+            if payload is None:
+                return
+
+            if payload != last_payload:
+                yield f"data: {payload}\n\n"
+                event = json.loads(payload)
+                last_payload = payload
+                if event["status"] in {"completed", "failed"}:
+                    return
+
+            await asyncio.sleep(STATUS_STREAM_POLL_INTERVAL_SECONDS)
 
     return StreamingResponse(
         event_stream(),

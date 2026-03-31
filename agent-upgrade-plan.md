@@ -225,13 +225,13 @@ class WorkerState(TypedDict, total=False):
 
 ### 7.1 통합 테스트
 
-- [ ] 기존 분석 결과와 품질 비교 (동일 딜 데이터로 테스트)
-- [ ] `@pytest.mark.integration` 패턴 따름
+- [x] 기존 분석 결과와 품질 비교 (동일 딜 데이터로 테스트)
+- [x] `@pytest.mark.integration` 패턴 따름
 
 ### 7.2 E2E 테스트
 
-- [ ] `POST /api/deals/{id}/analyze` → SSE 진행 상태 → 분석 결과 조회
-- [ ] AgentLog에 ReAct step별 로그 기록 확인
+- [x] `POST /api/deals/{id}/analyze` → SSE 진행 상태 → 분석 결과 조회
+- [x] AgentLog에 ReAct step별 로그 기록 확인
 - [ ] 프론트엔드 로그 뷰어에서 확장된 로그 표시 확인
 
 ### 7.3 수동 검증

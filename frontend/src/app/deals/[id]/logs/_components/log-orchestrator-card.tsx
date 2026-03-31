@@ -23,7 +23,11 @@ export function LogOrchestratorCard({
   const hasError = !!node.error;
 
   return (
-    <div className="space-y-3">
+    <div
+      className="space-y-3"
+      data-testid="orchestrator-card"
+      data-step-type={node.step_type ?? "legacy"}
+    >
       <div className="flex items-center gap-2">
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
           {index + 1}

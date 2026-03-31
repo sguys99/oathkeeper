@@ -36,7 +36,11 @@ function RootNode({
   node: AgentLogTreeNode;
   index: number;
 }) {
-  if (node.step_type === "orchestrator_decision") {
+  if (
+    node.step_type === "orchestrator_decision" ||
+    node.step_type === "orchestrator_reasoning" ||
+    node.step_type === "orchestrator_tool_call"
+  ) {
     return <LogOrchestratorCard node={node} index={index} />;
   }
   if (node.step_type === "worker_start" || node.step_type === "worker_result") {

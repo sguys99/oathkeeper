@@ -1,9 +1,11 @@
 """Deal and analysis endpoint tests."""
 
 import uuid
+from unittest.mock import patch
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
 
@@ -121,3 +123,30 @@ async def test_get_analysis_not_found(async_client: AsyncClient):
     deal_id = create_resp.json()["id"]
     resp = await async_client.get(f"/api/deals/{deal_id}/analysis")
     assert resp.status_code == 404
+
+
+async def test_status_stream_returns_sse_event(async_client: AsyncClient, db_engine):
+    create_resp = await async_client.post(
+        "/api/deals/",
+        json={"title": "Streaming Deal", "raw_input": "Deal content"},
+    )
+    deal_id = create_resp.json()["id"]
+
+    test_factory = async_sessionmaker(
+        bind=db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    with patch("backend.app.api.routers.analysis.AsyncSessionLocal", test_factory):
+        async with async_client.stream("GET", f"/api/deals/{deal_id}/status") as resp:
+            assert resp.status_code == 200
+            assert resp.headers["content-type"].startswith("text/event-stream")
+
+            lines = resp.aiter_lines()
+            line = await anext(lines)
+            assert line.startswith("data: ")
+
+            payload = line.removeprefix("data: ")
+            assert deal_id in payload
+            assert '"status":"pending"' in payload

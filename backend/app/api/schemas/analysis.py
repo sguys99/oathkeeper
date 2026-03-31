@@ -77,3 +77,10 @@ class AnalysisTriggerResponse(BaseModel):
     deal_id: uuid.UUID
     status: str
     message: str
+
+
+class AnalysisStatusEvent(BaseModel):
+    deal_id: uuid.UUID
+    status: str
+    current_step: str | None = None
+    updated_at: datetime

@@ -337,11 +337,20 @@ export interface CostItemUpdate {
 // Agent Logs
 export type StepType =
   | "orchestrator_decision"
+  | "orchestrator_reasoning"
+  | "orchestrator_tool_call"
   | "worker_start"
   | "reasoning"
   | "tool_call"
   | "observation"
   | "worker_result";
+
+export interface AnalysisStatusEvent {
+  deal_id: string;
+  status: DealStatus;
+  current_step: string | null;
+  updated_at: string;
+}
 
 export interface AgentLogResponse {
   id: string;

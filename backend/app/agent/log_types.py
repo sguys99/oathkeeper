@@ -10,3 +10,4 @@ class StepType(StrEnum):
     WORKER_RESULT = "worker_result"
     REASONING = "reasoning"
     TOOL_CALL = "tool_call"
+    OBSERVATION = "observation"

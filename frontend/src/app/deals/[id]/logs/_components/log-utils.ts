@@ -30,7 +30,13 @@ export const LEGACY_NODE_LABELS: Record<string, string> = {
 };
 
 export function getNodeLabel(node: AgentLogTreeNode): string {
-  if (node.step_type === "orchestrator_decision") return "오케스트레이터 판단";
+  if (
+    node.step_type === "orchestrator_decision" ||
+    node.step_type === "orchestrator_reasoning" ||
+    node.step_type === "orchestrator_tool_call"
+  ) {
+    return "오케스트레이터 판단";
+  }
   if (node.step_type === "worker_start" || node.step_type === "worker_result") {
     return (
       WORKER_LABELS[node.worker_name ?? ""] ?? node.worker_name ?? node.node_name
