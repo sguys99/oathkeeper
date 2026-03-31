@@ -19,33 +19,33 @@ OathKeeper의 현재 에이전트 시스템은 정적 LangGraph DAG 워크플로
 
 ### 1.1 내부 데이터 Tools (`data_tools.py`)
 
-- [ ] `search_similar_projects` — Pinecone 벡터 검색 (`ProjectHistoryStore.query()` 재활용)
-- [ ] `search_company_context` — 회사 컨텍스트 벡터 검색 (`CompanyContextStore.query()` 재활용)
-- [ ] `get_team_members` — 팀원 정보 조회 (`settings_repo` 재활용)
-- [ ] `get_scoring_criteria` — 평가 기준/가중치 조회 (`settings_repo` 재활용)
-- [ ] `get_company_settings` — 회사 설정 조회 (`settings_repo` 재활용)
-- [ ] `get_past_deal_analysis` — 과거 딜 분석 결과 조회 (`analysis_repo` 재활용)
+- [x] `search_similar_projects` — Pinecone 벡터 검색 (`ProjectHistoryStore.query()` 재활용)
+- [x] `search_company_context` — 회사 컨텍스트 벡터 검색 (`CompanyContextStore.query()` 재활용)
+- [x] `get_team_members` — 팀원 정보 조회 (`settings_repo` 재활용)
+- [x] `get_scoring_criteria` — 평가 기준/가중치 조회 (`settings_repo` 재활용)
+- [x] `get_company_settings` — 회사 설정 조회 (`settings_repo` 재활용)
+- [x] `get_past_deal_analysis` — 과거 딜 분석 결과 조회 (`analysis_repo` 재활용)
 
 ### 1.2 외부 API Tools (`external_tools.py`)
 
-- [ ] `web_search` — 시장/기술 동향, 경쟁사 정보 검색
-- [ ] `fetch_notion_deal` — Notion에서 딜 상세 정보 조회
+- [x] `web_search` — 시장/기술 동향, 경쟁사 정보 검색
+- [x] `fetch_notion_deal` — Notion에서 딜 상세 정보 조회
 
 ### 1.3 계산/추론 Tools (`calculation_tools.py`)
 
-- [ ] `calculate_roi` — ROI, 손익분기점, 수익성 계산
-- [ ] `calculate_weighted_score` — 가중 점수 계산 (LLM 산술 신뢰 방지)
-- [ ] `estimate_timeline` — 일정 시뮬레이션 (리소스 대비 기간 추정)
-- [ ] `assess_risk_matrix` — 리스크 확률×영향도 매트릭스 계산
+- [x] `calculate_roi` — ROI, 손익분기점, 수익성 계산
+- [x] `calculate_weighted_score` — 가중 점수 계산 (LLM 산술 신뢰 방지)
+- [x] `estimate_timeline` — 일정 시뮬레이션 (리소스 대비 기간 추정)
+- [x] `assess_risk_matrix` — 리스크 확률×영향도 매트릭스 계산
 
 ### 1.4 유틸리티 Tools (`utils_tools.py`)
 
-- [ ] `format_currency` — 금액 단위 변환 (만원/억원)
-- [ ] `current_date` — 현재 날짜 반환
+- [x] `format_currency` — 금액 단위 변환 (만원/억원)
+- [x] `current_date` — 현재 날짜 반환
 
 ### 1.5 Tool 단위 테스트
 
-- [ ] 각 Tool의 Pydantic 스키마 및 반환값 검증 테스트 작성
+- [x] 각 Tool의 Pydantic 스키마 및 반환값 검증 테스트 작성
 
 **구현 방식:** LangChain `@tool` 데코레이터 + Pydantic 스키마. 기존 `base.py` 헬퍼와 repository 계층 내부 재활용.
 
