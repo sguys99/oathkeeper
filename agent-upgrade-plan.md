@@ -232,19 +232,30 @@ class WorkerState(TypedDict, total=False):
 
 - [x] `POST /api/deals/{id}/analyze` → SSE 진행 상태 → 분석 결과 조회
 - [x] AgentLog에 ReAct step별 로그 기록 확인
-- [ ] 프론트엔드 로그 뷰어에서 확장된 로그 표시 확인
+- [x] 프론트엔드 로그 뷰어에서 확장된 로그 표시 확인 (Playwright E2E: Hold/다중Worker/Legacy 포맷 포함)
 
 ### 7.3 수동 검증
 
-- [ ] 명확한 Go 딜 시나리오 테스트
-- [ ] 경계값 딜 시나리오 테스트 (Orchestrator 재분석 확인)
-- [ ] No-Go 딜 시나리오 테스트
-- [ ] Hold 딜 시나리오 테스트 (missing fields ≥3)
-- [ ] Tool calling 로그를 통해 LLM의 자율적 판단 과정 추적
+자동화된 E2E 테스트 (`tests/e2e/test_deal_scenarios.py`, `tests/e2e/test_agent_logs.py`):
+
+- [x] 명확한 Go 딜 시나리오 테스트 (자동화)
+- [x] 경계값 딜 시나리오 테스트 + Orchestrator 로그 계층 검증 (자동화)
+- [x] No-Go 딜 시나리오 테스트 (자동화)
+- [x] Hold 딜 시나리오 테스트 (자동화)
+- [x] Tool calling 로그 ReAct 순서 검증 (자동화)
+
+UI 수동 QA 체크리스트 (자동화 범위 밖):
+
+- [ ] Go 딜: 분석 결과 페이지에서 점수/리스크/리소스/유사 프로젝트 모두 표시
+- [ ] 경계값 딜: 로그 뷰어에서 Orchestrator 재분석 판단 과정 확인
+- [ ] No-Go 딜: verdict "no_go", 보고서에 근거 포함
+- [ ] Hold 딜: 로그 뷰어에 Worker 없이 orchestrator만 표시
+- [ ] Tool calling: 로그 뷰어에서 도구명, 입력/출력 확인 가능
 
 ### 7.4 레거시 정리
 
-- [ ] 기존 `nodes/` 디렉토리 단계적 폐기 (마이그레이션 완료 확인 후 제거)
+- [x] 기존 `nodes/` 디렉토리 삭제 완료 (프로덕션 코드에서 import 없음 확인)
+- [x] 레거시 노드 단위 테스트 5개 삭제 완료
 
 ---
 

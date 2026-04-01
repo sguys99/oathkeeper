@@ -1,0 +1,130 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OathKeeper" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e6]
+          - text: OathKeeper
+        - navigation [ref=e8]:
+          - link "분석 요청" [ref=e9] [cursor=pointer]:
+            - /url: /
+          - link "Deal 현황" [ref=e10] [cursor=pointer]:
+            - /url: /deals
+          - link "에이전트 로그" [ref=e11] [cursor=pointer]:
+            - /url: /agent-logs
+          - link "에이전트 설정" [ref=e12] [cursor=pointer]:
+            - /url: /agent-settings
+          - link "관리자" [ref=e13] [cursor=pointer]:
+            - /url: /admin
+    - main [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - link "목록으로" [ref=e17] [cursor=pointer]:
+            - /url: /deals
+            - img [ref=e18]
+            - text: 목록으로
+          - heading "xx철강 AI 비전 검사 시스템" [level=1] [ref=e20]
+          - generic [ref=e21]: Go
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e25]: 종합 평가
+            - generic [ref=e26]:
+              - generic [ref=e28]:
+                - generic [ref=e29]: 78점
+                - generic [ref=e30]: Go
+              - application [ref=e33]:
+                - generic [ref=e34]:
+                  - generic [ref=e38]: 기술
+                  - generic [ref=e40]:
+                    - generic [ref=e42]: "0"
+                    - generic [ref=e44]: "25"
+                    - generic [ref=e46]: "50"
+                    - generic [ref=e48]: "75"
+                    - generic [ref=e50]: "100"
+          - generic [ref=e54]:
+            - generic [ref=e56]: Deal 개요
+            - generic [ref=e58]:
+              - term [ref=e59]: 고객사
+              - definition [ref=e60]: xx철강
+        - generic [ref=e61]:
+          - generic [ref=e63]: 평가 기준별 점수
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: 기술 적합성
+              - generic [ref=e68]: 가중치 20%
+            - paragraph [ref=e72]: 유사 도메인 경험 보유
+        - generic [ref=e73]:
+          - generic [ref=e75]: 소요 리소스
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - img [ref=e79]
+                - generic [ref=e84]:
+                  - paragraph [ref=e85]: 팀 구성
+                  - paragraph [ref=e86]: PM 1명
+              - generic [ref=e87]:
+                - img [ref=e88]
+                - generic [ref=e91]:
+                  - paragraph [ref=e92]: 예상 기간
+                  - paragraph [ref=e93]: 6개월
+              - generic [ref=e94]:
+                - img [ref=e95]
+                - generic [ref=e98]:
+                  - paragraph [ref=e99]: 총 비용
+                  - paragraph [ref=e100]: 28000.0억원
+              - generic [ref=e101]:
+                - img [ref=e102]
+                - generic [ref=e105]:
+                  - paragraph [ref=e106]: 예상 마진
+                  - paragraph [ref=e107]: 2250%
+            - paragraph [ref=e108]: 기존 모듈 재사용 가능
+        - generic [ref=e109]:
+          - generic [ref=e111]: 리스크 분석
+          - generic [ref=e113]:
+            - heading "일정" [level=4] [ref=e114]
+            - generic [ref=e116]:
+              - generic [ref=e117]:
+                - generic [ref=e118]: MES 연동 지연
+                - generic [ref=e119]:
+                  - generic [ref=e120]: 확률 MEDIUM / 영향 HIGH
+                  - generic [ref=e121]: HIGH
+              - paragraph [ref=e123]: 기존 인터페이스 정합성 검토 필요
+              - paragraph [ref=e124]: "완화 방안: 초기 인터페이스 워크숍 진행"
+        - generic [ref=e125]:
+          - generic [ref=e127]: 유사 프로젝트
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - generic [ref=e132]: 철강 표면 검사 구축
+              - generic [ref=e133]: 91%
+            - paragraph [ref=e134]: "산업: 제조"
+            - paragraph [ref=e135]: "기간: 6개월"
+            - paragraph [ref=e136]: "결과: success"
+            - generic [ref=e137]:
+              - generic [ref=e138]: Python
+              - generic [ref=e139]: PyTorch
+            - paragraph [ref=e140]: 라인 중단 없이 배포 필요
+        - generic [ref=e141]:
+          - generic [ref=e143]: 권고사항
+          - generic [ref=e145]:
+            - heading "최종 권고" [level=1] [ref=e146]
+            - paragraph [ref=e147]: Go 권고
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - button "Notion에 저장" [ref=e150]:
+              - img
+              - text: Notion에 저장
+            - link "로그 보기" [ref=e151] [cursor=pointer]:
+              - /url: /deals/11111111-1111-1111-1111-111111111111/logs
+              - button "로그 보기" [ref=e152]
+          - link "닫기" [ref=e153] [cursor=pointer]:
+            - /url: /deals
+            - button "닫기" [ref=e154]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e160] [cursor=pointer]:
+    - img [ref=e161]
+  - alert [ref=e164]
+```

@@ -86,6 +86,30 @@ async function mockDealDetailApis(page: Page) {
   });
 }
 
+function makeLogNode(
+  overrides: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    deal_id: DEAL_ID,
+    system_prompt: null,
+    user_prompt: null,
+    raw_output: null,
+    parsed_output: null,
+    error: null,
+    duration_ms: 10,
+    started_at: "2026-03-31T00:00:00Z",
+    completed_at: "2026-03-31T00:00:00Z",
+    created_at: "2026-03-31T00:00:00Z",
+    parent_log_id: null,
+    step_type: null,
+    step_index: null,
+    tool_name: null,
+    worker_name: null,
+    children: [],
+    ...overrides,
+  };
+}
+
 async function mockLogTreeApi(page: Page) {
   await page.route(`http://localhost:8000/api/deals/${DEAL_ID}/logs?view=tree`, async (route) => {
     await route.fulfill({
@@ -96,108 +120,204 @@ async function mockLogTreeApi(page: Page) {
         total_count: 4,
         total_duration_ms: 60,
         logs: [
-          {
+          makeLogNode({
             id: "33333333-3333-3333-3333-333333333333",
-            deal_id: DEAL_ID,
             node_name: "orchestrator",
-            system_prompt: null,
-            user_prompt: null,
             raw_output: "run_scoring_analysis",
-            parsed_output: null,
-            error: null,
             duration_ms: 20,
-            started_at: "2026-03-31T00:00:00Z",
-            completed_at: "2026-03-31T00:00:00Z",
-            created_at: "2026-03-31T00:00:00Z",
-            parent_log_id: null,
             step_type: "orchestrator_tool_call",
             step_index: 0,
             tool_name: "run_scoring_analysis",
-            worker_name: null,
             children: [
-              {
+              makeLogNode({
                 id: "44444444-4444-4444-4444-444444444444",
-                deal_id: DEAL_ID,
                 node_name: "scoring_worker",
-                system_prompt: null,
-                user_prompt: null,
-                raw_output: "{\"total_score\":78.1}",
-                parsed_output: null,
-                error: null,
+                raw_output: '{"total_score":78.1}',
                 duration_ms: 20,
-                started_at: "2026-03-31T00:00:01Z",
-                completed_at: "2026-03-31T00:00:01Z",
-                created_at: "2026-03-31T00:00:01Z",
                 parent_log_id: "33333333-3333-3333-3333-333333333333",
                 step_type: "worker_start",
                 step_index: 0,
-                tool_name: null,
                 worker_name: "scoring_worker",
                 children: [
-                  {
+                  makeLogNode({
                     id: "55555555-5555-5555-5555-555555555555",
-                    deal_id: DEAL_ID,
                     node_name: "scoring_worker:reasoning",
-                    system_prompt: null,
-                    user_prompt: null,
                     raw_output: "Weighted score 계산 필요",
-                    parsed_output: null,
-                    error: null,
                     duration_ms: 5,
-                    started_at: "2026-03-31T00:00:02Z",
-                    completed_at: "2026-03-31T00:00:02Z",
-                    created_at: "2026-03-31T00:00:02Z",
                     parent_log_id: "44444444-4444-4444-4444-444444444444",
                     step_type: "reasoning",
                     step_index: 0,
-                    tool_name: null,
                     worker_name: "scoring_worker",
-                    children: [],
-                  },
-                  {
+                  }),
+                  makeLogNode({
                     id: "66666666-6666-6666-6666-666666666666",
-                    deal_id: DEAL_ID,
                     node_name: "scoring_worker:tool_call",
-                    system_prompt: null,
-                    user_prompt: "{\"scores\":[85]}",
-                    raw_output: null,
-                    parsed_output: null,
-                    error: null,
+                    user_prompt: '{"scores":[85]}',
                     duration_ms: 5,
-                    started_at: "2026-03-31T00:00:03Z",
-                    completed_at: "2026-03-31T00:00:03Z",
-                    created_at: "2026-03-31T00:00:03Z",
                     parent_log_id: "44444444-4444-4444-4444-444444444444",
                     step_type: "tool_call",
                     step_index: 1,
                     tool_name: "calculate_weighted_score",
                     worker_name: "scoring_worker",
-                    children: [],
-                  },
-                  {
+                  }),
+                  makeLogNode({
                     id: "77777777-7777-7777-7777-777777777777",
-                    deal_id: DEAL_ID,
                     node_name: "scoring_worker:observation",
-                    system_prompt: null,
-                    user_prompt: null,
-                    raw_output: "{\"total_score\":78.1}",
-                    parsed_output: null,
-                    error: null,
+                    raw_output: '{"total_score":78.1}',
                     duration_ms: 5,
-                    started_at: "2026-03-31T00:00:04Z",
-                    completed_at: "2026-03-31T00:00:04Z",
-                    created_at: "2026-03-31T00:00:04Z",
                     parent_log_id: "44444444-4444-4444-4444-444444444444",
                     step_type: "observation",
                     step_index: 2,
                     tool_name: "calculate_weighted_score",
                     worker_name: "scoring_worker",
-                    children: [],
-                  },
+                  }),
                 ],
-              },
+              }),
             ],
-          },
+          }),
+        ],
+      }),
+    });
+  });
+}
+
+async function mockHoldLogTreeApi(page: Page) {
+  await page.route(`http://localhost:8000/api/deals/${DEAL_ID}/logs?view=tree`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        deal_id: DEAL_ID,
+        total_count: 1,
+        total_duration_ms: 10,
+        logs: [
+          makeLogNode({
+            id: "33333333-3333-3333-3333-333333333333",
+            node_name: "orchestrator",
+            raw_output: "Hold — 필수 정보 부족",
+            step_type: "orchestrator_tool_call",
+            step_index: 0,
+            tool_name: "run_deal_structuring",
+          }),
+        ],
+      }),
+    });
+  });
+}
+
+async function mockMultiWorkerLogTreeApi(page: Page) {
+  await page.route(`http://localhost:8000/api/deals/${DEAL_ID}/logs?view=tree`, async (route) => {
+    const makeWorker = (
+      id: string,
+      name: string,
+      parentId: string,
+      stepIndex: number,
+    ) =>
+      makeLogNode({
+        id,
+        node_name: name,
+        raw_output: `{"result":"ok"}`,
+        parent_log_id: parentId,
+        step_type: "worker_start",
+        step_index: stepIndex,
+        worker_name: name,
+        children: [
+          makeLogNode({
+            id: `${id.slice(0, -1)}a`,
+            node_name: `${name}:reasoning`,
+            raw_output: "분석 중",
+            parent_log_id: id,
+            step_type: "reasoning",
+            step_index: 0,
+            worker_name: name,
+          }),
+        ],
+      });
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        deal_id: DEAL_ID,
+        total_count: 7,
+        total_duration_ms: 120,
+        logs: [
+          makeLogNode({
+            id: "33333333-3333-3333-3333-333333333333",
+            node_name: "orchestrator",
+            raw_output: "run_scoring_analysis",
+            step_type: "orchestrator_tool_call",
+            step_index: 0,
+            tool_name: "run_scoring_analysis",
+            children: [
+              makeWorker(
+                "44444444-4444-4444-4444-444444444444",
+                "scoring_worker",
+                "33333333-3333-3333-3333-333333333333",
+                0,
+              ),
+            ],
+          }),
+          makeLogNode({
+            id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            node_name: "orchestrator",
+            raw_output: "run_risk_analysis",
+            step_type: "orchestrator_tool_call",
+            step_index: 1,
+            tool_name: "run_risk_analysis",
+            children: [
+              makeWorker(
+                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                "risk_worker",
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                0,
+              ),
+            ],
+          }),
+          makeLogNode({
+            id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            node_name: "orchestrator",
+            raw_output: "run_resource_estimation",
+            step_type: "orchestrator_tool_call",
+            step_index: 2,
+            tool_name: "run_resource_estimation",
+            children: [
+              makeWorker(
+                "dddddddd-dddd-dddd-dddd-dddddddddddd",
+                "resource_worker",
+                "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                0,
+              ),
+            ],
+          }),
+        ],
+      }),
+    });
+  });
+}
+
+async function mockLegacyLogTreeApi(page: Page) {
+  await page.route(`http://localhost:8000/api/deals/${DEAL_ID}/logs?view=tree`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        deal_id: DEAL_ID,
+        total_count: 2,
+        total_duration_ms: 40,
+        logs: [
+          makeLogNode({
+            id: "33333333-3333-3333-3333-333333333333",
+            node_name: "deal_structuring",
+            raw_output: "구조화 결과",
+            duration_ms: 20,
+          }),
+          makeLogNode({
+            id: "44444444-4444-4444-4444-444444444444",
+            node_name: "scoring",
+            raw_output: "스코어링 결과",
+            duration_ms: 20,
+          }),
         ],
       }),
     });
@@ -282,5 +402,61 @@ test.describe("Deal Analysis Flow", () => {
       page.locator('[data-testid="react-step"][data-step-type="observation"]'),
     ).toBeVisible();
     await expect(page.getByText("도구 호출: calculate_weighted_score")).toBeVisible();
+  });
+
+  test("should render hold scenario with orchestrator only (no workers)", async ({
+    page,
+  }) => {
+    await mockDealDetailApis(page);
+    await mockHoldLogTreeApi(page);
+
+    await page.goto(`/deals/${DEAL_ID}/logs`);
+
+    await expect(page.getByTestId("orchestrator-card")).toBeVisible();
+    // No worker cards should exist
+    await expect(page.getByTestId("worker-card")).toHaveCount(0);
+  });
+
+  test("should render multiple workers and allow expand/collapse", async ({
+    page,
+  }) => {
+    await mockDealDetailApis(page);
+    await mockMultiWorkerLogTreeApi(page);
+
+    await page.goto(`/deals/${DEAL_ID}/logs`);
+
+    // 3 orchestrator cards (one per worker invocation)
+    await expect(page.getByTestId("orchestrator-card")).toHaveCount(3);
+    // 3 worker cards nested inside
+    await expect(page.getByTestId("worker-card")).toHaveCount(3);
+
+    // Expand first worker → should reveal reasoning step
+    const workerHeaders = page.getByTestId("worker-card-header");
+    await workerHeaders.first().click();
+    await expect(
+      page.locator('[data-testid="react-step"][data-step-type="reasoning"]').first(),
+    ).toBeVisible();
+
+    // Collapse it again
+    await workerHeaders.first().click();
+    await expect(
+      page.locator('[data-testid="react-step"][data-step-type="reasoning"]').first(),
+    ).not.toBeVisible();
+  });
+
+  test("should fall back to legacy timeline for old log format", async ({
+    page,
+  }) => {
+    await mockDealDetailApis(page);
+    await mockLegacyLogTreeApi(page);
+
+    await page.goto(`/deals/${DEAL_ID}/logs`);
+
+    // Legacy timeline renders node names as labels, not orchestrator/worker cards
+    await expect(page.getByTestId("orchestrator-card")).toHaveCount(0);
+    await expect(page.getByTestId("worker-card")).toHaveCount(0);
+    // Legacy node labels should appear (use exact match to avoid "딜 구조화 단계")
+    await expect(page.getByText("딜 구조화", { exact: true })).toBeVisible();
+    await expect(page.getByText("스코어링", { exact: true })).toBeVisible();
   });
 });

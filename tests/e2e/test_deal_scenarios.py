@@ -70,6 +70,29 @@ class TestDealScenarios:
         analysis = await _run_deal_scenario(e2e_client, CONDITIONAL_GO_DEAL)
         _assert_analysis_complete(analysis)
 
+    async def test_conditional_go_has_orchestrator_logs(self, e2e_client, ensure_seed_data):
+        """Conditional Go deal should produce orchestrator→worker log hierarchy."""
+        resp = await e2e_client.post("/api/deals/", json=CONDITIONAL_GO_DEAL)
+        deal_id = resp.json()["id"]
+        await e2e_client.post(f"/api/deals/{deal_id}/analyze")
+        await poll_until_complete(e2e_client, deal_id)
+
+        logs_resp = await e2e_client.get(f"/api/deals/{deal_id}/logs", params={"view": "tree"})
+        assert logs_resp.status_code == 200
+        tree = logs_resp.json()
+        assert tree["total_count"] > 0
+
+        # At least one orchestrator_tool_call root with worker children
+        orch_roots = [log for log in tree["logs"] if log.get("step_type") == "orchestrator_tool_call"]
+        assert len(orch_roots) >= 1, "Expected at least one orchestrator tool call"
+        worker_children = [
+            child
+            for root in orch_roots
+            for child in root.get("children", [])
+            if child.get("step_type") == "worker_start"
+        ]
+        assert len(worker_children) >= 1, "Expected at least one worker execution"
+
     async def test_hold_deal(self, e2e_client, ensure_seed_data):
         """Minimal input → Hold verdict due to missing fields."""
         resp = await e2e_client.post("/api/deals/", json=HOLD_DEAL)
