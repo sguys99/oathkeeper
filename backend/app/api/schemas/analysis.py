@@ -36,7 +36,7 @@ class RiskItem(BaseModel):
     item: str
     probability: str | None = None  # HIGH, MEDIUM, LOW
     impact: str | None = None  # HIGH, MEDIUM, LOW
-    level: str  # HIGH, MEDIUM, LOW (derived from probability × impact matrix)
+    level: str  # CRITICAL, HIGH, MEDIUM, LOW (derived from probability × impact matrix)
     evidence: str | None = None
     description: str
     mitigation: str | None = None

@@ -1,7 +1,7 @@
 // Enums
 export type DealStatus = "pending" | "analyzing" | "completed" | "failed";
 export type Verdict = "go" | "conditional_go" | "no_go" | "pending";
-export type RiskLevel = "HIGH" | "MEDIUM" | "LOW";
+export type RiskLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 export type TeamRole = "PM" | "FE" | "BE" | "MLE" | "DevOps";
 export type UserRole = "admin" | "executive" | "sales";
 

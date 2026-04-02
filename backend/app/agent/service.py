@@ -33,6 +33,8 @@ def _classify_error(exc: Exception) -> str:
         return "분석 시간이 초과되었습니다. 다시 시도해주세요."
     if "integrityerror" in exc_type.lower():
         return "데이터 충돌이 발생했습니다. 다시 시도해주세요."
+    if "invalidrequesterror" in exc_type.lower() or "concurrent" in msg:
+        return "내부 데이터베이스 세션 오류가 발생했습니다. 다시 시도해주세요."
     if "connection" in msg or "connect" in msg:
         return "외부 서비스 연결에 실패했습니다. 네트워크 상태를 확인해주세요."
 
@@ -62,10 +64,14 @@ class AnalysisService:
 
                 deal_id_str = str(deal_id)
 
-                # Progress callback — updates deal.current_step in DB
+                # Progress callback — uses its own session to avoid
+                # concurrent-commit errors when workers run in parallel.
                 async def on_progress(step_label: str) -> None:
-                    deal.current_step = step_label
-                    await db.commit()
+                    async with AsyncSessionLocal() as progress_db:
+                        progress_deal = await deal_repo.get_by_id(progress_db, deal_id)
+                        if progress_deal is not None:
+                            progress_deal.current_step = step_label
+                            await progress_db.commit()
 
                 # Initialize per-deal analysis context
                 ctx = init_analysis_context(

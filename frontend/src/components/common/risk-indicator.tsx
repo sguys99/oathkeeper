@@ -2,6 +2,11 @@ import { cn } from "@/lib/utils";
 import type { RiskLevel } from "@/lib/api/types";
 
 const config: Record<RiskLevel, { label: string; dotClass: string; textClass: string }> = {
+  CRITICAL: {
+    label: "CRITICAL",
+    dotClass: "bg-red-700",
+    textClass: "text-red-900",
+  },
   HIGH: {
     label: "HIGH",
     dotClass: "bg-red-500",
