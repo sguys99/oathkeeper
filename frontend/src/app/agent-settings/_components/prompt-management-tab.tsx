@@ -19,6 +19,7 @@ import type { PromptResponse } from "@/lib/api/types";
 import { AgentFlowDiagram } from "./agent-flow-diagram";
 
 const PROMPT_LABELS: Record<string, string> = {
+  orchestrator: "오케스트레이터",
   system: "시스템 프롬프트",
   deal_structuring: "딜 구조화",
   scoring: "스코어링",

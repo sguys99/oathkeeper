@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import {
   FileText,
-  GitBranch,
   PauseCircle,
   BarChart3,
   Users,
@@ -13,13 +12,23 @@ import {
   Scale,
   XCircle,
   CheckCircle,
+  Brain,
+  ScanEye,
   type LucideIcon,
 } from "lucide-react";
 
 // ── Prompt → node highlight mapping ─────────────────────────────────────
 
 const PROMPT_NODE_MAP: Record<string, string[]> = {
-  system: ["deal_structuring", "scoring"],
+  orchestrator: ["orchestrator", "reflection"],
+  system: [
+    "deal_structuring",
+    "scoring",
+    "resource_estimation",
+    "risk_analysis",
+    "similar_project",
+    "final_verdict",
+  ],
   deal_structuring: ["deal_structuring"],
   scoring: ["scoring"],
   resource_estimation: ["resource_estimation"],
@@ -41,6 +50,15 @@ interface NodeConfig {
 }
 
 const NODES: Record<string, NodeConfig> = {
+  orchestrator: {
+    id: "orchestrator",
+    label: "오케스트레이터",
+    subtitle: "Orchestrator",
+    Icon: Brain,
+    iconBg: "bg-purple-500/10",
+    iconText: "text-purple-500",
+    highlightIconBg: "bg-purple-500",
+  },
   deal_structuring: {
     id: "deal_structuring",
     label: "딜 구조화",
@@ -49,15 +67,6 @@ const NODES: Record<string, NodeConfig> = {
     iconBg: "bg-blue-500/10",
     iconText: "text-blue-500",
     highlightIconBg: "bg-blue-500",
-  },
-  condition: {
-    id: "condition",
-    label: "필드 검증",
-    subtitle: "Decision",
-    Icon: GitBranch,
-    iconBg: "bg-amber-500/10",
-    iconText: "text-amber-500",
-    highlightIconBg: "bg-amber-500",
   },
   hold_verdict: {
     id: "hold_verdict",
@@ -104,6 +113,15 @@ const NODES: Record<string, NodeConfig> = {
     iconText: "text-cyan-500",
     highlightIconBg: "bg-cyan-500",
   },
+  reflection: {
+    id: "reflection",
+    label: "결과 검토",
+    subtitle: "Reflection",
+    Icon: ScanEye,
+    iconBg: "bg-slate-500/10",
+    iconText: "text-slate-500",
+    highlightIconBg: "bg-slate-500",
+  },
   final_verdict: {
     id: "final_verdict",
     label: "최종 판단",
@@ -133,11 +151,9 @@ function Terminal({ label, className }: { label: string; className?: string }) {
 function FlowNode({
   config,
   highlighted,
-  isCondition,
 }: {
   config: NodeConfig;
   highlighted: boolean;
-  isCondition?: boolean;
 }) {
   const { label, subtitle, Icon, iconBg, iconText, highlightIconBg } = config;
 
@@ -154,7 +170,6 @@ function FlowNode({
           highlighted
             ? "shadow-md ring-2 ring-primary"
             : "shadow-sm ring-foreground/10",
-          isCondition && !highlighted && "border-l-4 border-amber-400",
         )}
       >
         {/* Icon badge */}
@@ -313,45 +328,32 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
         if (from && to) conns.push({ from, to, ...opts });
       };
 
-      // START → deal_structuring
-      add("start", "bottom", "deal_structuring", "top");
+      // START → orchestrator
+      add("start", "bottom", "orchestrator", "top");
 
-      // deal_structuring → condition
-      add("deal_structuring", "bottom", "condition", "top");
+      // orchestrator → deal_structuring
+      add("orchestrator", "bottom", "deal_structuring", "top");
 
-      // condition → fork → hold_verdict & phase1_group
-      const condBottom = getPos("condition", "bottom");
+      // deal_structuring → hold_verdict (dashed, curve to left branch)
+      const dsBottom = getPos("deal_structuring", "bottom");
       const holdTop = getPos("hold_verdict", "top");
-      const phase1Top = getPos("phase1_group", "top");
-
-      if (condBottom && holdTop) {
-        // Bezier curve from condition bottom to hold_verdict top-center
-        const midY = (condBottom.y + holdTop.y) / 2;
-        const path = `M ${condBottom.x},${condBottom.y} C ${condBottom.x},${midY} ${holdTop.x},${midY} ${holdTop.x},${holdTop.y}`;
-        conns.push({ from: condBottom, to: holdTop, dashed: true, path });
+      if (dsBottom && holdTop) {
+        const midY = (dsBottom.y + holdTop.y) / 2;
+        const path = `M ${dsBottom.x},${dsBottom.y} C ${dsBottom.x},${midY} ${holdTop.x},${midY} ${holdTop.x},${holdTop.y}`;
+        conns.push({ from: dsBottom, to: holdTop, dashed: true, path });
       }
 
       // hold_verdict → end_hold
       add("hold_verdict", "bottom", "end_hold", "top");
 
-      if (condBottom && phase1Top) {
-        // Bezier curve from condition bottom to phase1_group top-center
-        const midY = (condBottom.y + phase1Top.y) / 2;
-        const path = `M ${condBottom.x},${condBottom.y} C ${condBottom.x},${midY} ${phase1Top.x},${midY} ${phase1Top.x},${phase1Top.y}`;
-        conns.push({ from: condBottom, to: phase1Top, path });
-      }
+      // deal_structuring → parallel_group (continue, straight down)
+      add("deal_structuring", "bottom", "parallel_group", "top");
 
-      // phase1_group → phase2_group
-      add("phase1_group", "bottom", "phase2_group", "top");
+      // parallel_group → reflection
+      add("parallel_group", "bottom", "reflection", "top");
 
-      // phase2_group → final_verdict (smooth S-curve for horizontal offset)
-      const p2Bottom = getPos("phase2_group", "bottom");
-      const fvTop = getPos("final_verdict", "top");
-      if (p2Bottom && fvTop) {
-        const midY = (p2Bottom.y + fvTop.y) / 2;
-        const path = `M ${p2Bottom.x},${p2Bottom.y} C ${p2Bottom.x},${midY} ${fvTop.x},${fvTop.y - 20} ${fvTop.x},${fvTop.y}`;
-        conns.push({ from: p2Bottom, to: fvTop, path });
-      }
+      // reflection → final_verdict
+      add("reflection", "bottom", "final_verdict", "top");
 
       // final_verdict → end_main
       add("final_verdict", "bottom", "end_main", "top");
@@ -380,6 +382,14 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
           <Terminal label="START" />
         </div>
 
+        {/* Orchestrator */}
+        <div ref={setNodeRef("orchestrator")} className="z-10 w-[200px]">
+          <FlowNode
+            config={NODES.orchestrator}
+            highlighted={highlightedNodes.has("orchestrator")}
+          />
+        </div>
+
         {/* Deal Structuring */}
         <div
           ref={setNodeRef("deal_structuring")}
@@ -391,23 +401,15 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
           />
         </div>
 
-        {/* Condition */}
-        <div
-          ref={setNodeRef("condition")}
-          className="z-10 w-[200px]"
-        >
-          <FlowNode config={NODES.condition} highlighted={false} isCondition />
-        </div>
-
-        {/* Branch area: hold (left) | continue (right) */}
-        <div className="z-10 mb-4 flex w-full items-start gap-4">
+        {/* Branch area: hold (left) | continue badge (right) */}
+        <div className="z-10 flex w-full items-start">
           {/* Hold branch */}
-          <div className="flex w-[200px] shrink-0 flex-col items-center gap-4">
-            <div className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-500">
+          <div className="flex w-[140px] shrink-0 flex-col items-center gap-4">
+            <div className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-500 dark:bg-red-500/10">
               <XCircle className="h-3.5 w-3.5" />
-              <span>≥3 누락</span>
+              <span>&#x2265;3 누락</span>
             </div>
-            <div ref={setNodeRef("hold_verdict")} className="w-[200px]">
+            <div ref={setNodeRef("hold_verdict")} className="w-[140px]">
               <FlowNode config={NODES.hold_verdict} highlighted={false} />
             </div>
             <div ref={setNodeRef("end_hold")} className="mt-1">
@@ -415,53 +417,47 @@ export function AgentFlowDiagram({ selectedPrompt }: AgentFlowDiagramProps) {
             </div>
           </div>
 
-          {/* Continue branch */}
-          <div className="flex flex-1 flex-col items-center gap-4">
-            <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600">
+          {/* Continue badge */}
+          <div className="flex flex-1 items-start justify-center pt-0.5">
+            <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/10">
               <CheckCircle className="h-3.5 w-3.5" />
               <span>계속</span>
             </div>
-
-            {/* Phase 1 parallel group */}
-            <div
-              ref={setNodeRef("phase1_group")}
-              className="relative w-[220px] rounded-lg border border-dashed border-border p-2.5 pt-5"
-            >
-              <span className="absolute -top-2.5 left-3 rounded bg-muted/80 px-1.5 text-[10px] font-medium text-muted-foreground">
-                Phase 1 병렬
-              </span>
-              <div className="flex flex-col gap-2">
-                {(["resource_estimation", "similar_project"] as const).map(
-                  (id) => (
-                    <FlowNode
-                      key={id}
-                      config={NODES[id]}
-                      highlighted={highlightedNodes.has(id)}
-                    />
-                  ),
-                )}
-              </div>
-            </div>
-
-            {/* Phase 2 parallel group */}
-            <div
-              ref={setNodeRef("phase2_group")}
-              className="relative w-[220px] rounded-lg border border-dashed border-border p-2.5 pt-5"
-            >
-              <span className="absolute -top-2.5 left-3 rounded bg-muted/80 px-1.5 text-[10px] font-medium text-muted-foreground">
-                Phase 2 병렬
-              </span>
-              <div className="flex flex-col gap-2">
-                {(["scoring", "risk_analysis"] as const).map((id) => (
-                  <FlowNode
-                    key={id}
-                    config={NODES[id]}
-                    highlighted={highlightedNodes.has(id)}
-                  />
-                ))}
-              </div>
-            </div>
           </div>
+        </div>
+
+        {/* Parallel analysis group — full width, separate row */}
+        <div
+          ref={setNodeRef("parallel_group")}
+          className="relative z-10 w-full rounded-lg border border-dashed border-border p-3 pt-6"
+        >
+          <span className="absolute -top-2.5 left-3 rounded bg-muted/80 px-1.5 text-[10px] font-medium text-muted-foreground">
+            병렬 분석
+          </span>
+          <div className="grid grid-cols-2 gap-2.5">
+            {(
+              [
+                "scoring",
+                "resource_estimation",
+                "risk_analysis",
+                "similar_project",
+              ] as const
+            ).map((id) => (
+              <FlowNode
+                key={id}
+                config={NODES[id]}
+                highlighted={highlightedNodes.has(id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Reflection */}
+        <div ref={setNodeRef("reflection")} className="z-10 w-[200px]">
+          <FlowNode
+            config={NODES.reflection}
+            highlighted={highlightedNodes.has("reflection")}
+          />
         </div>
 
         {/* Final Verdict */}

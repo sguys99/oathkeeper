@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/prompts", tags=["prompts"])
 
 ALLOWED_NAMES = frozenset(
     {
+        "orchestrator",
         "system",
         "deal_structuring",
         "scoring",
