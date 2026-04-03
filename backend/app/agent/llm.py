@@ -44,6 +44,7 @@ def get_llm(
         api_key=settings.anthropic_api_key,
         temperature=temperature,
         max_tokens=max_tokens,
+        max_retries=5,
     )
 
 
@@ -75,4 +76,5 @@ def get_llm_uncached(
         api_key=settings.anthropic_api_key,
         temperature=temperature,
         max_tokens=max_tokens,
+        max_retries=5,
     )

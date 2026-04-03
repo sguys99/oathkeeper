@@ -1,0 +1,106 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OathKeeper" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e6]
+          - text: OathKeeper
+        - navigation [ref=e8]:
+          - link "분석 요청" [ref=e9] [cursor=pointer]:
+            - /url: /
+          - link "Deal 현황" [ref=e10] [cursor=pointer]:
+            - /url: /deals
+          - link "에이전트 로그" [ref=e11] [cursor=pointer]:
+            - /url: /agent-logs
+          - link "에이전트 설정" [ref=e12] [cursor=pointer]:
+            - /url: /agent-settings
+          - link "관리자" [ref=e13] [cursor=pointer]:
+            - /url: /admin
+    - main [ref=e14]:
+      - generic [ref=e15]:
+        - heading "에이전트 설정" [level=1] [ref=e16]
+        - generic [ref=e17]:
+          - tablist [ref=e18]:
+            - tab "프롬프트 관리" [selected] [ref=e19]
+          - tabpanel "프롬프트 관리" [ref=e20]:
+            - generic [ref=e21]:
+              - generic [ref=e22]:
+                - generic [ref=e23]:
+                  - img [ref=e24]
+                  - text: 로딩 중...
+                - generic [ref=e26]:
+                  - generic [ref=e27]:
+                    - generic [ref=e28]: 프롬프트 선택
+                    - combobox [ref=e29]:
+                      - img: ▼
+                    - textbox [ref=e30]
+                  - generic [ref=e31]:
+                    - generic [ref=e32]: 버전
+                    - textbox [disabled]
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: 이름
+                    - textbox [disabled]
+              - generic [ref=e37]:
+                - img
+                - generic [ref=e39]: START
+                - generic [ref=e44]:
+                  - img [ref=e46]
+                  - generic [ref=e54]:
+                    - generic [ref=e55]: 오케스트레이터
+                    - generic [ref=e56]: Orchestrator
+                - generic [ref=e61]:
+                  - img [ref=e63]
+                  - generic [ref=e66]:
+                    - generic [ref=e67]: 딜 구조화
+                    - generic [ref=e68]: Structuring
+                - generic [ref=e69]:
+                  - generic [ref=e70]:
+                    - generic [ref=e71]:
+                      - img [ref=e72]
+                      - generic [ref=e76]: ≥3 누락
+                    - generic [ref=e81]:
+                      - img [ref=e83]
+                      - generic [ref=e85]:
+                        - generic [ref=e86]: 보류 판정
+                        - generic [ref=e87]: Hold Verdict
+                    - generic [ref=e89]: END
+                  - generic [ref=e91]:
+                    - img [ref=e92]
+                    - generic [ref=e95]: 계속
+                - generic [ref=e96]:
+                  - generic [ref=e97]: 병렬 분석
+                  - generic [ref=e98]:
+                    - generic [ref=e102]:
+                      - img [ref=e104]
+                      - generic [ref=e106]:
+                        - generic [ref=e107]: 스코어링
+                        - generic [ref=e108]: Scoring
+                    - generic [ref=e112]:
+                      - img [ref=e114]
+                      - generic [ref=e119]:
+                        - generic [ref=e120]: 리소스 산정
+                        - generic [ref=e121]: Estimation
+                    - generic [ref=e125]:
+                      - img [ref=e127]
+                      - generic [ref=e129]:
+                        - generic [ref=e130]: 리스크 분석
+                        - generic [ref=e131]: Risk Analysis
+                    - generic [ref=e135]:
+                      - img [ref=e137]
+                      - generic [ref=e140]:
+                        - generic [ref=e141]: 유사 프로젝트
+                        - generic [ref=e142]: Similar Projects
+                - generic [ref=e147]:
+                  - img [ref=e149]
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: 결과 검토
+                    - generic [ref=e158]: Reflection
+                - generic [ref=e163]:
+                  - img [ref=e165]
+                  - generic [ref=e169]:
+                    - generic [ref=e170]: 최종 판단
+                    - generic [ref=e171]: Final Verdict
+                - generic [ref=e173]: END
+  - region "Notifications alt+T"
+  - alert [ref=e174]

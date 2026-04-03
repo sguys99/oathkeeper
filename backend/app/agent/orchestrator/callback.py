@@ -28,9 +28,12 @@ class OrchestratorLogCallback(AsyncCallbackHandler):
         self.deal_id = deal_id
         self._step_index = 0
         self._current_start: datetime | None = None
-        self._tool_start: datetime | None = None
-        self._current_tool_name: str = "unknown"
-        self._last_tool_call_log_id: uuid.UUID | None = None
+
+        # Per-tool-call tracking for parallel safety
+        self._tool_call_log_ids: dict[uuid.UUID, uuid.UUID] = {}  # run_id → log_id
+        self._tool_call_log_ids_by_name: dict[str, uuid.UUID] = {}  # tool_name → log_id
+        self._tool_starts: dict[uuid.UUID, datetime] = {}  # run_id → start time
+        self._last_tool_call_log_id: uuid.UUID | None = None  # backward compat
 
     @property
     def last_tool_call_log_id(self) -> uuid.UUID | None:
@@ -39,6 +42,13 @@ class OrchestratorLogCallback(AsyncCallbackHandler):
         Meta-tools read this to set ``parent_log_id`` on worker callbacks.
         """
         return self._last_tool_call_log_id
+
+    def get_tool_call_log_id(self, tool_name: str) -> uuid.UUID | None:
+        """Get the log_id for a specific tool call by name.
+
+        Parallel-safe: each tool name maps to its own log entry.
+        """
+        return self._tool_call_log_ids_by_name.get(tool_name)
 
     # ── LLM reasoning ────────────────────────────────────────────────
 
@@ -65,26 +75,41 @@ class OrchestratorLogCallback(AsyncCallbackHandler):
     # ── Tool calls (meta-tools) ──────────────────────────────────────
 
     async def on_tool_start(self, serialized, input_str, **kwargs):
-        """Create orchestrator_tool_call log and expose its ID."""
-        self._tool_start = datetime.now(UTC)
-        self._current_tool_name = serialized.get("name", "unknown")
+        """Create orchestrator_tool_call log and expose its ID.
+
+        Uses ``run_id`` from kwargs to correlate with ``on_tool_end`` so that
+        parallel tool calls each track their own log entry.
+        """
+        run_id: uuid.UUID | None = kwargs.get("run_id")
+        started_at = datetime.now(UTC)
+        tool_name = serialized.get("name", "unknown")
 
         log_id = await self._create_log(
             step_type=StepType.ORCHESTRATOR_TOOL_CALL,
-            tool_name=self._current_tool_name,
-            started_at=self._tool_start,
+            tool_name=tool_name,
+            started_at=started_at,
         )
-        self._last_tool_call_log_id = log_id
+
+        # Track per run_id and per tool_name for parallel safety
+        if run_id and log_id:
+            self._tool_call_log_ids[run_id] = log_id
+            self._tool_starts[run_id] = started_at
+        if log_id:
+            self._tool_call_log_ids_by_name[tool_name] = log_id
+            self._last_tool_call_log_id = log_id
 
     async def on_tool_end(self, output, **kwargs):
         """Update the tool_call log created in on_tool_start."""
+        run_id: uuid.UUID | None = kwargs.get("run_id")
         completed_at = datetime.now(UTC)
-        started_at = self._tool_start or completed_at
+
+        log_id = self._tool_call_log_ids.get(run_id) if run_id else self._last_tool_call_log_id
+        started_at = self._tool_starts.get(run_id, completed_at) if run_id else completed_at
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
-        if self._last_tool_call_log_id:
+        if log_id:
             await self._update_log(
-                log_id=self._last_tool_call_log_id,
+                log_id=log_id,
                 raw_output=str(output)[:5000],
                 duration_ms=duration_ms,
                 completed_at=completed_at,
@@ -93,13 +118,16 @@ class OrchestratorLogCallback(AsyncCallbackHandler):
 
     async def on_tool_error(self, error, **kwargs):
         """Update the tool_call log with error info."""
+        run_id: uuid.UUID | None = kwargs.get("run_id")
         completed_at = datetime.now(UTC)
-        started_at = self._tool_start or completed_at
+
+        log_id = self._tool_call_log_ids.get(run_id) if run_id else self._last_tool_call_log_id
+        started_at = self._tool_starts.get(run_id, completed_at) if run_id else completed_at
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
-        if self._last_tool_call_log_id:
+        if log_id:
             await self._update_log(
-                log_id=self._last_tool_call_log_id,
+                log_id=log_id,
                 error=str(error),
                 duration_ms=duration_ms,
                 completed_at=completed_at,

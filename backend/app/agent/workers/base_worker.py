@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -20,6 +21,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_ITERATIONS = 8
+
+# Limit concurrent worker executions to avoid API rate limits (429).
+_WORKER_SEMAPHORE = asyncio.Semaphore(2)
 
 
 # ── Worker State ──────────────────────────────────────────────────────
@@ -130,13 +134,14 @@ async def invoke_worker(
         parent_log_id=worker_log_id,
     )
 
-    result = await worker.ainvoke(
-        {"messages": [HumanMessage(content=user_prompt)]},
-        config={
-            "recursion_limit": 2 * max_iterations + 1,
-            "callbacks": [callback],
-        },
-    )
+    async with _WORKER_SEMAPHORE:
+        result = await worker.ainvoke(
+            {"messages": [HumanMessage(content=user_prompt)]},
+            config={
+                "recursion_limit": 2 * max_iterations + 1,
+                "callbacks": [callback],
+            },
+        )
 
     final_text = extract_worker_result(result)
 

@@ -1,0 +1,117 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "OathKeeper" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e6]
+          - text: OathKeeper
+        - navigation [ref=e8]:
+          - link "분석 요청" [ref=e9] [cursor=pointer]:
+            - /url: /
+          - link "Deal 현황" [ref=e10] [cursor=pointer]:
+            - /url: /deals
+          - link "에이전트 로그" [ref=e11] [cursor=pointer]:
+            - /url: /agent-logs
+          - link "에이전트 설정" [ref=e12] [cursor=pointer]:
+            - /url: /agent-settings
+          - link "관리자" [ref=e13] [cursor=pointer]:
+            - /url: /admin
+    - main [ref=e14]:
+      - generic [ref=e15]:
+        - heading "에이전트 설정" [level=1] [ref=e16]
+        - generic [ref=e17]:
+          - tablist [ref=e18]:
+            - tab "프롬프트 관리" [selected] [ref=e19]
+          - tabpanel "프롬프트 관리" [ref=e20]:
+            - generic [ref=e21]:
+              - generic [ref=e22]:
+                - generic [ref=e26]:
+                  - generic [ref=e27]:
+                    - generic [ref=e28]: 프롬프트 선택
+                    - combobox [active] [ref=e29]:
+                      - generic [ref=e175]: 오케스트레이터
+                      - img: ▼
+                    - textbox [ref=e30]: orchestrator
+                  - generic [ref=e31]:
+                    - generic [ref=e32]: 버전
+                    - textbox [ref=e176]: "1.0"
+                  - generic [ref=e33]:
+                    - generic [ref=e34]: 이름
+                    - textbox [disabled]: orchestrator
+                - generic [ref=e177]:
+                  - generic [ref=e178]: 설명
+                  - textbox [ref=e179]: ReAct 오케스트레이터 시스템 프롬프트. 분석 워커들의 실행 순서와 조건부 로직을 제어한다. Deal 구조화 → Hold 체크 → 병렬 분석 → 결과 검토 → 최종 판단 흐름을 관장한다.
+                - generic [ref=e180]:
+                  - generic [ref=e181]: System Prompt
+                  - textbox [ref=e182]: "You are the OathKeeper Analysis Orchestrator. Your job is to coordinate a comprehensive Go/No-Go analysis for B2B software development deals. ## Your Role You manage a team of specialized analysis workers. You decide WHAT to analyze, in WHAT ORDER, and WHETHER intermediate results need deeper investigation. ## Available Workers (via tools) - run_deal_structuring: Extract structured fields from raw deal text (MUST be first) - run_scoring_analysis: Score deal against 7 weighted criteria - run_resource_estimation: Estimate team, timeline, cost, profitability - run_risk_analysis: Identify risks across 5 categories - run_similar_project_search: Find comparable past projects - run_final_verdict: Generate final executive report (MUST be last) - lookup_company_context: Quick company context lookup ## Evaluation Framework 7 criteria: Technical Fit (20%), Profitability (20%), Resource Availability (15%), Timeline Risk (15%), Customer Risk (10%), Requirement Clarity (10%), Strategic Value (10%) Verdict thresholds: Go >= 70, Conditional Go 40-69, No-Go < 40, Hold (>= 3 critical missing fields) ## Execution Protocol ### Step 1: Structure the deal Always start with run_deal_structuring(deal_id=...). If HOLD_RECOMMENDED appears in the result, immediately call run_final_verdict(deal_id=..., hold=true) and stop. ### Step 2: Run analysis workers Call these four tools IN PARALLEL (in a single response with multiple tool calls): - run_scoring_analysis(deal_id=...) - run_resource_estimation(deal_id=...) - run_risk_analysis(deal_id=...) - run_similar_project_search(deal_id=...) ### Step 3: Review and reflect After all workers complete, review the results: - If the total score is borderline (55-75), consider whether risk analysis or resource estimation reveals concerns that should adjust the verdict. - If critical risks are found (>= 2 critical severity), note this for the final report. - If resource estimation shows negative margin, this is a significant concern. You do NOT need to re-run workers unless results are clearly erroneous (e.g., worker failure). ### Step 4: Generate final verdict Call run_final_verdict(deal_id=...) to produce the executive report. ## Important Rules - ALWAYS pass the deal_id to every tool call. - NEVER skip run_deal_structuring or run_final_verdict. - Call analysis workers in parallel when possible. - Do not fabricate analysis results -- always use the tools. - If a worker fails, proceed with available results and note the gap in your reasoning."
+                - generic [ref=e183]:
+                  - generic [ref=e184]: User Prompt
+                  - textbox [ref=e185]: "Current deal_id: {{ deal_id }}"
+                - generic [ref=e186]:
+                  - button "저장" [disabled]
+              - generic [ref=e37]:
+                - img
+                - generic [ref=e39]: START
+                - generic [ref=e44]:
+                  - img [ref=e46]
+                  - generic [ref=e54]:
+                    - generic [ref=e55]: 오케스트레이터
+                    - generic [ref=e56]: Orchestrator
+                - generic [ref=e61]:
+                  - img [ref=e63]
+                  - generic [ref=e66]:
+                    - generic [ref=e67]: 딜 구조화
+                    - generic [ref=e68]: Structuring
+                - generic [ref=e69]:
+                  - generic [ref=e70]:
+                    - generic [ref=e71]:
+                      - img [ref=e72]
+                      - generic [ref=e76]: ≥3 누락
+                    - generic [ref=e81]:
+                      - img [ref=e83]
+                      - generic [ref=e85]:
+                        - generic [ref=e86]: 보류 판정
+                        - generic [ref=e87]: Hold Verdict
+                    - generic [ref=e89]: END
+                  - generic [ref=e91]:
+                    - img [ref=e92]
+                    - generic [ref=e95]: 계속
+                - generic [ref=e96]:
+                  - generic [ref=e97]: 병렬 분석
+                  - generic [ref=e98]:
+                    - generic [ref=e102]:
+                      - img [ref=e104]
+                      - generic [ref=e106]:
+                        - generic [ref=e107]: 스코어링
+                        - generic [ref=e108]: Scoring
+                    - generic [ref=e112]:
+                      - img [ref=e114]
+                      - generic [ref=e119]:
+                        - generic [ref=e120]: 리소스 산정
+                        - generic [ref=e121]: Estimation
+                    - generic [ref=e125]:
+                      - img [ref=e127]
+                      - generic [ref=e129]:
+                        - generic [ref=e130]: 리스크 분석
+                        - generic [ref=e131]: Risk Analysis
+                    - generic [ref=e135]:
+                      - img [ref=e137]
+                      - generic [ref=e140]:
+                        - generic [ref=e141]: 유사 프로젝트
+                        - generic [ref=e142]: Similar Projects
+                - generic [ref=e147]:
+                  - img [ref=e149]
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: 결과 검토
+                    - generic [ref=e158]: Reflection
+                - generic [ref=e163]:
+                  - img [ref=e165]
+                  - generic [ref=e169]:
+                    - generic [ref=e170]: 최종 판단
+                    - generic [ref=e171]: Final Verdict
+                - generic [ref=e173]: END
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e192] [cursor=pointer]:
+    - img [ref=e193]
+  - alert [ref=e174]
