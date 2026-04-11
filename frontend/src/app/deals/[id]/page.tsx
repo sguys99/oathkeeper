@@ -57,6 +57,7 @@ export default function DealDetailPage({
       <DealHeader
         title={deal.title}
         verdict={(analysis?.verdict as Verdict) ?? null}
+        workflowType={analysis?.workflow_type ?? null}
       />
 
       {analysis ? (

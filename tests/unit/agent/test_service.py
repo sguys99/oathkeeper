@@ -6,28 +6,27 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from backend.app.agent.service import AnalysisService
+from backend.app.agent.workflows import WorkflowType
 
 pytestmark = pytest.mark.unit
 
 
-SAMPLE_GRAPH_RESULT = {
-    "deal_input": "test deal",
+SAMPLE_RESULT = {
     "structured_deal": {"customer_name": "Acme"},
     "scores": [{"criterion": "tech", "score": 80, "weight": 0.2, "weighted_score": 16.0}],
     "total_score": 72.0,
     "verdict": "go",
     "resource_estimate": {"duration_months": 4},
     "risks": [{"category": "tech", "level": "MEDIUM"}],
+    "risk_interdependencies": [],
     "similar_projects": [],
     "final_report": "# Report\n\nGo!",
-    "status": "completed",
-    "errors": [],
 }
 
 
 class TestAnalysisService:
     @pytest.mark.asyncio
-    @patch("backend.app.agent.service.build_graph")
+    @patch("backend.app.agent.service.get_workflow")
     @patch("backend.app.agent.service.deal_repo")
     @patch("backend.app.agent.service.analysis_repo")
     @patch("backend.app.agent.service.AsyncSessionLocal")
@@ -36,7 +35,7 @@ class TestAnalysisService:
         mock_session_local,
         mock_analysis_repo,
         mock_deal_repo,
-        mock_build_graph,
+        mock_get_workflow,
     ):
         deal_id = uuid.uuid4()
 
@@ -51,43 +50,36 @@ class TestAnalysisService:
         mock_deal_repo.get_by_id = AsyncMock(return_value=mock_deal)
         mock_deal_repo.update_status = AsyncMock()
 
-        # Setup mock graph — astream yields dicts of {node_name: node_output}
-        async def fake_astream(input_dict):
-            yield {"deal_structuring": {"structured_deal": {"customer_name": "Acme"}}}
-            yield {
-                "scoring": {
-                    "scores": SAMPLE_GRAPH_RESULT["scores"],
-                    "total_score": 72.0,
-                    "verdict": "go",
-                },
-            }
-            yield {"resource_estimation": {"resource_estimate": {"duration_months": 4}}}
-            yield {"risk_analysis": {"risks": [{"category": "tech", "level": "MEDIUM"}]}}
-            yield {"similar_project": {"similar_projects": []}}
-            yield {"final_verdict": {"final_report": "# Report\n\nGo!"}}
-
-        mock_graph = MagicMock()
-        mock_graph.astream = fake_astream
-        mock_build_graph.return_value = mock_graph
+        # Setup mock workflow
+        mock_workflow = MagicMock()
+        mock_workflow.execute = AsyncMock(return_value=SAMPLE_RESULT)
+        mock_get_workflow.return_value = mock_workflow
 
         # Setup mock analysis repo
         mock_analysis_repo.delete_by_deal_id = AsyncMock()
         mock_analysis_repo.create = AsyncMock()
 
         service = AnalysisService()
-        await service.run_analysis(deal_id)
+        await service.run_analysis(deal_id, WorkflowType.STATIC)
+
+        # Verify workflow was selected
+        mock_get_workflow.assert_called_once_with(WorkflowType.STATIC)
+
+        # Verify workflow was executed
+        mock_workflow.execute.assert_awaited_once()
 
         # Verify analysis was saved
         mock_analysis_repo.create.assert_awaited_once()
         call_kwargs = mock_analysis_repo.create.call_args
         assert call_kwargs.kwargs["deal_id"] == deal_id
         assert call_kwargs.kwargs["verdict"] == "go"
+        assert call_kwargs.kwargs["workflow_type"] == "static"
 
         # Verify status updated to completed
         mock_deal_repo.update_status.assert_awaited_with(mock_session, deal_id, "completed")
 
     @pytest.mark.asyncio
-    @patch("backend.app.agent.service.build_graph")
+    @patch("backend.app.agent.service.get_workflow")
     @patch("backend.app.agent.service.deal_repo")
     @patch("backend.app.agent.service.analysis_repo")
     @patch("backend.app.agent.service.AsyncSessionLocal")
@@ -96,7 +88,7 @@ class TestAnalysisService:
         mock_session_local,
         mock_analysis_repo,
         mock_deal_repo,
-        mock_build_graph,
+        mock_get_workflow,
     ):
         deal_id = uuid.uuid4()
 
@@ -112,8 +104,10 @@ class TestAnalysisService:
 
         mock_analysis_repo.delete_by_deal_id = AsyncMock()
 
-        # Graph raises an error
-        mock_build_graph.side_effect = RuntimeError("Graph build failed")
+        # Workflow raises an error
+        mock_workflow = MagicMock()
+        mock_workflow.execute = AsyncMock(side_effect=RuntimeError("Workflow failed"))
+        mock_get_workflow.return_value = mock_workflow
 
         service = AnalysisService()
         await service.run_analysis(deal_id)

@@ -16,12 +16,20 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { ApiError } from "@/lib/api/client";
 import type { NotionDeal } from "@/lib/api/types";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 
 export function DealAnalysisForm() {
   const [selectedDeal, setSelectedDeal] = useState<NotionDeal | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [workflowType, setWorkflowType] = useState<string>("default");
   const [analyzingDealId, setAnalyzingDealId] = useState<string | null>(null);
 
   const router = useRouter();
@@ -58,7 +66,10 @@ export function DealAnalysisForm() {
       }
 
       // 3. Trigger analysis
-      await triggerAnalysis.mutateAsync(deal.id);
+      await triggerAnalysis.mutateAsync({
+        dealId: deal.id,
+        workflowType: workflowType === "default" ? undefined : workflowType,
+      });
 
       setAnalyzingDealId(deal.id);
     } catch (err) {
@@ -132,6 +143,27 @@ export function DealAnalysisForm() {
             onFileChange={setFile}
             disabled={isSubmitting}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>분석 워크플로우</Label>
+          <Select
+            value={workflowType}
+            onValueChange={(v) => { if (v) setWorkflowType(v); }}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="워크플로우 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">시스템 기본값</SelectItem>
+              <SelectItem value="static">Static (정적 워크플로우)</SelectItem>
+              <SelectItem value="react">React Agent (동적 워크플로우)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Static은 고정된 분석 순서를, React Agent는 AI가 동적으로 분석을 수행합니다
+          </p>
         </div>
 
         <Button

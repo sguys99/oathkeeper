@@ -3,8 +3,10 @@ import type { AnalysisResponse, AnalysisTriggerResponse } from "./types";
 
 export async function triggerAnalysis(
   dealId: string,
+  workflowType?: string,
 ): Promise<AnalysisTriggerResponse> {
-  return post<AnalysisTriggerResponse>(`/api/deals/${dealId}/analyze`);
+  const body = workflowType ? { workflow_type: workflowType } : undefined;
+  return post<AnalysisTriggerResponse>(`/api/deals/${dealId}/analyze`, body);
 }
 
 export async function getAnalysis(

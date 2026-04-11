@@ -21,6 +21,7 @@ async def create(
     risk_interdependencies: dict | None = None,
     similar_projects: dict | None = None,
     report_markdown: str | None = None,
+    workflow_type: str | None = None,
 ) -> AnalysisResult:
     analysis = AnalysisResult(
         id=uuid.uuid4(),
@@ -33,6 +34,7 @@ async def create(
         risk_interdependencies=risk_interdependencies,
         similar_projects=similar_projects,
         report_markdown=report_markdown,
+        workflow_type=workflow_type,
     )
     session.add(analysis)
     await session.flush()

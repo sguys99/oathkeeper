@@ -14,6 +14,12 @@ export function useAnalysis(dealId: string | undefined) {
 
 export function useTriggerAnalysis() {
   return useMutation({
-    mutationFn: (dealId: string) => triggerAnalysis(dealId),
+    mutationFn: ({
+      dealId,
+      workflowType,
+    }: {
+      dealId: string;
+      workflowType?: string;
+    }) => triggerAnalysis(dealId, workflowType),
   });
 }

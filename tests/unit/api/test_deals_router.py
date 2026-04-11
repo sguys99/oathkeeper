@@ -86,7 +86,7 @@ async def test_trigger_analysis_stub(async_client: AsyncClient):
     assert resp.status_code == 202
     data = resp.json()
     assert data["status"] == "analyzing"
-    assert data["message"] == "Analysis started"
+    assert data["message"].startswith("Analysis started")
 
 
 async def test_trigger_analysis_not_found(async_client: AsyncClient):

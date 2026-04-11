@@ -11,6 +11,13 @@ import {
 } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COMPANY_KEYS = [
   { key: "business_direction", label: "사업 방향", rows: 3 },
@@ -18,6 +25,7 @@ const COMPANY_KEYS = [
   { key: "mid_term_strategy", label: "중기 전략", rows: 2 },
   { key: "long_term_strategy", label: "장기 전략", rows: 2 },
   { key: "deal_criteria", label: "Deal 선정 기준", rows: 3 },
+  { key: "default_workflow_type", label: "기본 분석 워크플로우", rows: 0 },
 ];
 
 function useCompanySettings() {
@@ -90,13 +98,29 @@ export function CompanyInfoTab() {
       {COMPANY_KEYS.map(({ key, label, rows }) => (
         <div key={key} className="space-y-2">
           <Label>{label}</Label>
-          <Textarea
-            value={displayValues[key] ?? ""}
-            onChange={(e) => handleChange(key, e.target.value)}
-            rows={rows}
-            disabled={isLoading}
-            placeholder={`${label}을 입력하세요...`}
-          />
+          {key === "default_workflow_type" ? (
+            <Select
+              value={displayValues[key] || "static"}
+              onValueChange={(v) => { if (v) handleChange(key, v); }}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="워크플로우 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="static">Static (정적 워크플로우)</SelectItem>
+                <SelectItem value="react">React Agent (동적 워크플로우)</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <Textarea
+              value={displayValues[key] ?? ""}
+              onChange={(e) => handleChange(key, e.target.value)}
+              rows={rows}
+              disabled={isLoading}
+              placeholder={`${label}을 입력하세요...`}
+            />
+          )}
         </div>
       ))}
       <div className="flex justify-end gap-2">

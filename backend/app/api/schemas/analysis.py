@@ -36,7 +36,7 @@ class RiskItem(BaseModel):
     item: str
     probability: str | None = None  # HIGH, MEDIUM, LOW
     impact: str | None = None  # HIGH, MEDIUM, LOW
-    level: str  # HIGH, MEDIUM, LOW (derived from probability × impact matrix)
+    level: str  # CRITICAL, HIGH, MEDIUM, LOW
     evidence: str | None = None
     description: str
     mitigation: str | None = None
@@ -69,6 +69,7 @@ class AnalysisResponse(OrmBase):
     risk_interdependencies: Any | None = None
     similar_projects: Any | None = None
     report_markdown: str | None = None
+    workflow_type: str | None = None
     notion_saved_at: datetime | None = None
     created_at: datetime
 
@@ -77,3 +78,10 @@ class AnalysisTriggerResponse(BaseModel):
     deal_id: uuid.UUID
     status: str
     message: str
+
+
+class AnalysisStatusEvent(BaseModel):
+    deal_id: uuid.UUID
+    status: str
+    current_step: str | None = None
+    updated_at: datetime | None = None

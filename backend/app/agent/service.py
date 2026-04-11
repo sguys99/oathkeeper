@@ -1,23 +1,15 @@
-"""Analysis service — orchestrates graph execution and DB persistence."""
+"""Analysis service — orchestrates workflow execution and DB persistence."""
 
 import logging
 import uuid
 
-from backend.app.agent.graph import build_graph
-from backend.app.db.repositories import analysis_repo, deal_repo
+from backend.app.agent.workflows import WorkflowType, get_workflow
+from backend.app.db.repositories import analysis_repo, deal_repo, settings_repo
 from backend.app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
-STEP_LABELS: dict[str, str] = {
-    "deal_structuring": "Deal 구조화 중...",
-    "scoring": "평가 기준 분석 중...",
-    "resource_estimation": "리소스 추정 중...",
-    "risk_analysis": "리스크 분석 중...",
-    "similar_project": "유사 프로젝트 검색 중...",
-    "final_verdict": "최종 판정 중...",
-    "hold_verdict": "보류 판정 중...",
-}
+DEFAULT_WORKFLOW_TYPE = WorkflowType.STATIC
 
 
 def _classify_error(exc: Exception) -> str:
@@ -35,22 +27,63 @@ def _classify_error(exc: Exception) -> str:
         return "분석 시간이 초과되었습니다. 다시 시도해주세요."
     if "integrityerror" in exc_type.lower():
         return "데이터 충돌이 발생했습니다. 다시 시도해주세요."
+    if "invalidrequesterror" in exc_type.lower() or "concurrent" in msg:
+        return "내부 데이터베이스 세션 오류가 발생했습니다. 다시 시도해주세요."
     if "connection" in msg or "connect" in msg:
         return "외부 서비스 연결에 실패했습니다. 네트워크 상태를 확인해주세요."
 
     return f"분석 중 오류가 발생했습니다: {exc_type}"
 
 
+async def resolve_workflow_type(
+    requested: str | None,
+    db=None,
+) -> WorkflowType:
+    """Resolve workflow type from request or system default.
+
+    Priority: explicit request > company setting > DEFAULT_WORKFLOW_TYPE.
+    """
+    if requested:
+        try:
+            return WorkflowType(requested)
+        except ValueError:
+            logger.warning("Invalid workflow_type '%s', falling back to default", requested)
+
+    # Check company settings for default
+    try:
+        if db is not None:
+            setting = await settings_repo.get_setting(db, "default_workflow_type")
+            if setting and setting.value:
+                return WorkflowType(setting.value)
+        else:
+            async with AsyncSessionLocal() as session:
+                setting = await settings_repo.get_setting(session, "default_workflow_type")
+                if setting and setting.value:
+                    return WorkflowType(setting.value)
+    except (ValueError, Exception):
+        logger.debug("Could not read default_workflow_type from settings, using fallback")
+
+    return DEFAULT_WORKFLOW_TYPE
+
+
 class AnalysisService:
     """Run the full deal-analysis pipeline and persist results."""
 
-    async def run_analysis(self, deal_id: uuid.UUID) -> None:
-        """Execute the LangGraph pipeline for *deal_id* and save results.
+    async def run_analysis(
+        self,
+        deal_id: uuid.UUID,
+        workflow_type: WorkflowType = DEFAULT_WORKFLOW_TYPE,
+    ) -> None:
+        """Execute the analysis pipeline for *deal_id* and save results.
 
         Creates its own DB session because this method runs inside
         ``BackgroundTasks`` (outside the request lifecycle).
         """
-        logger.info("run_analysis started for deal %s", deal_id)
+        logger.info(
+            "run_analysis started for deal %s (workflow=%s)",
+            deal_id,
+            workflow_type,
+        )
         async with AsyncSessionLocal() as db:
             try:
                 deal = await deal_repo.get_by_id(db, deal_id)
@@ -62,23 +95,22 @@ class AnalysisService:
                 await analysis_repo.delete_by_deal_id(db, deal_id)
                 await db.flush()
 
-                # Build and run the graph
-                logger.info("Building graph for deal %s", deal_id)
-                graph = build_graph()
-                logger.info("Graph built, starting execution for deal %s", deal_id)
+                # Progress callback — uses its own session to avoid
+                # concurrent-commit errors when workers run in parallel.
+                async def on_progress(step_label: str) -> None:
+                    async with AsyncSessionLocal() as progress_db:
+                        progress_deal = await deal_repo.get_by_id(progress_db, deal_id)
+                        if progress_deal is not None:
+                            progress_deal.current_step = step_label
+                            await progress_db.commit()
 
-                result: dict = {}
-                async for event in graph.astream(
-                    {"deal_input": deal.raw_input or "", "deal_id": str(deal_id)},
-                ):
-                    for node_name, node_output in event.items():
-                        if node_output is not None:
-                            result.update(node_output)
-                        label = STEP_LABELS.get(node_name)
-                        if label:
-                            logger.info("Deal %s: completed step '%s'", deal_id, node_name)
-                            deal.current_step = label
-                            await db.commit()
+                # Execute the selected workflow
+                workflow = get_workflow(workflow_type)
+                result = await workflow.execute(
+                    deal_id=deal_id,
+                    deal_input=deal.raw_input or "",
+                    on_progress=on_progress,
+                )
 
                 # Persist analysis result
                 await analysis_repo.create(
@@ -92,6 +124,7 @@ class AnalysisService:
                     risk_interdependencies=result.get("risk_interdependencies"),
                     similar_projects=result.get("similar_projects"),
                     report_markdown=result.get("final_report"),
+                    workflow_type=workflow_type.value,
                 )
 
                 # Update deal structured_data and status

@@ -41,6 +41,7 @@ class AnalysisResult(Base):
     risk_interdependencies: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     similar_projects: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
     report_markdown: Mapped[str | None] = mapped_column(Text, nullable=True)
+    workflow_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     notion_saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

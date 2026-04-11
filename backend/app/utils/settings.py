@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     notion_decision_db_id: str = ""
     notion_project_history_db_id: str = ""
 
+    # Tavily (web search for agent tools)
+    tavily_api_key: str = ""
+
     # Slack
     slack_webhook_url: str = ""
 

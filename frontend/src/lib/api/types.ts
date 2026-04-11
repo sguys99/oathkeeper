@@ -1,7 +1,25 @@
 // Enums
 export type DealStatus = "pending" | "analyzing" | "completed" | "failed";
 export type Verdict = "go" | "conditional_go" | "no_go" | "pending";
-export type RiskLevel = "HIGH" | "MEDIUM" | "LOW";
+export type RiskLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+
+export type StepType =
+  | "orchestrator_decision"
+  | "orchestrator_reasoning"
+  | "orchestrator_tool_call"
+  | "worker_start"
+  | "reasoning"
+  | "tool_call"
+  | "observation"
+  | "worker_result";
+
+export interface AnalysisStatusEvent {
+  deal_id: string;
+  status: DealStatus;
+  current_step: string | null;
+  error_message: string | null;
+  workflow_type: string | null;
+}
 export type TeamRole = "PM" | "FE" | "BE" | "MLE" | "DevOps";
 export type UserRole = "admin" | "executive" | "sales";
 
@@ -152,6 +170,7 @@ export interface AnalysisResponse {
   similar_projects: SimilarProject[] | null;
   report_markdown: string | null;
   notion_saved_at: string | null;
+  workflow_type: string | null;
   created_at: string;
 }
 
@@ -159,6 +178,7 @@ export interface AnalysisTriggerResponse {
   deal_id: string;
   status: string;
   message: string;
+  workflow_type: string | null;
 }
 
 // Notion
@@ -344,10 +364,26 @@ export interface AgentLogResponse {
   raw_output: string | null;
   parsed_output: Record<string, unknown> | null;
   error: string | null;
+  parent_log_id: string | null;
+  step_type: StepType | null;
+  step_index: number | null;
+  tool_name: string | null;
+  worker_name: string | null;
   duration_ms: number | null;
   started_at: string;
   completed_at: string | null;
   created_at: string;
+}
+
+export interface AgentLogTreeNode extends AgentLogResponse {
+  children: AgentLogTreeNode[];
+}
+
+export interface AgentLogTreeResponse {
+  deal_id: string;
+  logs: AgentLogTreeNode[];
+  total_count: number;
+  total_duration_ms: number | null;
 }
 
 // Prompts

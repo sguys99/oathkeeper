@@ -51,3 +51,6 @@ items:
     - 해외 시장 진출 (북미/ 유럽)
     - 산업별 데이터셋 및 모델 자산화
   description: 장기 전략
+- key: default_workflow_type
+  value: static
+  description: 기본 분석 워크플로우 (static 또는 react)

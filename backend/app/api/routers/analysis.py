@@ -1,14 +1,15 @@
 """Analysis trigger, results, and status endpoints."""
 
+import asyncio
 import json
 import uuid
 from collections.abc import AsyncGenerator
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.agent.service import AnalysisService
+from backend.app.agent.service import AnalysisService, resolve_workflow_type
 from backend.app.api.exceptions import (
     AnalysisInProgress,
     AnalysisNotFound,
@@ -31,6 +32,7 @@ async def trigger_analysis(
     deal_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    workflow_type: str | None = Body(None, embed=True),
 ) -> AnalysisTriggerResponse:
     deal = await deal_repo.get_by_id(db, deal_id)
     if deal is None:
@@ -39,9 +41,12 @@ async def trigger_analysis(
         raise AnalysisInProgress(deal_id)
     if not (deal.raw_input or "").strip():
         raise OathKeeperError(
-            "분석할 Deal 정보가 없습니다. Notion 내용 또는 추가 정보를 입력해주세요.",
+            "분석할 Deal 정보가 없습니다. Notion 내용 또는 추가 정보를 입력해���세요.",
             status_code=422,
         )
+
+    # Resolve workflow type: explicit request > system setting > default
+    resolved_wf = await resolve_workflow_type(workflow_type, db=db)
 
     await deal_repo.update_status(db, deal_id, "analyzing")
     deal.current_step = "Deal 구조화 준비 중..."
@@ -49,12 +54,12 @@ async def trigger_analysis(
     await db.commit()
 
     service = AnalysisService()
-    background_tasks.add_task(service.run_analysis, deal_id)
+    background_tasks.add_task(service.run_analysis, deal_id, resolved_wf)
 
     return AnalysisTriggerResponse(
         deal_id=deal_id,
         status="analyzing",
-        message="Analysis started",
+        message=f"Analysis started (workflow: {resolved_wf.value})",
     )
 
 
@@ -83,8 +88,27 @@ async def get_analysis_status(
         raise DealNotFound(deal_id)
 
     async def event_stream() -> AsyncGenerator[str, None]:
-        data = json.dumps({"deal_id": str(deal_id), "status": deal.status})
-        yield f"data: {data}\n\n"
+        last_payload: str | None = None
+        for _ in range(600):  # max ~150 seconds
+            from backend.app.db.session import AsyncSessionLocal
+
+            async with AsyncSessionLocal() as poll_db:
+                poll_deal = await deal_repo.get_by_id(poll_db, deal_id)
+                if poll_deal is None:
+                    break
+                payload = json.dumps(
+                    {
+                        "deal_id": str(deal_id),
+                        "status": poll_deal.status,
+                        "current_step": poll_deal.current_step,
+                    },
+                )
+                if payload != last_payload:
+                    yield f"data: {payload}\n\n"
+                    last_payload = payload
+                if poll_deal.status in ("completed", "failed"):
+                    break
+            await asyncio.sleep(0.25)
 
     return StreamingResponse(
         event_stream(),

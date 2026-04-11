@@ -14,6 +14,17 @@ logger = logging.getLogger(__name__)
 
 MISSING_FIELDS_THRESHOLD = 3
 
+CRITICAL_FIELDS = frozenset(
+    {
+        "customer_name",
+        "customer_industry",
+        "project_overview",
+        "tech_requirements",
+        "expected_amount",
+        "duration_months",
+    },
+)
+
 
 # ── LLM helpers ────────────────────────────────────────────────────────
 
@@ -210,3 +221,57 @@ def build_company_context(vector_context: str, company_settings: dict[str, str])
     if vector_context:
         parts.append(vector_context)
     return "\n\n".join(parts)
+
+
+# ── Business logic (shared by nodes and workers) ─────────────────────
+
+
+_UNIT_TO_MANWON: dict[str, float] = {
+    "원": 1 / 10_000,
+    "만원": 1,
+    "억원": 10_000,
+}
+
+
+def normalize_amount_to_manwon(structured: dict) -> dict:
+    """Convert expected_amount to 만원 units and pin amount_unit = '만원'.
+
+    Eliminates downstream LLM unit-conversion errors by normalizing at the
+    code level immediately after deal structuring.
+    """
+    amount = structured.get("expected_amount")
+    unit = structured.get("amount_unit", "만원")
+    if amount is None:
+        return structured
+    factor = _UNIT_TO_MANWON.get(unit, 1)
+    return {**structured, "expected_amount": round(amount * factor), "amount_unit": "만원"}
+
+
+def recalculate_scores(scores: list[dict]) -> tuple[list[dict], float]:
+    """Recompute weighted_score and total from LLM-provided raw scores."""
+    recalculated = []
+    total = 0.0
+    for s in scores:
+        score = float(s.get("score", 0))
+        weight = float(s.get("weight", 0))
+        weighted = round(score * weight, 2)
+        total += weighted
+        recalculated.append(
+            {
+                "criterion": s.get("criterion", ""),
+                "score": score,
+                "weight": weight,
+                "weighted_score": weighted,
+                "rationale": s.get("rationale", ""),
+            },
+        )
+    return recalculated, round(total, 2)
+
+
+def determine_verdict(total_score: float) -> str:
+    """Server-side verdict based on score thresholds (don't trust LLM arithmetic)."""
+    if total_score >= 70:
+        return "go"
+    if total_score >= 40:
+        return "conditional_go"
+    return "no_go"

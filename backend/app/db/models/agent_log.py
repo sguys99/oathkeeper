@@ -40,4 +40,34 @@ class AgentLog(Base):
         nullable=False,
     )
 
+    # Hierarchical logging fields
+    parent_log_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_logs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    step_type: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+        index=True,
+    )
+    step_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tool_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    worker_name: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        index=True,
+    )
+
     deal: Mapped["Deal"] = relationship(lazy="selectin")  # noqa: F821
+    parent: Mapped["AgentLog | None"] = relationship(
+        "AgentLog",
+        remote_side="AgentLog.id",
+        back_populates="children",
+        lazy="selectin",
+    )
+    children: Mapped[list["AgentLog"]] = relationship(
+        "AgentLog",
+        back_populates="parent",
+        lazy="selectin",
+    )
